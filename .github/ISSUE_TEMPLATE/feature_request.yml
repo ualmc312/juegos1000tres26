@@ -1,0 +1,54 @@
+name: "Nueva funcionalidad"
+description: "Proponer una mejora o nueva funcionalidad"
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Gracias por proponer una mejora.
+        Cuanto mas detalle incluyas, mejor podremos priorizarla.
+
+  - type: textarea
+    id: problema
+    attributes:
+      label: Problema u oportunidad
+      description: Que necesidad cubre esta propuesta.
+      placeholder: "Actualmente no se puede..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solucion
+    attributes:
+      label: Solucion propuesta
+      description: Describe tu idea de implementacion.
+      placeholder: "Se podria anadir..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternativas
+    attributes:
+      label: Alternativas consideradas
+      description: Otras opciones que valoraste.
+      placeholder: "Tambien se podria..."
+
+  - type: dropdown
+    id: prioridad
+    attributes:
+      label: Prioridad
+      options:
+        - Baja
+        - Media
+        - Alta
+    validations:
+      required: true
+
+  - type: input
+    id: impacto
+    attributes:
+      label: Impacto esperado
+      description: A quien beneficia y en que medida.
+      placeholder: "Beneficia a jugadores nuevos al reducir..."

@@ -1,0 +1,16 @@
+name: "Tarea interna"
+description: "Registrar trabajo tecnico o tareas de mantenimiento"
+title: "[Task]: "
+labels:
+  - chore
+body:
+  - type: textarea
+    id: objetivo
+    attributes:
+      label: Objetivo
+      description: Que se necesita hacer.
+      placeholder: "Actualizar dependencias de..."
+    validations:
+      required: true
+
+  
