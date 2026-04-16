@@ -1,0 +1,29 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Frontend Node.js
+juegos1000tres-frontend/node_modules/
+juegos1000tres-frontend/.npm/
+juegos1000tres-frontend/.pnpm-store/
+juegos1000tres-frontend/.yarn/
+juegos1000tres-frontend/.cache/
+juegos1000tres-frontend/coverage/
+juegos1000tres-frontend/dist/
+juegos1000tres-frontend/build/
+juegos1000tres-frontend/*.tsbuildinfo
+
+# Frontend logs
+juegos1000tres-frontend/npm-debug.log*
+juegos1000tres-frontend/yarn-debug.log*
+juegos1000tres-frontend/yarn-error.log*
+juegos1000tres-frontend/pnpm-debug.log*
+
+# Frontend env files
+juegos1000tres-frontend/.env
+juegos1000tres-frontend/.env.*
+!juegos1000tres-frontend/.env.example
