@@ -3,7 +3,7 @@ import { Traductor } from "./comunicacion/Traductor.js";
 import { ApiConexion } from "./comunicacion/implementaciones/ApiConexion.js";
 import { JsonEnvio } from "./comunicacion/implementaciones/JsonEnvio.js";
 import { JsonRecibo } from "./comunicacion/implementaciones/JsonRecibo.js";
-import { JuegoConexion } from "./juego/JuegoConexion.js";
+import { JuegoConexion } from "./juegos/JuegoConexion.js";
 import { TextoEnviable } from "./mensajes/TextoEnviable.js";
 
 class DemoJuegoConexion extends JuegoConexion<string> {
