@@ -30,6 +30,18 @@
                 >
 
                 <fieldset class="rol-selector">
+                    <legend>Juego</legend>
+                    <label class="rol-option" for="juegoSpaceInvaders">
+                        <input id="juegoSpaceInvaders" type="radio" name="juegoId" value="space_invaders" {% if juego_seleccionado != 'prueba_websocket' %}checked{% endif %}>
+                        Space Invaders
+                    </label>
+                    <label class="rol-option" for="juegoPruebaWebSocket">
+                        <input id="juegoPruebaWebSocket" type="radio" name="juegoId" value="prueba_websocket" {% if juego_seleccionado == 'prueba_websocket' %}checked{% endif %}>
+                        Prueba WebSocket
+                    </label>
+                </fieldset>
+
+                <fieldset class="rol-selector">
                     <legend>Tipo de cliente</legend>
                     <label class="rol-option" for="tipoJugador">
                         <input id="tipoJugador" type="radio" name="tipoCliente" value="jugador" {% if tipo_cliente != 'pantalla' %}checked{% endif %}>

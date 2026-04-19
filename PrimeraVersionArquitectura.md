@@ -1,6 +1,6 @@
-## Arquitectura de comunicación (versión actual)
+## Arquitectura de comunicacion (version actual)
 
-Este documento describe la arquitectura de comunicación simétrica backend/frontend, incluyendo el comportamiento real de API con short polling y WebSocket push.
+Este documento describe la arquitectura de comunicacion backend/frontend, incluyendo el comportamiento real de API con short polling y WebSocket push.
 
 ## 1. Principio general
 
@@ -12,6 +12,11 @@ La arquitectura separa tres responsabilidades:
 
 Con esto, el juego no depende del canal y el canal no depende de reglas de negocio.
 
+Nota de estado actual:
+
+1. En backend, Envio<PAYLOAD> y Recibo<PAYLOAD> son clases concretas genericas.
+2. En frontend, se mantiene el modelo Envio/Recibo con implementaciones JsonEnvio/JsonRecibo.
+
 ## 2. Componentes
 
 ### 2.1 Enviable
@@ -22,6 +27,11 @@ Mensaje de dominio intercambiable entre backend y frontend. Cada clase concreta 
 
 Convierte un Enviable a payload de transporte.
 
+Estado actual:
+
+1. Backend: clase concreta Envio<PAYLOAD> con funcion traductora y factory Envio.paraStringDesdeOut().
+2. Frontend: implementacion JsonEnvio para payload json-string.
+
 ### 2.3 Evento<PAYLOAD>
 
 Define la lógica de un comando entrante mediante hacer(payload, contexto). El evento puede o no producir respuesta.
@@ -30,7 +40,10 @@ Define la lógica de un comando entrante mediante hacer(payload, contexto). El e
 
 Permite publicar la respuesta principal sin acoplarse al transporte: contexto.enviar(enviable).
 
-Si el evento no llama a enviar(...), se considera operación sin respuesta de negocio.
+Estado actual:
+
+1. Solo permite una respuesta principal por evento.
+2. Expone tieneRespuesta()/getRespuesta() para que Traductor decida si serializa y envia.
 
 ### 2.5 Recibo<PAYLOAD>
 
@@ -40,10 +53,10 @@ Dispatcher de entrada por comando (Strategy):
 2. Se construye de forma inmutable con conEvento(...).
 3. En procesar(payload, contexto), extrae comando y ejecuta evento.
 
-Politica actual en frontend (JsonRecibo):
+Politica actual por capa:
 
-1. Si el comando no existe en el diccionario, el mensaje se descarta silenciosamente.
-2. No se lanza error por comando no registrado.
+1. Backend Recibo<PAYLOAD>: si el comando no existe, lanza error.
+2. Frontend JsonRecibo: si el comando no existe, descarta silenciosamente.
 
 ### 2.6 Conexion<PAYLOAD>
 
@@ -58,12 +71,14 @@ Orquesta Envio + Recibo + Conexion y valida compatibilidad de payload.
 
 Metodos principales:
 
-1. enviar(enviable)
-2. procesar(payload)
-3. recibirYProcesar()
-4. recibirProcesarYResponder()
+1. traducirEnviableAFormato(enviable)
+2. enviar(enviable)
+3. procesar(payload)
+4. recibirPayload()
+5. recibirYProcesar()
+6. recibirProcesarYResponder()
 
-### 2.8 Configuración externa de transporte
+### 2.8 Configuracion externa de transporte
 
 Backend usa configuracion externa para rutas, host y puertos en:
 
@@ -80,17 +95,19 @@ Incluye, entre otros:
 
 ### 3.1 API (request/response + short polling)
 
-Se usan dos endpoints por sala:
+En la implementacion actual se usan dos patrones:
 
-1. Endpoint de eventos (entrada al backend): POST de mensajes frontend -> backend.
-2. Endpoint de actualizaciones (salida a frontend): GET para short polling frontend -> backend.
+1. Patron generico por sala (ApiConexion): endpoint de eventos + endpoint de actualizaciones por sala.
+2. Patron de juego via proxy Flask (Space Invaders):
+1. POST /api/event para entrada.
+2. GET /api/updates para salida con short polling (playerId/screenId).
 
-Flujo esperado:
+Flujo real esperado:
 
 1. Front envia comando con Traductor.enviar(...).
 2. Backend procesa el evento correspondiente.
-3. Si el backend necesita enviar respuesta/actualizacion, llama a Traductor.enviar(...) o usa respuesta de negocio.
-4. Front recibe esa actualizacion en el polling periodico y la mete en cola de Conexion.
+3. Si el backend genera actualizacion de negocio, la publica en el canal de salida.
+4. Front recibe esa actualizacion en polling periodico y la encola en Conexion.
 5. Traductor del front consume recibir() y ejecuta Recibo.procesar(...).
 
 ### 3.2 WebSocket (push bidireccional)
@@ -102,6 +119,11 @@ En WebSocket no hay polling:
 3. La respuesta puede ser:
 1. Automatica con recibirProcesarYResponder().
 2. Explicita cuando el evento/servicio decida emitir un mensaje posterior.
+
+Implementacion actual destacada:
+
+1. Prueba WebSocket usa canales urlJugadores/urlPantalla entregados por backend.
+2. La sincronizacion entre ventanas del juego pasa por backend (no hay canal directo ventana a ventana para estado de juego).
 
 ## 4. Flujos de procesamiento
 
@@ -126,10 +148,10 @@ Mismo flujo, pero el evento no llama a contexto.enviar(...).
 
 ### 4.4 Recepcion de comando no registrado
 
-Politica actual (frontend JsonRecibo):
+Politica actual por capa:
 
-1. Se descarta silenciosamente.
-2. No se interrumpe el bucle de recepcion.
+1. Backend Recibo<PAYLOAD>: error por comando no registrado.
+2. Frontend JsonRecibo: descarta silenciosamente y no interrumpe el bucle de recepcion.
 
 ## 5. Flujo de trabajo para un juego nuevo
 
@@ -147,19 +169,23 @@ Politica actual (frontend JsonRecibo):
 
 ### 5.3 Registrar Eventos en Recibo
 
-1. Crear Recibo (por ejemplo JsonRecibo).
+1. Crear Recibo (por ejemplo Recibo.paraJsonString() en backend o JsonRecibo en frontend).
 2. Registrar comandos con conEvento("COMANDO", evento).
 
 ### 5.4 Montar Traductor
 
 1. Elegir Conexion (ApiConexion o WebSocketConexion).
-2. Elegir Envio (JsonEnvio u otro).
-3. Usar Recibo configurado.
+2. Elegir Envio segun capa:
+1. Backend: Envio.paraStringDesdeOut() o Envio<PAYLOAD> custom.
+2. Frontend: JsonEnvio u otro.
+3. Configurar Recibo segun capa:
+1. Backend: Recibo.paraJsonString() + conEvento(...).
+2. Frontend: JsonRecibo + conEvento(...).
 4. Construir Traductor(conexion, envio, recibo).
 
 ### 5.5 Definir loop de entrada
 
-1. API: conectar() inicia polling en frontend y el juego consume con recibirYProcesar() o recibirProcesarYResponder().
+1. API: conectar() inicia polling y el juego consume con recibirYProcesar() o recibirProcesarYResponder().
 2. WebSocket: consumir mensajes entrantes por conexion abierta con los mismos metodos de Traductor.
 
 ## 6. Diagramas de secuencia (PlantUML)
@@ -192,14 +218,16 @@ title API con short polling
 participant FrontJuego
 participant FrontTraductor
 participant FrontApiConexion
-participant ApiEventos as "Backend API eventos"
-participant ApiActualizaciones as "Backend API actualizaciones"
+participant FrontProxy as "Flask proxy API"
+participant ApiEventos as "Backend API event"
+participant ApiActualizaciones as "Backend API updates"
 participant BackTraductor
 participant BackRecibo
 
 FrontJuego -> FrontTraductor : enviar(enviable)
-FrontTraductor -> FrontApiConexion : POST /eventos
-FrontApiConexion -> ApiEventos : payload
+FrontTraductor -> FrontApiConexion : POST /api/event
+FrontApiConexion -> FrontProxy : request
+FrontProxy -> ApiEventos : payload
 
 ApiEventos -> BackTraductor : procesar payload
 BackTraductor -> BackRecibo : procesar(payload, contexto)
@@ -207,8 +235,10 @@ BackTraductor -> BackRecibo : procesar(payload, contexto)
 BackTraductor -> ApiActualizaciones : publica actualizacion
 
 loop cada pollingIntervalMs
-	FrontApiConexion -> ApiActualizaciones : GET /actualizaciones
-	ApiActualizaciones --> FrontApiConexion : payload o 204
+	FrontApiConexion -> FrontProxy : GET /api/updates
+	FrontProxy -> ApiActualizaciones : GET /updates
+	ApiActualizaciones --> FrontProxy : payload o 204
+	FrontProxy --> FrontApiConexion : payload o 204
 end
 
 FrontApiConexion -> FrontTraductor : recibir()
@@ -240,11 +270,11 @@ TraductorB -> ClienteB : evento ejecutado
 @enduml
 ```
 
-### 6.4 Comando no registrado (descartado)
+### 6.4 Comando no registrado (comportamiento por capa)
 
 ```plantuml
 @startuml
-title Comando no registrado (descartado)
+title Comando no registrado (comportamiento por capa)
 
 participant Conexion
 participant Traductor
@@ -253,11 +283,15 @@ participant Recibo
 Traductor -> Conexion : recibir()
 Conexion --> Traductor : payload(comando desconocido)
 Traductor -> Recibo : procesar(payload, contexto)
-Recibo --> Traductor : return (sin error)
+alt Frontend JsonRecibo
+	Recibo --> Traductor : return (sin error)
+else Backend Recibo<PAYLOAD>
+	Recibo --> Traductor : IllegalArgumentException
+end
 
 note over Recibo
-Si no existe comando en el map,
-se descarta el mensaje.
+Frontend descarta silenciosamente.
+Backend reporta error.
 end note
 
 @enduml
@@ -274,7 +308,7 @@ abstract class Enviable {
 	+in(entrada)
 }
 
-abstract class Envio~PAYLOAD~ {
+class Envio~PAYLOAD~ {
 	+traducirEnviableAFormato(enviable)
 }
 
@@ -284,45 +318,50 @@ interface Evento~PAYLOAD~ {
 
 class ContextoEvento {
 	+enviar(enviable)
+	+tieneRespuesta()
 	+getRespuesta()
 }
 
-abstract class Recibo~PAYLOAD~ {
+class Recibo~PAYLOAD~ {
 	+conEvento(comando, evento)
 	+procesar(payload, contexto)
 }
 
-abstract class Conexion~PAYLOAD~ {
+interface Conexion~PAYLOAD~ {
 	+conectar()
 	+desconectar()
 	+enviar(payload)
 	+recibir()
+	+getClasePayload()
+	+getTipoPayload()
 	+getTipoComunicacion()
 	+getSalaId()
 	+getCanalSala()
 }
 
 class Traductor~PAYLOAD~ {
+	+traducirEnviableAFormato(enviable)
 	+enviar(enviable)
 	+procesar(payload)
+	+recibirPayload()
 	+recibirYProcesar()
 	+recibirProcesarYResponder()
 }
 
 class ApiConexion
 class WebSocketConexion
-class JsonRecibo
-class JsonEnvio
+class JsonRecibo <<frontend>>
+class JsonEnvio <<frontend>>
 
 Traductor o-- Conexion
 Traductor o-- Envio
 Traductor o-- Recibo
 Recibo --> Evento
 Evento --> ContextoEvento
-JsonRecibo --|> Recibo
-JsonEnvio --|> Envio
-ApiConexion --|> Conexion
-WebSocketConexion --|> Conexion
+JsonRecibo ..> Recibo
+JsonEnvio ..> Envio
+ApiConexion ..|> Conexion
+WebSocketConexion ..|> Conexion
 
 @enduml
 ```

@@ -12,14 +12,13 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import com.juegos1000tres.juegos1000tres_backend.comunicacion.Envio;
 import com.juegos1000tres.juegos1000tres_backend.comunicacion.Recibo;
 import com.juegos1000tres.juegos1000tres_backend.comunicacion.Traductor;
 import com.juegos1000tres.juegos1000tres_backend.juegos.SpaceInvaders.EstadoJugadoresSpaceInvaders;
 import com.juegos1000tres.juegos1000tres_backend.juegos.SpaceInvaders.SpaceInvader;
 import com.juegos1000tres.juegos1000tres_backend.juegos.SpaceInvaders.pruebas.comunicacion.ConexionNulaPruebas;
 import com.juegos1000tres.juegos1000tres_backend.juegos.SpaceInvaders.pruebas.comunicacion.ConexionPantallaPruebas;
-import com.juegos1000tres.juegos1000tres_backend.juegos.SpaceInvaders.pruebas.comunicacion.JsonEnvioPruebas;
-import com.juegos1000tres.juegos1000tres_backend.juegos.SpaceInvaders.pruebas.comunicacion.JsonReciboPruebas;
 
 @Service
 public class SpaceInvadersPruebaService {
@@ -36,21 +35,21 @@ public class SpaceInvadersPruebaService {
     public SpaceInvadersPruebaService() {
         Traductor<String> traductorNulo = new Traductor<>(
                 new ConexionNulaPruebas("space-invaders-pruebas"),
-                new JsonEnvioPruebas(),
-                new JsonReciboPruebas());
+                Envio.paraStringDesdeOut(),
+                Recibo.paraJsonString());
 
         this.conexionPantalla = new ConexionPantallaPruebas("space-invaders-pruebas");
         Traductor<String> traductorPantalla = new Traductor<>(
             this.conexionPantalla,
-            new JsonEnvioPruebas(),
-            new JsonReciboPruebas());
+            Envio.paraStringDesdeOut(),
+            Recibo.paraJsonString());
 
         this.juego = new SpaceInvader(4, traductorNulo, traductorPantalla);
-        Recibo<String> reciboJuego = this.juego.registrarEventosEnRecibo(new JsonReciboPruebas());
+        Recibo<String> reciboJuego = this.juego.registrarEventosEnRecibo(Recibo.paraJsonString());
 
         this.traductorEventos = new Traductor<>(
                 new ConexionNulaPruebas("space-invaders-pruebas"),
-                new JsonEnvioPruebas(),
+                Envio.paraStringDesdeOut(),
                 reciboJuego);
 
         this.scoreboard = new LinkedHashMap<>();

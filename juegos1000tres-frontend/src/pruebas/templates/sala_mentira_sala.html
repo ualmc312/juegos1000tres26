@@ -14,20 +14,23 @@
                 Usuario activo: <strong>{{ nombre_usuario | default(nombre, true) | default('Jugador', true) }}</strong>
                 (rol: <strong>{{ tipo_cliente | default('jugador') }}</strong>)
             </p>
+            <p>
+                Juego seleccionado: <strong>{{ juego_titulo | default('Space Invaders') }}</strong>
+            </p>
             <p class="hint">Abre otra ventana en esta misma URL, pon otro nombre y podras comprobar la comunicacion entre ambos.</p>
 
             <div class="actions">
                 <button id="iniciarJuegoBtn" type="button">
-                    {% if es_pantalla | default(false) %}Iniciar pantalla compartida{% else %}Iniciar Space Invaders{% endif %}
+                    {% if es_pantalla | default(false) %}Iniciar pantalla compartida{% else %}Iniciar juego{% endif %}
                 </button>
                 <button id="volverSalaBtn" type="button" class="secondary hidden">Volver a la sala</button>
                 <a id="abrirJuegoNuevaTab" href="#" target="_blank" rel="noopener noreferrer">Abrir juego en otra pestaña</a>
                 <form method="post" action="{{ url_for('sala_mentira_pruebas.salir') }}">
-                    <button type="submit" class="secondary">Cambiar nombre</button>
+                    <button type="submit" class="secondary">Cambiar nombre o juego</button>
                 </form>
             </div>
 
-            <section id="resultadoPartida" class="resultado {% if es_pantalla | default(false) %}hidden{% endif %}" aria-live="polite">
+            <section id="resultadoPartida" class="resultado {% if es_pantalla | default(false) or juego_id == 'prueba_websocket' %}hidden{% endif %}" aria-live="polite">
                 <h2>Resultado de la partida</h2>
                 <p id="resultadoTexto">Aun no hay resultado.</p>
             </section>
@@ -42,9 +45,7 @@
         (function () {
             const nombre = {{ (nombre_usuario | default(nombre, true) | default('Jugador', true)) | tojson }};
             const esPantalla = {{ 'true' if (es_pantalla is defined and es_pantalla) else 'false' }};
-            const urlJuego = esPantalla
-                ? '/server/space_invaders/pantalla?screenId=' + encodeURIComponent(nombre)
-                : '/server/space_invaders?player=' + encodeURIComponent(nombre);
+            const juegoId = {{ (juego_id | default('space_invaders')) | tojson }};
 
             const iniciarJuegoBtn = document.getElementById('iniciarJuegoBtn');
             const volverSalaBtn = document.getElementById('volverSalaBtn');
@@ -54,9 +55,53 @@
             const resultadoPartida = document.getElementById('resultadoPartida');
             const resultadoTexto = document.getElementById('resultadoTexto');
 
+            function construirUrlJuego() {
+                if (juegoId === 'prueba_websocket') {
+                    if (esPantalla) {
+                        return '/server/prueba_websocket/pantalla';
+                    }
+
+                    return '/server/prueba_websocket?player=' + encodeURIComponent(nombre);
+                }
+
+                if (esPantalla) {
+                    return '/server/space_invaders/pantalla?screenId=' + encodeURIComponent(nombre);
+                }
+
+                return '/server/space_invaders?player=' + encodeURIComponent(nombre);
+            }
+
+            function obtenerTextoInicio() {
+                if (esPantalla) {
+                    return 'Iniciar pantalla compartida';
+                }
+
+                if (juegoId === 'prueba_websocket') {
+                    return 'Iniciar Prueba WebSocket';
+                }
+
+                return 'Iniciar Space Invaders';
+            }
+
+            function obtenerTextoIniciado() {
+                if (esPantalla) {
+                    return 'Pantalla iniciada';
+                }
+
+                if (juegoId === 'prueba_websocket') {
+                    return 'Prueba WebSocket iniciada';
+                }
+
+                return 'Juego iniciado';
+            }
+
+            const urlJuego = construirUrlJuego();
+
             if (esPantalla) {
                 volverSalaBtn.classList.add('hidden');
             }
+
+            iniciarJuegoBtn.textContent = obtenerTextoInicio();
 
             function ocultarResultado() {
                 resultadoPartida.classList.add('hidden');
@@ -71,7 +116,7 @@
                     volverSalaBtn.classList.remove('hidden');
                 }
                 iniciarJuegoBtn.disabled = true;
-                iniciarJuegoBtn.textContent = esPantalla ? 'Pantalla iniciada' : 'Juego iniciado';
+                iniciarJuegoBtn.textContent = obtenerTextoIniciado();
             }
 
             async function volverASalaYMostrarResultado() {
@@ -79,9 +124,13 @@
                 juegoContainer.classList.add('hidden');
                 volverSalaBtn.classList.add('hidden');
                 iniciarJuegoBtn.disabled = false;
-                iniciarJuegoBtn.textContent = esPantalla ? 'Iniciar pantalla compartida' : 'Iniciar Space Invaders';
+                iniciarJuegoBtn.textContent = obtenerTextoInicio();
 
                 if (esPantalla) {
+                    return;
+                }
+
+                if (juegoId !== 'space_invaders') {
                     return;
                 }
 
@@ -154,23 +203,25 @@
                 });
             });
 
-            window.addEventListener('message', function (event) {
-                if (event.origin !== window.location.origin) {
-                    return;
-                }
+            if (juegoId === 'space_invaders') {
+                window.addEventListener('message', function (event) {
+                    if (event.origin !== window.location.origin) {
+                        return;
+                    }
 
-                const data = event.data;
-                if (!data || data.type !== 'SPACE_INVADERS_GAME_OVER') {
-                    return;
-                }
+                    const data = event.data;
+                    if (!data || data.type !== 'SPACE_INVADERS_GAME_OVER') {
+                        return;
+                    }
 
-                window.setTimeout(function () {
-                    volverASalaYMostrarResultado().catch(() => {
-                        resultadoTexto.textContent = 'No se pudo obtener el resultado de la partida.';
-                        resultadoPartida.classList.remove('hidden');
-                    });
-                }, 250);
-            });
+                    window.setTimeout(function () {
+                        volverASalaYMostrarResultado().catch(() => {
+                            resultadoTexto.textContent = 'No se pudo obtener el resultado de la partida.';
+                            resultadoPartida.classList.remove('hidden');
+                        });
+                    }, 250);
+                });
+            }
         })();
     </script>
 </body>

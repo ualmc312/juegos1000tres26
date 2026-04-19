@@ -39,6 +39,15 @@ class ListaJuegos:
                 color="#00ff88",
                 url="/server/space_invaders",
             ),
+            Juego(
+                id="prueba_websocket",
+                titulo="Prueba WebSocket",
+                descripcion="Chat minimo para validar comunicacion en tiempo real con Traductor y WebSocket.",
+                genero="Pruebas",
+                icono="💬",
+                color="#53d8fb",
+                url="/server/prueba_websocket",
+            ),
         ]
 
     # ── Consultas ────────────────────────────────────────────────────────────
