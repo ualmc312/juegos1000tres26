@@ -22,6 +22,8 @@
             <div id="livesIcons" class="lives-container">
                 <!-- Javascript will inject lives icons here -->
             </div>
+            <div class="rank-info">RANK <span id="rankText">--</span></div>
+            <div class="players-info">PLAYERS <span id="playersText">0</span></div>
             <div class="bottom-line"></div>
             <div>ROUND <span id="roundText">1</span></div>
             <div style="margin-left: auto;">CREDIT 00</div>
@@ -33,6 +35,6 @@
             <button id="restartBtn" class="retro-btn">PLAY AGAIN</button>
         </div>
     </div>
-    <script src="{{ url_for('.static', filename='js/game.js') }}"></script>
+    <script type="module" src="{{ url_for('.static', filename='js/game.js') }}"></script>
 </body>
 </html>

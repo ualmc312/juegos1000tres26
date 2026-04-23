@@ -1,8 +1,7 @@
 package com.juegos1000tres.juegos1000tres_backend.comunicacion;
 
 import java.util.Objects;
-
-import com.juegos1000tres.juegos1000tres_backend.modelos.Juego;
+import java.util.Optional;
 
 public class Traductor<PAYLOAD> {
 
@@ -25,27 +24,38 @@ public class Traductor<PAYLOAD> {
         return envio.traducirEnviableAFormato(enviable);
     }
 
-    public <T extends Enviable> T traducirFormatoAEnviable(PAYLOAD payload, Class<T> tipoEnviable) {
-        return recibo.traducirFormatoAEnviable(payload, tipoEnviable);
-    }
-
     public void enviar(Enviable enviable) {
         PAYLOAD payload = traducirEnviableAFormato(enviable);
         conexion.enviar(payload);
     }
 
-    public <T extends Enviable> T recibir(Class<T> tipoEnviable) {
-        PAYLOAD payload = conexion.recibir();
-        return traducirFormatoAEnviable(payload, tipoEnviable);
+    public void enviarPayload(PAYLOAD payload) {
+        Objects.requireNonNull(payload, "El payload es obligatorio");
+        conexion.enviar(payload);
     }
 
-    public <T extends Enviable> T recibirYNotificarJuego(Juego juego, Class<T> tipoEnviable) {
-        Objects.requireNonNull(juego, "El juego es obligatorio");
-        Objects.requireNonNull(tipoEnviable, "El tipo de mensaje es obligatorio");
+    public Optional<PAYLOAD> procesar(PAYLOAD payload) {
+        Objects.requireNonNull(payload, "El payload es obligatorio");
 
-        T mensaje = recibir(tipoEnviable);
-        juego.procesarMensajeEntrante(mensaje);
-        return mensaje;
+        ContextoEvento contexto = new ContextoEvento();
+        recibo.procesar(payload, contexto);
+
+        return contexto.getRespuesta().map(this::traducirEnviableAFormato);
+    }
+
+    public PAYLOAD recibirPayload() {
+        return conexion.recibir();
+    }
+
+    public Optional<PAYLOAD> recibirYProcesar() {
+        PAYLOAD payload = recibirPayload();
+        return procesar(payload);
+    }
+
+    public Optional<PAYLOAD> recibirProcesarYResponder() {
+        Optional<PAYLOAD> respuesta = recibirYProcesar();
+        respuesta.ifPresent(conexion::enviar);
+        return respuesta;
     }
 
     public Class<PAYLOAD> getClasePayload() {

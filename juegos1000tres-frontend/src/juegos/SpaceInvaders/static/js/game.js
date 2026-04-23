@@ -1,3 +1,11 @@
+import {
+    Enviable,
+    FetchApiConexion,
+    JsonEnvio,
+    JsonRecibo,
+    Traductor
+} from './comunicacion/core.js';
+
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const score1 = document.getElementById('score1');
@@ -7,9 +15,17 @@ const gameOverScreen = document.getElementById('gameOverScreen');
 const finalScore = document.getElementById('finalScore');
 const restartBtn = document.getElementById('restartBtn');
 const roundText = document.getElementById('roundText');
+const rankText = document.getElementById('rankText');
+const playersText = document.getElementById('playersText');
 
 const COLOR_PLAYER = '#39ff14';
 const COLOR_ALIEN = '#ffffff';
+
+const COMANDO_ACTUALIZAR_PUNTUACION = 'ACTUALIZAR_PUNTUACION';
+const COMANDO_NOTIFICAR_MUERTE = 'NOTIFICAR_MUERTE';
+const COMANDO_ESTADO_JUGADORES = 'ESTADO_JUGADORES';
+const INTERVALO_ACTUALIZACION_PUNTUACION_MS = 2000;
+const INTERVALO_POLLING_ESTADO_MS = 1000;
 
 const PIXEL_SIZE = 3;
 
@@ -139,7 +155,21 @@ let score = 0;
 let lives = 3;
 let gameState = 'waiting'; // playing, gameover, waiting
 let animationId;
-let playerName = 'UNKNOWN';
+let playerName = obtenerNombreJugador();
+const playerId = obtenerJugadorIdPersistente();
+let canalComunicacion = null;
+let posicionRankingActual = null;
+let totalJugadoresConectados = 0;
+let todosLosJugadoresMuertos = false;
+
+function obtenerPrefijoApiSpaceInvaders() {
+    const pathname = (window.location.pathname || '').replace(/\/+$/, '');
+    if (pathname.startsWith('/server/space_invaders')) {
+        return '/server/space_invaders';
+    }
+
+    return '';
+}
 
 // Game timing (rhythm)
 let ticks = 0;
@@ -166,6 +196,263 @@ const keys = {
     ArrowRight: false,
     Space: false
 };
+
+class CanalComunicacionSpaceInvaders {
+    constructor(traductor, conexion, jugadorId, nombreJugador, intervaloActualizacionMs) {
+        this.traductor = traductor;
+        this.conexion = conexion;
+        this.jugadorId = jugadorId;
+        this.nombreJugador = nombreJugador;
+        this.intervaloActualizacionMs = intervaloActualizacionMs;
+        this.timerActualizacion = null;
+        this.muerteNotificada = false;
+        this.conexionActiva = false;
+        this.recepcionActiva = false;
+    }
+
+    reiniciarPartida() {
+        this.detenerActualizacionPeriodica();
+        this.muerteNotificada = false;
+    }
+
+    iniciarActualizacionPeriodicaPuntuacion(obtenerPuntuacionActual, estaPartidaActiva) {
+        this.detenerActualizacionPeriodica();
+
+        this.timerActualizacion = window.setInterval(() => {
+            if (this.muerteNotificada || !estaPartidaActiva()) {
+                return;
+            }
+
+            const puntuacionActual = obtenerPuntuacionActual();
+            this.enviarActualizacionPuntuacion(puntuacionActual)
+                .catch((error) => console.error('Error enviando puntuacion periodica:', error));
+        }, this.intervaloActualizacionMs);
+    }
+
+    detenerActualizacionPeriodica() {
+        if (this.timerActualizacion !== null) {
+            clearInterval(this.timerActualizacion);
+            this.timerActualizacion = null;
+        }
+    }
+
+    async enviarActualizacionPuntuacion(puntuacionTotal) {
+        if (this.muerteNotificada) {
+            return;
+        }
+
+        const enviable = new ActualizarPuntuacionEnviable(
+            this.jugadorId,
+            this.nombreJugador,
+            puntuacionTotal
+        );
+
+        await this.enviarEvento(enviable);
+    }
+
+    async notificarMuerte(puntuacionFinal) {
+        if (this.muerteNotificada) {
+            return;
+        }
+
+        this.muerteNotificada = true;
+        this.detenerActualizacionPeriodica();
+
+        const enviable = new NotificarMuerteJugadorEnviable(
+            this.jugadorId,
+            this.nombreJugador,
+            puntuacionFinal
+        );
+
+        await this.enviarEvento(enviable);
+    }
+
+    async enviarEvento(enviable) {
+        await this.asegurarConexionActiva();
+        await this.traductor.enviar(enviable);
+    }
+
+    async asegurarConexionActiva() {
+        if (!this.conexionActiva) {
+            await this.conexion.conectar();
+            this.conexionActiva = true;
+            this.iniciarRecepcionContinua();
+        }
+    }
+
+    iniciarRecepcionContinua() {
+        if (this.recepcionActiva) {
+            return;
+        }
+
+        this.recepcionActiva = true;
+        this.bucleRecepcion();
+    }
+
+    async bucleRecepcion() {
+        while (this.recepcionActiva) {
+            try {
+                await this.traductor.recibirYProcesar();
+            } catch (error) {
+                if (!this.recepcionActiva) {
+                    break;
+                }
+
+                console.error('Error recibiendo actualizaciones del backend:', error);
+                await this.esperar(300);
+            }
+        }
+    }
+
+    esperar(ms) {
+        return new Promise((resolve) => window.setTimeout(resolve, ms));
+    }
+}
+
+class EventoJugadorSpaceInvadersEnviable extends Enviable {
+    constructor(comando, jugadorId, nombreJugador, puntuacion) {
+        super();
+        this.comando = comando;
+        this.jugadorId = jugadorId;
+        this.nombreJugador = nombreJugador;
+        this.puntuacion = puntuacion;
+    }
+
+    out() {
+        return JSON.stringify({
+            comando: this.comando,
+            jugadorId: this.jugadorId,
+            nombreJugador: this.nombreJugador,
+            puntuacion: this.puntuacion,
+        });
+    }
+
+    in(entrada) {
+        if (typeof entrada !== 'string') {
+            throw new Error('EventoJugadorSpaceInvadersEnviable.in requiere un string JSON');
+        }
+
+        const data = JSON.parse(entrada);
+        this.comando = data.comando ?? this.comando;
+        this.jugadorId = data.jugadorId ?? this.jugadorId;
+        this.nombreJugador = data.nombreJugador ?? this.nombreJugador;
+        this.puntuacion = typeof data.puntuacion === 'number' ? data.puntuacion : this.puntuacion;
+    }
+}
+
+class ActualizarPuntuacionEnviable extends EventoJugadorSpaceInvadersEnviable {
+    constructor(jugadorId, nombreJugador, puntuacion) {
+        super(COMANDO_ACTUALIZAR_PUNTUACION, jugadorId, nombreJugador, puntuacion);
+    }
+}
+
+class NotificarMuerteJugadorEnviable extends EventoJugadorSpaceInvadersEnviable {
+    constructor(jugadorId, nombreJugador, puntuacion) {
+        super(COMANDO_NOTIFICAR_MUERTE, jugadorId, nombreJugador, puntuacion);
+    }
+}
+
+class EstadoJugadoresActualizadoEvento {
+    constructor(onEstadoActualizado) {
+        this.onEstadoActualizado = onEstadoActualizado;
+    }
+
+    async hacer(payload, _contexto) {
+        if (typeof payload !== 'string') {
+            return;
+        }
+
+        let data;
+        try {
+            data = JSON.parse(payload);
+        } catch {
+            return;
+        }
+
+        if (!data || data.comando !== COMANDO_ESTADO_JUGADORES || !Array.isArray(data.jugadores)) {
+            return;
+        }
+
+        this.onEstadoActualizado(data.jugadores);
+    }
+}
+
+function normalizarJugadoresEstado(jugadores) {
+    return jugadores
+        .map((jugador) => ({
+            jugadorId: typeof jugador.jugadorId === 'string' ? jugador.jugadorId : '',
+            nombreJugador:
+                typeof jugador.nombreJugador === 'string' ? jugador.nombreJugador
+                    : (typeof jugador.player === 'string' ? jugador.player : ''),
+            puntuacion:
+                Number.isFinite(jugador.puntuacion) ? jugador.puntuacion
+                    : (Number.isFinite(jugador.score) ? jugador.score : 0),
+            muerto: typeof jugador.muerto === 'boolean' ? jugador.muerto : Boolean(jugador.dead),
+        }))
+        .filter((jugador) => jugador.jugadorId)
+        .sort((a, b) => b.puntuacion - a.puntuacion);
+}
+
+function actualizarEstadoMultijugador(jugadores) {
+    const jugadoresNormalizados = normalizarJugadoresEstado(jugadores);
+    totalJugadoresConectados = jugadoresNormalizados.length;
+    todosLosJugadoresMuertos =
+        jugadoresNormalizados.length > 0 && jugadoresNormalizados.every((jugador) => jugador.muerto);
+
+    const indiceJugador = jugadoresNormalizados.findIndex((jugador) => jugador.jugadorId === playerId);
+    posicionRankingActual = indiceJugador >= 0 ? indiceJugador + 1 : null;
+
+    if (rankText) {
+        rankText.innerText = posicionRankingActual !== null
+            ? `${posicionRankingActual}/${totalJugadoresConectados}`
+            : '--';
+    }
+
+    if (playersText) {
+        playersText.innerText = `${totalJugadoresConectados}`;
+    }
+}
+
+function obtenerNombreJugador() {
+    const params = new URLSearchParams(window.location.search);
+    const nombreEnQuery = params.get('player');
+
+    if (typeof nombreEnQuery === 'string' && nombreEnQuery.trim()) {
+        return nombreEnQuery.trim();
+    }
+
+    return 'UNKNOWN';
+}
+
+function obtenerJugadorIdPersistente() {
+    const claveStorage = 'space-invaders-player-id';
+
+    try {
+        const existente = localStorage.getItem(claveStorage);
+        if (existente && existente.trim()) {
+            return existente;
+        }
+
+        const nuevoId = generarUuid();
+        localStorage.setItem(claveStorage, nuevoId);
+        return nuevoId;
+    } catch {
+        return generarUuid();
+    }
+}
+
+function generarUuid() {
+    if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+        return window.crypto.randomUUID();
+    }
+
+    // Fallback simple si randomUUID no esta disponible
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (char) => {
+        const random = Math.floor(Math.random() * 16);
+        const value = char === 'x' ? random : (random & 0x3) | 0x8;
+        return value.toString(16);
+    });
+}
 
 document.addEventListener('keydown', (e) => {
     if (e.code === 'ArrowLeft') { keys.ArrowLeft = true; e.preventDefault(); }
@@ -341,6 +628,31 @@ class Explosion {
 
 function initGame() {
     if(animationId) cancelAnimationFrame(animationId);
+
+    if (!canalComunicacion) {
+        const apiBase = obtenerPrefijoApiSpaceInvaders();
+        const conexion = new FetchApiConexion(`${apiBase}/api/event`, `${apiBase}/api/updates`, {
+            playerId,
+            pollingIntervalMs: INTERVALO_POLLING_ESTADO_MS,
+        });
+        const envio = new JsonEnvio();
+        const recibo = new JsonRecibo().conEvento(
+            COMANDO_ESTADO_JUGADORES,
+            new EstadoJugadoresActualizadoEvento(actualizarEstadoMultijugador)
+        );
+        const traductor = new Traductor(conexion, envio, recibo);
+
+        canalComunicacion = new CanalComunicacionSpaceInvaders(
+            traductor,
+            conexion,
+            playerId,
+            playerName,
+            INTERVALO_ACTUALIZACION_PUNTUACION_MS
+        );
+    }
+
+    canalComunicacion.reiniciarPartida();
+    actualizarEstadoMultijugador([]);
     
     player = new Player();
     aliens = [];
@@ -363,6 +675,15 @@ function initGame() {
 
     spawnAliens();
     spawnShields();
+
+    canalComunicacion.iniciarActualizacionPeriodicaPuntuacion(
+        () => score,
+        () => gameState === 'playing'
+    );
+
+    canalComunicacion.enviarActualizacionPuntuacion(score)
+        .catch((err) => console.error('Error enviando puntuacion inicial:', err));
+
     gameLoop();
 }
 
@@ -492,17 +813,6 @@ function fireAlienBullet() {
     }
 }
 
-function sendScore(currentScore) {
-    if (gameState === 'waiting') return;
-    fetch('/api/score', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ player: playerName, score: currentScore })
-    }).catch(err => console.error('Error saving score:', err));
-}
-
 function checkCollisions() {
     // Player Bullet vs Aliens
     if (playerBullet) {
@@ -515,7 +825,6 @@ function checkCollisions() {
                 explosions.push(new Explosion(a.x, a.y));
                 score += a.points;
                 updateHUD();
-                sendScore(score); // Evia el score en tiempo real
                 aliens.splice(i, 1);
                 playerBullet = null;
                 hit = true;
@@ -571,12 +880,37 @@ function checkCollisions() {
 }
 
 function gameOver() {
+    if (gameState === 'gameover') {
+        return;
+    }
+
     gameState = 'gameover';
     finalScore.innerText = padScore(score);
     gameOverScreen.classList.remove('hidden');
 
-    // Send the final score as well, just in case
-    sendScore(score);
+    if (canalComunicacion) {
+        canalComunicacion.notificarMuerte(score)
+            .catch((err) => console.error('Error notificando muerte del jugador:', err))
+            .finally(() => notificarFinPartidaAlContenedor());
+    } else {
+        notificarFinPartidaAlContenedor();
+    }
+}
+
+function notificarFinPartidaAlContenedor() {
+    if (!window.parent || window.parent === window) {
+        return;
+    }
+
+    window.parent.postMessage(
+        {
+            type: 'SPACE_INVADERS_GAME_OVER',
+            jugadorId: playerId,
+            nombreJugador: playerName,
+            puntuacionFinal: score,
+        },
+        window.location.origin
+    );
 }
 
 function gameLoop() {

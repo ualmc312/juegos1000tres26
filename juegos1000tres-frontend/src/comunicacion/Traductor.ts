@@ -1,11 +1,8 @@
-import { Enviable, type EnviableConstructor } from "./Enviable.js";
+import { ContextoEvento } from "./ContextoEvento.js";
+import { Enviable } from "./Enviable.js";
 import { Conexion } from "./Conexion.js";
 import { Envio } from "./Envio.js";
 import { Recibo } from "./Recibo.js";
-
-type JuegoReceptor = {
-  procesarMensajeEntrante(mensaje: Enviable): Promise<void> | void;
-};
 
 export class Traductor<PAYLOAD> {
   private readonly conexion: Conexion<PAYLOAD>;
@@ -38,34 +35,40 @@ export class Traductor<PAYLOAD> {
     return this.envio.traducirEnviableAFormato(enviable);
   }
 
-  traducirFormatoAEnviable<T extends Enviable>(
-    payload: PAYLOAD,
-    tipoEnviable: EnviableConstructor<T>
-  ): T {
-    return this.recibo.traducirFormatoAEnviable(payload, tipoEnviable);
-  }
-
   async enviar(enviable: Enviable): Promise<void> {
     const payload = this.traducirEnviableAFormato(enviable);
     await this.conexion.enviar(payload);
   }
 
-  async recibir<T extends Enviable>(tipoEnviable: EnviableConstructor<T>): Promise<T> {
-    const payload = await this.conexion.recibir();
-    return this.traducirFormatoAEnviable(payload, tipoEnviable);
-  }
-
-  async recibirYNotificarJuego<T extends Enviable>(
-    juegoConexion: JuegoReceptor,
-    tipoEnviable: EnviableConstructor<T>
-  ): Promise<T> {
-    if (!juegoConexion) {
-      throw new Error("El juego es obligatorio");
+  async procesar(payload: PAYLOAD): Promise<PAYLOAD | undefined> {
+    if (payload === undefined || payload === null) {
+      throw new Error("El payload es obligatorio");
     }
 
-    const mensaje = await this.recibir(tipoEnviable);
-    await juegoConexion.procesarMensajeEntrante(mensaje);
-    return mensaje;
+    const contexto = new ContextoEvento();
+    await this.recibo.procesar(payload, contexto);
+
+    const respuesta = contexto.obtenerRespuesta();
+    return respuesta ? this.traducirEnviableAFormato(respuesta) : undefined;
+  }
+
+  async recibirPayload(): Promise<PAYLOAD> {
+    return this.conexion.recibir();
+  }
+
+  async recibirYProcesar(): Promise<PAYLOAD | undefined> {
+    const payload = await this.recibirPayload();
+    return this.procesar(payload);
+  }
+
+  async recibirProcesarYResponder(): Promise<PAYLOAD | undefined> {
+    const respuesta = await this.recibirYProcesar();
+
+    if (respuesta !== undefined) {
+      await this.conexion.enviar(respuesta);
+    }
+
+    return respuesta;
   }
 
   getTipoPayload(): string {

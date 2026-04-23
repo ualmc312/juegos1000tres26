@@ -16,6 +16,10 @@ public interface Conexion<PAYLOAD> {
 
     String getTipoComunicacion();
 
+    String getSalaId();
+
+    String getCanalSala();
+
     default String getTipoVerificacion() {
         return TIPO_COMPROBAR_HOMOLOGO;
     }

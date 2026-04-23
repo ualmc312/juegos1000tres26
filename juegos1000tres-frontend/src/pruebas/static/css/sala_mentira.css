@@ -1,0 +1,161 @@
+:root {
+    --bg: #0c1021;
+    --panel: #151b35;
+    --text: #f3f6ff;
+    --muted: #a9b3d9;
+    --accent: #3ddc97;
+    --danger: #ff6b6b;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background: radial-gradient(circle at top, #1f2750 0%, var(--bg) 60%);
+    color: var(--text);
+}
+
+.page {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+}
+
+.card {
+    width: min(480px, 100%);
+    background: linear-gradient(180deg, #1a2143, var(--panel));
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+    padding: 22px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.35);
+}
+
+.card-wide {
+    width: min(980px, 100%);
+}
+
+h1 {
+    margin-top: 0;
+}
+
+p {
+    color: var(--muted);
+}
+
+.hint {
+    margin-bottom: 20px;
+}
+
+.formulario {
+    display: grid;
+    gap: 10px;
+}
+
+.rol-selector {
+    margin: 2px 0 4px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    padding: 8px 10px;
+}
+
+.rol-selector legend {
+    color: var(--muted);
+    font-size: 13px;
+    padding: 0 6px;
+}
+
+.rol-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text);
+    padding: 4px 0;
+}
+
+input,
+button,
+a {
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 10px 12px;
+    font-size: 15px;
+}
+
+input {
+    background: #0f1530;
+    color: var(--text);
+}
+
+button,
+a {
+    background: var(--accent);
+    color: #052412;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+}
+
+button.secondary {
+    background: transparent;
+    color: var(--text);
+}
+
+button:disabled {
+    opacity: 0.7;
+    cursor: default;
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.error {
+    color: var(--danger);
+    font-weight: 600;
+}
+
+.resultado {
+    margin-top: 8px;
+    margin-bottom: 14px;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(61, 220, 151, 0.08);
+}
+
+.resultado h2 {
+    margin: 0 0 8px;
+    font-size: 18px;
+}
+
+.resultado p {
+    margin: 0;
+    color: var(--text);
+}
+
+.juego {
+    margin-top: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+iframe {
+    width: 100%;
+    min-height: 760px;
+    border: 0;
+    background: #000;
+}
+
+.hidden {
+    display: none;
+}

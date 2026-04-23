@@ -1,10 +1,10 @@
-import { Enviable, type EnviableConstructor } from "./Enviable.js";
+import { ContextoEvento } from "./ContextoEvento.js";
+import { Evento } from "./Evento.js";
 
 export abstract class Recibo<PAYLOAD> {
-  abstract traducirFormatoAEnviable<T extends Enviable>(
-    payload: PAYLOAD,
-    tipoEnviable: EnviableConstructor<T>
-  ): T;
+  abstract conEvento(comando: string, evento: Evento<PAYLOAD>): Recibo<PAYLOAD>;
+
+  abstract procesar(payload: PAYLOAD, contexto: ContextoEvento): Promise<void> | void;
 
   abstract getTipoPayload(): string;
 }

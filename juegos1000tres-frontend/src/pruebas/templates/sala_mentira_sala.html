@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sala de Pruebas - Unica Sala</title>
+    <link rel="stylesheet" href="{{ url_for('sala_mentira_pruebas.static', filename='css/sala_mentira.css') }}">
+</head>
+<body>
+    <main class="page">
+        <section class="card card-wide">
+            <h1>Sala unica de pruebas</h1>
+            <p>
+                Usuario activo: <strong>{{ nombre_usuario | default(nombre, true) | default('Jugador', true) }}</strong>
+                (rol: <strong>{{ tipo_cliente | default('jugador') }}</strong>)
+            </p>
+            <p>
+                Juego seleccionado: <strong>{{ juego_titulo | default('Space Invaders') }}</strong>
+            </p>
+            <p class="hint">Abre otra ventana en esta misma URL, pon otro nombre y podras comprobar la comunicacion entre ambos.</p>
+
+            <div class="actions">
+                <button id="iniciarJuegoBtn" type="button">
+                    {% if es_pantalla | default(false) %}Iniciar pantalla compartida{% else %}Iniciar juego{% endif %}
+                </button>
+                <button id="volverSalaBtn" type="button" class="secondary hidden">Volver a la sala</button>
+                <a id="abrirJuegoNuevaTab" href="#" target="_blank" rel="noopener noreferrer">Abrir juego en otra pestaña</a>
+                <form method="post" action="{{ url_for('sala_mentira_pruebas.salir') }}">
+                    <button type="submit" class="secondary">Cambiar nombre o juego</button>
+                </form>
+            </div>
+
+            <section id="resultadoPartida" class="resultado {% if es_pantalla | default(false) or juego_id == 'prueba_websocket' or juego_id == 'preguntas' %}hidden{% endif %}" aria-live="polite">
+                <h2>Resultado de la partida</h2>
+                <p id="resultadoTexto">Aun no hay resultado.</p>
+            </section>
+
+            <section id="juegoContainer" class="juego hidden" aria-live="polite">
+                <iframe id="juegoIframe" title="{{ juego_titulo | default('Juego de prueba') }}"></iframe>
+            </section>
+        </section>
+    </main>
+
+    <script>
+        (function () {
+            const nombre = {{ (nombre_usuario | default(nombre, true) | default('Jugador', true)) | tojson }};
+            const esPantalla = {{ 'true' if (es_pantalla is defined and es_pantalla) else 'false' }};
+            const juegoId = {{ (juego_id | default('space_invaders')) | tojson }};
+
+            const iniciarJuegoBtn = document.getElementById('iniciarJuegoBtn');
+            const volverSalaBtn = document.getElementById('volverSalaBtn');
+            const abrirJuegoNuevaTab = document.getElementById('abrirJuegoNuevaTab');
+            const juegoContainer = document.getElementById('juegoContainer');
+            const juegoIframe = document.getElementById('juegoIframe');
+            const resultadoPartida = document.getElementById('resultadoPartida');
+            const resultadoTexto = document.getElementById('resultadoTexto');
+
+            function construirUrlJuego() {
+                if (juegoId === 'prueba_websocket') {
+                    if (esPantalla) {
+                        return '/server/prueba_websocket/pantalla';
+                    }
+
+                    return '/server/prueba_websocket?player=' + encodeURIComponent(nombre);
+                }
+
+                if (juegoId === 'preguntas') {
+                    if (esPantalla) {
+                        return '/server/preguntas/pantalla?screenId=' + encodeURIComponent(nombre);
+                    }
+
+                    return '/server/preguntas?player=' + encodeURIComponent(nombre);
+                }
+
+                if (esPantalla) {
+                    return '/server/space_invaders/pantalla?screenId=' + encodeURIComponent(nombre);
+                }
+
+                return '/server/space_invaders?player=' + encodeURIComponent(nombre);
+            }
+
+            function obtenerTextoInicio() {
+                if (esPantalla) {
+                    return 'Iniciar pantalla compartida';
+                }
+
+                if (juegoId === 'prueba_websocket') {
+                    return 'Iniciar Prueba WebSocket';
+                }
+
+                if (juegoId === 'preguntas') {
+                    return 'Iniciar Preguntas';
+                }
+
+                return 'Iniciar Space Invaders';
+            }
+
+            function obtenerTextoIniciado() {
+                if (esPantalla) {
+                    return 'Pantalla iniciada';
+                }
+
+                if (juegoId === 'prueba_websocket') {
+                    return 'Prueba WebSocket iniciada';
+                }
+
+                if (juegoId === 'preguntas') {
+                    return 'Juego Preguntas iniciado';
+                }
+
+                return 'Juego iniciado';
+            }
+
+            const urlJuego = construirUrlJuego();
+
+            if (esPantalla) {
+                volverSalaBtn.classList.add('hidden');
+            }
+
+            iniciarJuegoBtn.textContent = obtenerTextoInicio();
+
+            function ocultarResultado() {
+                resultadoPartida.classList.add('hidden');
+                resultadoTexto.textContent = 'Aun no hay resultado.';
+            }
+
+            function entrarAlJuego() {
+                ocultarResultado();
+                juegoIframe.src = urlJuego;
+                juegoContainer.classList.remove('hidden');
+                if (!esPantalla) {
+                    volverSalaBtn.classList.remove('hidden');
+                }
+                iniciarJuegoBtn.disabled = true;
+                iniciarJuegoBtn.textContent = obtenerTextoIniciado();
+            }
+
+            async function volverASalaYMostrarResultado() {
+                juegoIframe.src = '';
+                juegoContainer.classList.add('hidden');
+                volverSalaBtn.classList.add('hidden');
+                iniciarJuegoBtn.disabled = false;
+                iniciarJuegoBtn.textContent = obtenerTextoInicio();
+
+                if (esPantalla) {
+                    return;
+                }
+
+                if (juegoId !== 'space_invaders') {
+                    return;
+                }
+
+                await actualizarResultadoPartida();
+            }
+
+            async function actualizarResultadoPartida() {
+                try {
+                    const response = await fetch('/server/space_invaders/api/score', {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                        },
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('No se pudo consultar el marcador');
+                    }
+
+                    const payload = await response.json();
+                    const scores = Array.isArray(payload.scores) ? payload.scores : [];
+                    if (scores.length === 0) {
+                        resultadoTexto.textContent = 'Sin datos de partida todavia.';
+                        resultadoPartida.classList.remove('hidden');
+                        return;
+                    }
+
+                    const ordenados = scores
+                        .map((item) => ({
+                            player: typeof item.player === 'string' ? item.player : 'Jugador',
+                            score: Number.isFinite(item.score) ? item.score : 0,
+                            dead: Boolean(item.dead),
+                        }))
+                        .sort((a, b) => b.score - a.score);
+
+                    const scoreGanador = ordenados[0].score;
+                    const posiblesGanadores = ordenados.filter((item) => item.score === scoreGanador);
+                    const todosMuertos = ordenados.every((item) => item.dead);
+
+                    if (todosMuertos) {
+                        if (posiblesGanadores.length === 1) {
+                            const ganador = posiblesGanadores[0];
+                            resultadoTexto.textContent =
+                                `Gano ${ganador.player} con ${ganador.score} puntos.`;
+                        } else {
+                            const nombres = posiblesGanadores.map((item) => item.player).join(', ');
+                            resultadoTexto.textContent =
+                                `Empate entre ${nombres} con ${scoreGanador} puntos.`;
+                        }
+                    } else {
+                        const lider = posiblesGanadores[0];
+                        resultadoTexto.textContent =
+                            `Partida en curso. Lider actual: ${lider.player} (${lider.score} puntos).`;
+                    }
+
+                    resultadoPartida.classList.remove('hidden');
+                } catch (_error) {
+                    resultadoTexto.textContent = 'No se pudo obtener el resultado de la partida.';
+                    resultadoPartida.classList.remove('hidden');
+                }
+            }
+
+            abrirJuegoNuevaTab.href = urlJuego;
+
+            iniciarJuegoBtn.addEventListener('click', entrarAlJuego);
+            volverSalaBtn.addEventListener('click', function () {
+                volverASalaYMostrarResultado().catch(() => {
+                    resultadoTexto.textContent = 'No se pudo obtener el resultado de la partida.';
+                    resultadoPartida.classList.remove('hidden');
+                });
+            });
+
+            if (juegoId === 'space_invaders') {
+                window.addEventListener('message', function (event) {
+                    if (event.origin !== window.location.origin) {
+                        return;
+                    }
+
+                    const data = event.data;
+                    if (!data || data.type !== 'SPACE_INVADERS_GAME_OVER') {
+                        return;
+                    }
+
+                    window.setTimeout(function () {
+                        volverASalaYMostrarResultado().catch(() => {
+                            resultadoTexto.textContent = 'No se pudo obtener el resultado de la partida.';
+                            resultadoPartida.classList.remove('hidden');
+                        });
+                    }, 250);
+                });
+            }
+        })();
+    </script>
+</body>
+</html>

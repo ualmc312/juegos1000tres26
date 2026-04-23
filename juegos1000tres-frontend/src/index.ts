@@ -1,34 +1,36 @@
-import { Enviable } from "./comunicacion/Enviable.js";
+import { ContextoEvento } from "./comunicacion/ContextoEvento.js";
+import { Evento } from "./comunicacion/Evento.js";
 import { Traductor } from "./comunicacion/Traductor.js";
 import { ApiConexion } from "./comunicacion/implementaciones/ApiConexion.js";
 import { JsonEnvio } from "./comunicacion/implementaciones/JsonEnvio.js";
 import { JsonRecibo } from "./comunicacion/implementaciones/JsonRecibo.js";
-import { JuegoConexion } from "./juegos/JuegoConexion.js";
 import { TextoEnviable } from "./mensajes/TextoEnviable.js";
 
-class DemoJuegoConexion extends JuegoConexion<string> {
-  override async procesarMensajeEntrante(mensaje: Enviable): Promise<void> {
-    if (mensaje instanceof TextoEnviable) {
-      console.log("Mensaje recibido desde front:", mensaje.texto);
-      return;
-    }
-
-    console.log("Mensaje recibido desde front (tipo desconocido)");
+class EventoEcoTexto implements Evento<string> {
+  hacer(payload: string, contexto: ContextoEvento): void {
+    const mensaje = new TextoEnviable();
+    mensaje.in(payload);
+    contexto.enviar(new TextoEnviable(`Eco: ${mensaje.texto}`));
   }
 }
 
 async function main(): Promise<void> {
   const conexion = new ApiConexion();
   const envio = new JsonEnvio();
-  const recibo = new JsonRecibo();
+  const recibo = new JsonRecibo().conEvento("ECO", new EventoEcoTexto());
   const traductor = new Traductor(conexion, envio, recibo);
-  const juego = new DemoJuegoConexion(traductor);
 
   await conexion.conectar();
 
-  const mensaje = new TextoEnviable("Hola desde Node");
-  await juego.enviar(mensaje);
-  await traductor.recibirYNotificarJuego(juego, TextoEnviable);
+  const peticion = JSON.stringify({ comando: "ECO", texto: "Hola desde Node" });
+  await conexion.enviar(peticion);
+  const respuesta = await traductor.recibirProcesarYResponder();
+
+  if (respuesta) {
+    console.log("Respuesta generada:", respuesta);
+  } else {
+    console.log("La peticion no genero respuesta de negocio");
+  }
 
   await conexion.desconectar();
 }

@@ -6,6 +6,20 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Python / Flask
+**/__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc.*
+.python-version
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
 # Frontend Node.js
 juegos1000tres-frontend/node_modules/
 juegos1000tres-frontend/.npm/
@@ -27,3 +41,7 @@ juegos1000tres-frontend/pnpm-debug.log*
 juegos1000tres-frontend/.env
 juegos1000tres-frontend/.env.*
 !juegos1000tres-frontend/.env.example
+
+# Frontend Python virtual env
+juegos1000tres-frontend/.venv/
+juegos1000tres-frontend/venv/

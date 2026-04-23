@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sala de Pruebas - Nombre</title>
+    <link rel="stylesheet" href="{{ url_for('sala_mentira_pruebas.static', filename='css/sala_mentira.css') }}">
+</head>
+<body>
+    <main class="page">
+        <section class="card">
+            <h1>Sala de mentira</h1>
+            <p>Escribe tu nombre para entrar a la unica sala de pruebas.</p>
+
+            {% if error %}
+            <p class="error">{{ error }}</p>
+            {% endif %}
+
+            <form method="post" action="{{ url_for('sala_mentira_pruebas.guardar_nombre') }}" class="formulario">
+                <label for="nombre">Nombre de jugador</label>
+                <input
+                    id="nombre"
+                    name="nombre"
+                    type="text"
+                    maxlength="24"
+                    required
+                    autofocus
+                    value="{{ nombre }}"
+                    placeholder="Ejemplo: Ana"
+                >
+
+                <fieldset class="rol-selector">
+                    <legend>Juego</legend>
+                    <label class="rol-option" for="juegoSpaceInvaders">
+                        <input id="juegoSpaceInvaders" type="radio" name="juegoId" value="space_invaders" {% if juego_seleccionado == 'space_invaders' %}checked{% endif %}>
+                        Space Invaders
+                    </label>
+                    <label class="rol-option" for="juegoPruebaWebSocket">
+                        <input id="juegoPruebaWebSocket" type="radio" name="juegoId" value="prueba_websocket" {% if juego_seleccionado == 'prueba_websocket' %}checked{% endif %}>
+                        Prueba WebSocket
+                    </label>
+                    <label class="rol-option" for="juegoPreguntas">
+                        <input id="juegoPreguntas" type="radio" name="juegoId" value="preguntas" {% if juego_seleccionado == 'preguntas' %}checked{% endif %}>
+                        Preguntas
+                    </label>
+                </fieldset>
+
+                <fieldset class="rol-selector">
+                    <legend>Tipo de cliente</legend>
+                    <label class="rol-option" for="tipoJugador">
+                        <input id="tipoJugador" type="radio" name="tipoCliente" value="jugador" {% if tipo_cliente != 'pantalla' %}checked{% endif %}>
+                        Jugador
+                    </label>
+                    <label class="rol-option" for="tipoPantalla">
+                        <input id="tipoPantalla" type="radio" name="tipoCliente" value="pantalla" {% if tipo_cliente == 'pantalla' %}checked{% endif %}>
+                        Pantalla compartida
+                    </label>
+                </fieldset>
+
+                <button type="submit">Entrar a la sala</button>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

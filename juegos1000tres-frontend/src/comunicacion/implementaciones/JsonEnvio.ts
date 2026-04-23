@@ -7,11 +7,16 @@ export class JsonEnvio extends Envio<string> {
       throw new Error("El enviable es obligatorio");
     }
 
-    if (typeof enviable.toJson !== "function") {
-      throw new Error("El enviable debe implementar toJson");
+    if (typeof enviable.out !== "function") {
+      throw new Error("El enviable debe implementar out");
     }
 
-    return enviable.toJson();
+    const salida = enviable.out();
+    if (typeof salida !== "string") {
+      throw new Error("JsonEnvio requiere que Enviable.out() devuelva string");
+    }
+
+    return salida;
   }
 
   getTipoPayload(): string {

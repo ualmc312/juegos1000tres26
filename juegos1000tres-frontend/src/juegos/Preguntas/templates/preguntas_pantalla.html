@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pantalla - Preguntas Personales</title>
+    <link rel="stylesheet" href="{{ url_for('.static', filename='css/preguntas.css') }}">
+</head>
+<body>
+    <main class="layout-screen">
+        <section class="panel panel-main">
+            <header class="topbar">
+                <h1>Pantalla de Partida</h1>
+                <p id="pantallaEstado">Esperando actualizaciones...</p>
+            </header>
+
+            <div class="card">
+                <p class="meta-line">Pantalla: <strong id="screenIdLabel">{{ screen_id }}</strong></p>
+                <p id="pantallaRonda" class="meta-line">Ronda 0</p>
+                <p id="pantallaJugadorElegido" class="meta-line">Jugador elegido: -</p>
+                <h2 id="pantallaPregunta">Sin pregunta activa</h2>
+            </div>
+
+            <div class="card">
+                <h3>Respuestas</h3>
+                <ul id="pantallaOpciones" class="opciones-lista pantalla"></ul>
+            </div>
+        </section>
+
+        <aside class="panel panel-score">
+            <h2>Tabla de Puntuacion</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Jugador</th>
+                        <th>Puntos</th>
+                    </tr>
+                </thead>
+                <tbody id="pantallaTablaMarcador">
+                    <tr><td colspan="3">Sin jugadores</td></tr>
+                </tbody>
+            </table>
+        </aside>
+    </main>
+
+    <script type="module">
+        window.PREGUNTAS_SCREEN_ID = {{ screen_id | tojson }};
+    </script>
+    <script type="module" src="{{ url_for('.static', filename='js/preguntas_pantalla.js') }}"></script>
+</body>
+</html>

@@ -55,6 +55,13 @@ canvas {
     gap: 10px;
 }
 
+.rank-info,
+.players-info {
+    margin-left: 18px;
+    font-size: 10px;
+    color: var(--retro-green);
+}
+
 .life-icon {
     display: inline-block;
     width: 26px;

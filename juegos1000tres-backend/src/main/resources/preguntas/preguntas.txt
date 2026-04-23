@@ -1,0 +1,7 @@
+# Anade nuevas preguntas en este archivo. Usa el placeholder [NOMBRE_JUGADOR].
+Cual es la comida favorita de [NOMBRE_JUGADOR]?
+Cual seria el viaje soñado de [NOMBRE_JUGADOR]?
+Que superpoder le gustaria tener a [NOMBRE_JUGADOR]?
+Cual crees que es la cancion que mas representa a [NOMBRE_JUGADOR]?
+Que pelicula podria ver 100 veces [NOMBRE_JUGADOR] sin cansarse?
+Si [NOMBRE_JUGADOR] pudiera cenar con una persona famosa, con quien seria?
