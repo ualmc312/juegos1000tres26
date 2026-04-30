@@ -1,0 +1,214 @@
+@import url('https://fonts.googleapis.com/css2?family=Rye&family=Source+Sans+3:wght@400;600;700&display=swap');
+
+:host {
+	display: block;
+	min-height: 100vh;
+}
+
+.taptap-shell {
+	--sand: #f3d1a1;
+	--sunset: #f4b06b;
+	--wood: #6b3d1f;
+	--accent: #c1493f;
+	--ink: #2d160b;
+	background: linear-gradient(180deg, #fbe7c4 0%, #f3c992 40%, #d79a5f 100%);
+	color: var(--ink);
+	min-height: 100vh;
+	overflow: hidden;
+	padding: 2.5rem;
+	position: relative;
+	font-family: "Source Sans 3", "Trebuchet MS", sans-serif;
+}
+
+.taptap-shell::before {
+	content: "";
+	position: absolute;
+	top: -30%;
+	left: -20%;
+	width: 140%;
+	height: 80%;
+	background: radial-gradient(circle at top, rgba(255, 255, 255, 0.6), transparent 60%);
+	pointer-events: none;
+}
+
+.taptap-header {
+	align-items: center;
+	backdrop-filter: blur(6px);
+	background: rgba(255, 248, 235, 0.85);
+	border: 2px solid rgba(107, 61, 31, 0.35);
+	border-radius: 18px;
+	display: flex;
+	justify-content: space-between;
+	padding: 1.25rem 1.5rem;
+	position: relative;
+	gap: 1.5rem;
+	box-shadow: 0 12px 28px rgba(62, 31, 10, 0.2);
+}
+
+.marca-sobre {
+	text-transform: uppercase;
+	letter-spacing: 0.25em;
+	font-size: 0.7rem;
+	margin: 0;
+	color: rgba(45, 22, 11, 0.7);
+}
+
+.marca h2 {
+	font-family: "Rye", "Georgia", serif;
+	font-size: 2.8rem;
+	letter-spacing: 0.06em;
+	margin: 0.2rem 0 0;
+}
+
+.marcadores {
+	display: flex;
+	gap: 1rem;
+	flex-wrap: wrap;
+}
+
+.marcador {
+	background: rgba(107, 61, 31, 0.12);
+	border: 1px solid rgba(107, 61, 31, 0.35);
+	border-radius: 14px;
+	padding: 0.75rem 1rem;
+	min-width: 120px;
+	text-align: center;
+}
+
+.marcador span {
+	display: block;
+	font-size: 0.75rem;
+	text-transform: uppercase;
+	letter-spacing: 0.16em;
+}
+
+.marcador strong {
+	font-size: 1.8rem;
+	font-weight: 700;
+}
+
+.estado {
+	margin: 1.2rem 0 1.6rem;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.zona-juego {
+	position: relative;
+	border-radius: 22px;
+	border: 3px solid rgba(107, 61, 31, 0.4);
+	background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(107, 61, 31, 0.1));
+	box-shadow: inset 0 0 40px rgba(62, 31, 10, 0.2);
+	height: 62vh;
+	overflow: hidden;
+}
+
+.objetivo {
+	position: absolute;
+	width: 70px;
+	height: 70px;
+	border-radius: 50%;
+	border: 3px solid #2b1a12;
+	background: radial-gradient(circle at 30% 30%, #f8f1e5, #c1493f 60%, #8a2d23 100%);
+	box-shadow: 0 12px 20px rgba(45, 22, 11, 0.35);
+	cursor: pointer;
+	animation: aparecer 140ms ease-out;
+}
+
+.objetivo:hover {
+	transform: scale(1.05);
+}
+
+.objetivo:active {
+	transform: scale(0.92);
+}
+
+.polvo {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	width: 100%;
+	height: 35%;
+	background: linear-gradient(180deg, transparent, rgba(107, 61, 31, 0.28));
+	pointer-events: none;
+}
+
+.pantalla-panel {
+	background: rgba(255, 248, 235, 0.92);
+	border: 2px solid rgba(107, 61, 31, 0.35);
+	border-radius: 22px;
+	padding: 1.75rem;
+	box-shadow: 0 16px 30px rgba(62, 31, 10, 0.25);
+}
+
+.cartel {
+	font-family: "Rye", "Georgia", serif;
+	font-size: 1.8rem;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	margin-bottom: 1rem;
+}
+
+.tabla {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.tabla th,
+.tabla td {
+	padding: 0.85rem 0.5rem;
+	border-bottom: 1px solid rgba(107, 61, 31, 0.25);
+}
+
+.tabla th {
+	text-transform: uppercase;
+	letter-spacing: 0.18em;
+	font-size: 0.7rem;
+	text-align: left;
+}
+
+.tabla .puntos {
+	text-align: right;
+	font-weight: 700;
+}
+
+.nota {
+	margin-top: 1rem;
+	font-style: italic;
+}
+
+@keyframes aparecer {
+	from {
+		transform: scale(0.6);
+		opacity: 0.6;
+	}
+	to {
+		transform: scale(1);
+		opacity: 1;
+	}
+}
+
+@media (max-width: 720px) {
+	.taptap-shell {
+		padding: 1.5rem;
+	}
+
+	.taptap-header {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+
+	.marca h2 {
+		font-size: 2.2rem;
+	}
+
+	.zona-juego {
+		height: 52vh;
+	}
+
+	.objetivo {
+		width: 56px;
+		height: 56px;
+	}
+}

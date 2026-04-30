@@ -1,0 +1,42 @@
+.generic-button {
+	align-items: center;
+	appearance: none;
+	border: none;
+	border-radius: 10px;
+	box-shadow: 0 6px 0 rgba(0, 0, 0, 0.35);
+	color: #101010;
+	cursor: pointer;
+	display: inline-flex;
+	font-family: "Space Grotesk", "Poppins", "Segoe UI", sans-serif;
+	font-size: 1rem;
+	font-weight: 700;
+	justify-content: center;
+	letter-spacing: 0.02em;
+	min-width: 140px;
+	padding: 0.75rem 1.5rem;
+	text-decoration: none;
+	text-transform: uppercase;
+	transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
+	user-select: none;
+}
+
+.generic-button:active {
+	box-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
+	transform: translateY(4px);
+}
+
+.generic-button.red {
+	background: #ff5c5c;
+}
+
+.generic-button.green {
+	background: #35d08a;
+}
+
+.generic-button.gray {
+	background: #d7d7d7;
+}
+
+.generic-button:hover {
+	filter: brightness(0.98);
+}

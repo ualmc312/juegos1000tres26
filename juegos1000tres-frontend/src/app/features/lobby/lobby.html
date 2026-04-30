@@ -1,0 +1,152 @@
+<section class="lobby" *ngIf="viewMode === 'lobby'">
+	<h1>Salas</h1>
+
+	<generic-button color="red" (click)="crearSala()">Crear sala</generic-button>
+
+	<div class="join">
+		<label for="uuid">UUID</label>
+		<input id="uuid" type="text" placeholder="123456" [(ngModel)]="uuidInput" />
+		<generic-button color="gray" (click)="unirseSala()">Unirse a sala</generic-button>
+	</div>
+
+	<p class="error" *ngIf="errorUuid">{{ errorUuid }}</p>
+</section>
+
+<section
+	class="sala"
+	*ngIf="viewMode === 'sala'"
+	[class.jugando]="juegoActual === 'space-invaders' || juegoActual === 'taptap'"
+>
+	<div class="sala-layout">
+		<aside class="sala-sidebar">
+			<div class="sala-tag">
+				<span>Sala</span>
+				<strong>{{ uuidActual }}</strong>
+			</div>
+			<div class="sala-info">
+				<p class="info-label">Usuario conectado</p>
+				<p class="info-value">{{ jugadorId || '---' }}</p>
+			</div>
+			<div class="sala-info">
+				<p class="info-label">Creador de la sala</p>
+				<p class="info-value">{{ hostId || '---' }}</p>
+			</div>
+			<div class="sala-reservado">
+				<p>Espacio reservado para nuevas secciones</p>
+			</div>
+			<div class="salir-wrap">
+				<generic-button color="red" (click)="salir()">Salir</generic-button>
+			</div>
+		</aside>
+
+		<main class="sala-main">
+			<h1 class="sala-title">Jeugos1000tres</h1>
+
+			<div class="sala-content">
+				<section class="jugadores">
+					<div class="section-header">
+						<h2>Jugadores</h2>
+						<span class="host-indicator" *ngIf="esHost">Eres el creador</span>
+					</div>
+					<table class="jugadores-table">
+						<thead>
+							<tr>
+								<th>Pantalla</th>
+								<th>Jugador</th>
+								<th>Victorias</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr *ngFor="let jugador of jugadores">
+								<td>
+									<label class="radio-wrap">
+										<input
+											type="radio"
+											name="pantalla"
+											[value]="jugador.id"
+											[(ngModel)]="pantallaId"
+											(change)="cambiarPantalla(jugador.id)"
+											[disabled]="!esHost"
+										/>
+									</label>
+								</td>
+								<td>{{ jugador.nombre }}</td>
+								<td class="wins">{{ jugador.victorias ?? 0 }}</td>
+							</tr>
+							<tr class="jugador-ninguno">
+								<td>
+									<label class="radio-wrap">
+										<input
+											type="radio"
+											name="pantalla"
+											[value]="pantallaNingunoId"
+											[(ngModel)]="pantallaId"
+											(change)="cambiarPantalla(pantallaNingunoId)"
+											[disabled]="!esHost"
+										/>
+									</label>
+								</td>
+								<td>Ninguno</td>
+								<td class="wins">0</td>
+							</tr>
+						</tbody>
+					</table>
+					<p class="nota" *ngIf="!esHost">Solo el creador puede cambiar la pantalla.</p>
+				</section>
+
+				<section class="juegos">
+					<h2>Juegos disponibles</h2>
+					<ul class="juegos-list">
+						<li *ngFor="let juego of juegosDisponibles">
+							<button
+								class="juego-link"
+								(click)="iniciarJuego(juego.id)"
+								[disabled]="!esHost"
+							>
+								{{ juego.nombre }}
+							</button>
+							<img
+								class="juego-icon"
+								[src]="
+									juego.id === 'space-invaders' || juego.id === 'taptap'
+										? '/img/lobby/no-creen-needed.png'
+										: '/img/lobby/screen-needed.png'
+								"
+								[alt]="
+									juego.id === 'space-invaders' || juego.id === 'taptap'
+										? 'No requiere pantalla'
+										: 'Requiere pantalla'
+								"
+							/>
+						</li>
+					</ul>
+					<p class="nota" *ngIf="!esHost">Solo el creador puede iniciar un juego.</p>
+				</section>
+			</div>
+			<p class="error" *ngIf="errorUuid">{{ errorUuid }}</p>
+		</main>
+	</div>
+
+	<div class="juego" *ngIf="juegoActual === 'space-invaders'">
+		<ng-container *ngIf="pantallaId !== jugadorId && pantallaId !== pantallaNingunoId">
+			<iframe class="juego-frame" [src]="juegoUrl" title="Space Invaders"></iframe>
+		</ng-container>
+		<ng-container *ngIf="pantallaId === jugadorId">
+			<iframe class="juego-frame" [src]="pantallaUrl" title="Space Invaders - Pantalla"></iframe>
+		</ng-container>
+		<ng-container *ngIf="pantallaId === pantallaNingunoId">
+			<iframe class="juego-frame" [src]="juegoUrl" title="Space Invaders"></iframe>
+		</ng-container>
+	</div>
+
+	<div class="juego taptap" *ngIf="juegoActual === 'taptap'">
+		<app-taptap
+			[uuid]="uuidActual"
+			[jugadorId]="jugadorId"
+			[pantallaId]="pantallaId"
+			[esPantalla]="pantallaId === jugadorId"
+			[esHost]="esHost"
+		></app-taptap>
+	</div>
+
+</section>

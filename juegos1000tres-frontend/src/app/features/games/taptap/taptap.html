@@ -1,0 +1,51 @@
+<section class="taptap-shell" [class.pantalla]="esPantalla">
+	<header class="taptap-header">
+		<div class="marca">
+			<p class="marca-sobre">Duelo del lejano oeste</p>
+			<h2>TapTap</h2>
+		</div>
+		<div class="marcadores">
+			<div class="marcador">
+				<span>Tiempo</span>
+				<strong>{{ segundosRestantes }}</strong>
+			</div>
+			<div class="marcador" *ngIf="!esPantalla">
+				<span>Puntos</span>
+				<strong>{{ puntos }}</strong>
+			</div>
+		</div>
+	</header>
+
+	<p class="estado">{{ estadoTexto }}</p>
+
+	<div class="zona-juego" *ngIf="!esPantalla">
+		<button
+			class="objetivo"
+			*ngFor="let objetivo of objetivos"
+			[style.left.%]="objetivo.left"
+			[style.top.%]="objetivo.top"
+			(click)="tocarObjetivo(objetivo)"
+			aria-label="Objetivo"
+		></button>
+		<div class="polvo"></div>
+	</div>
+
+	<div class="pantalla-panel" *ngIf="esPantalla">
+		<div class="cartel">Clasificacion</div>
+		<table class="tabla">
+			<thead>
+				<tr>
+					<th>Jugador</th>
+					<th>Puntos</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr *ngFor="let jugador of tabla">
+					<td>{{ jugador.nombre }}</td>
+					<td class="puntos">{{ jugador.puntos }}</td>
+				</tr>
+			</tbody>
+		</table>
+		<p class="nota" *ngIf="tabla.length === 0">Esperando pistoleros...</p>
+	</div>
+</section>

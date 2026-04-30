@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classic Space Invaders 1978</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('.static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="game-container">
+        <div class="top-scores">
+            <div>SCORE&lt;1&gt;<br><br><span id="score1">0000</span></div>
+            <div>HI-SCORE<br><br><span id="hiScore">1050</span></div>
+            <div>SCORE&lt;2&gt;<br><br>0000</div>
+        </div>
+        
+        <canvas id="gameCanvas" width="600" height="500"></canvas>
+        
+        <div class="bottom-bar">
+            <div><span id="livesText">3</span></div>
+            <div id="livesIcons" class="lives-container">
+                <!-- Javascript will inject lives icons here -->
+            </div>
+            <div class="rank-info">RANK <span id="rankText">--</span></div>
+            <div class="players-info">PLAYERS <span id="playersText">0</span></div>
+            <div class="bottom-line"></div>
+            <div>ROUND <span id="roundText">1</span></div>
+            <div style="margin-left: auto;">CREDIT 00</div>
+        </div>
+
+        <div id="gameOverScreen" class="overlay hidden">
+            <h2>GAME OVER</h2>
+            <p>Score: <span id="finalScore">0000</span></p>
+            <button id="restartBtn" class="retro-btn">PLAY AGAIN</button>
+        </div>
+    </div>
+    <script type="module" src="{{ url_for('.static', filename='js/game.js') }}"></script>
+</body>
+</html>

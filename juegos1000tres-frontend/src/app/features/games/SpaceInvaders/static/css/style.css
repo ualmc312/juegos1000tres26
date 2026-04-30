@@ -1,0 +1,116 @@
+:root {
+    --retro-green: #39ff14;
+    --retro-white: #ffffff;
+    --bg-color: #000000;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-color);
+    color: var(--retro-white);
+    font-family: 'Press Start 2P', monospace;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    width: 600px;
+}
+
+.top-scores {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 20px;
+    font-size: 14px;
+    line-height: 1.5;
+    text-align: center;
+}
+
+canvas {
+    background-color: #000000;
+    /* Removed padding/border to feel like an authentic CRT screen boundary */
+}
+
+.bottom-bar {
+    display: flex;
+    align-items: flex-end;
+    width: 100%;
+    margin-top: 10px;
+    font-size: 14px;
+    position: relative;
+}
+
+.lives-container {
+    display: flex;
+    margin-left: 10px;
+    gap: 10px;
+}
+
+.rank-info,
+.players-info {
+    margin-left: 18px;
+    font-size: 10px;
+    color: var(--retro-green);
+}
+
+.life-icon {
+    display: inline-block;
+    width: 26px;
+    height: 16px;
+    background-color: var(--retro-green);
+    mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 11 8"><path fill="none" d="M0,0 M11,8"/><path fill="white" d="M5,0 h1 v1 H5 z M4,1 h3 v1 H4 z M4,2 h3 v1 H4 z M1,3 h9 v1 H1 z M0,4 h11 v4 H0 z"/></svg>') no-repeat center / contain;
+    -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 11 8"><path fill="none" d="M0,0 M11,8"/><path fill="white" d="M5,0 h1 v1 H5 z M4,1 h3 v1 H4 z M4,2 h3 v1 H4 z M1,3 h9 v1 H1 z M0,4 h11 v4 H0 z"/></svg>') no-repeat center / contain;
+}
+
+.bottom-line {
+    flex-grow: 1;
+    border-bottom: 2px solid var(--retro-green);
+    margin: 0 20px;
+    position: relative;
+    top: -2px;
+}
+
+.overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    padding: 40px;
+    border: 2px solid var(--retro-white);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    z-index: 10;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.retro-btn {
+    background: transparent;
+    color: var(--retro-white);
+    border: 2px solid var(--retro-white);
+    padding: 15px 30px;
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+    text-transform: uppercase;
+}
+
+.retro-btn:hover {
+    background: var(--retro-white);
+    color: #000;
+}

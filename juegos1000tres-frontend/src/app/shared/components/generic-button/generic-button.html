@@ -1,0 +1,15 @@
+<ng-template #contentTemplate>
+	<ng-content></ng-content>
+</ng-template>
+
+<ng-container *ngIf="link; else buttonTemplate">
+	<a class="generic-button" [routerLink]="link" [ngClass]="colorClass">
+		<ng-container *ngTemplateOutlet="contentTemplate"></ng-container>
+	</a>
+</ng-container>
+
+<ng-template #buttonTemplate>
+	<button class="generic-button" type="button" [ngClass]="colorClass">
+		<ng-container *ngTemplateOutlet="contentTemplate"></ng-container>
+	</button>
+</ng-template>

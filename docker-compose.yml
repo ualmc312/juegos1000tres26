@@ -1,0 +1,39 @@
+services:
+  postgres:
+    build:
+      context: ./juegos1000tres-backend
+      dockerfile: Dockerfile
+    container_name: juegos1000tres-postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U juegos_user -d juegos1000tres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    image: maven:3.9.9-eclipse-temurin-21
+    container_name: juegos1000tres-backend-app
+    working_dir: /app
+    volumes:
+      - ./juegos1000tres-backend:/app
+      - maven_cache:/root/.m2
+    command: mvn -DskipTests spring-boot:run
+    ports:
+      - "8083:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/juegos1000tres
+      SPRING_DATASOURCE_USERNAME: juegos_user
+      SPRING_DATASOURCE_PASSWORD: juegos_pass
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_DATA_REST_BASE_PATH: /api
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  maven_cache:
