@@ -27,8 +27,9 @@ public class SalaJuegoOrden {
     @JoinColumn(name = "sala_id", nullable = false)
     private SalaRegistro sala;
 
-    @Column(nullable = false, length = 120)
-    private String juego;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "juego", nullable = false)
+    private JuegoEntities juego;
 
     @Column(nullable = false)
     private int orden;
@@ -42,7 +43,7 @@ public class SalaJuegoOrden {
     public SalaJuegoOrden() {
     }
 
-    public SalaJuegoOrden(SalaRegistro sala, String juego, int orden) {
+    public SalaJuegoOrden(SalaRegistro sala, JuegoEntities juego, int orden) {
         this.sala = sala;
         this.juego = juego;
         this.orden = orden;
@@ -60,11 +61,11 @@ public class SalaJuegoOrden {
         this.sala = sala;
     }
 
-    public String getJuego() {
+    public JuegoEntities getJuego() {
         return juego;
     }
 
-    public void setJuego(String juego) {
+    public void setJuego(JuegoEntities juego) {
         this.juego = juego;
     }
 
