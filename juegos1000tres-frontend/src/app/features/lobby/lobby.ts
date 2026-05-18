@@ -223,6 +223,11 @@ export class Lobby implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
+  obtenerNombreJugador(id: string): string {
+    const j = this.jugadores.find(x => x.id === id);
+    return j ? j.nombre : 'Jugador';
+  }
+
 
   private iniciarPolling(): void {
     this.polling = interval(3000).subscribe(() => this.actualizarEstado());

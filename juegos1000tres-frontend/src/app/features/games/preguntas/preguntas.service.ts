@@ -24,8 +24,7 @@ export class PreguntasService {
     this.desconectar();
     this.salaActual = uuid.trim();
 
-    const base = `${this.baseApi}/api/salas/${encodeURIComponent(this.salaActual)}/preguntas`;
-    const conexion = new ApiConexion(this.salaActual, base, {}, 'preguntas');
+    const conexion = new ApiConexion(this.salaActual, this.baseApi, {}, 'preguntas');
 
     const envio = Envio.paraStringDesdeOut();
     const recibo = new Recibo(String, Recibo.extractorComandoDesdeJson())

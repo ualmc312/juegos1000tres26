@@ -12,6 +12,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 export class SpaceInvadersComponent implements OnInit, OnChanges {
   @Input() uuid = '';
   @Input() jugadorId = '';
+  @Input() nombreJugador = '';
   @Input() pantallaId = '';
   @Input() esPantalla = false;
   @Input() esHost = false;
@@ -27,7 +28,7 @@ export class SpaceInvadersComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['uuid'] || changes['jugadorId'] || changes['esPantalla'] || changes['pantallaId']) {
+    if (changes['uuid'] || changes['jugadorId'] || changes['nombreJugador'] || changes['esPantalla'] || changes['pantallaId']) {
       this.actualizarUrlJuego();
     }
   }
@@ -40,13 +41,14 @@ export class SpaceInvadersComponent implements OnInit, OnChanges {
     const salaId = this.uuid?.trim() || 'space-invaders';
     const backendSalaId = this.uuid?.trim() || 'space-invaders'; // debe ser el UUID de la sala
     const jugadorId = this.jugadorId?.trim() || 'jugador-space-invaders';
-    const player = jugadorId;
+    const nombreJugador = this.nombreJugador?.trim() || 'Jugador';
 
     const params = new URLSearchParams({
       salaId,
       backendSalaId,
       jugadorId,
-      player,
+      player: nombreJugador,
+      backendUrl: 'http://localhost:8083',
     });
 
     const vista = this.esPantalla ? 'scoreboard.html' : 'index.html';

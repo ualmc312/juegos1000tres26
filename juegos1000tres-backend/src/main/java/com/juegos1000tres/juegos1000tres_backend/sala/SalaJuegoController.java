@@ -28,6 +28,7 @@ public class SalaJuegoController {
     /**
      * POST /api/salas/{salaId}/{juego}/eventos
      * Procesa un comando/evento enviado por un cliente.
+     * Devuelve el estado actualizado del juego.
      */
     @PostMapping("/{juego}/eventos")
     public ResponseEntity<?> procesarEvento(
@@ -39,9 +40,15 @@ public class SalaJuegoController {
                 return ResponseEntity.badRequest().body("El payload es obligatorio");
             }
 
-            String respuesta = juegoManager.procesarMensaje(salaId, juego, payload);
+            // Procesar el evento
+            juegoManager.procesarMensaje(salaId, juego, payload);
             
-            return ResponseEntity.accepted().body("{\"status\":\"accepted\",\"salaId\":\"" + escapeJson(salaId) + "\"}");
+            // Devolver el estado actualizado
+            String estado = juegoManager.obtenerEstado(salaId, juego);
+            if (estado == null || estado.isBlank() || "{}".equals(estado.trim())) {
+                return ResponseEntity.accepted().body("{\"status\":\"accepted\"}");
+            }
+            return ResponseEntity.accepted().body(estado);
         } catch (Exception ex) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("{\"error\":\"" + escapeJson(ex.getMessage()) + "\"}");

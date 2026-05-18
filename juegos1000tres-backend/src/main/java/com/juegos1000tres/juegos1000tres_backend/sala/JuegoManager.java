@@ -1,18 +1,21 @@
 package com.juegos1000tres.juegos1000tres_backend.sala;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import com.juegos1000tres.juegos1000tres_backend.comunicacion.Conexion;
 import com.juegos1000tres.juegos1000tres_backend.comunicacion.Envio;
 import com.juegos1000tres.juegos1000tres_backend.comunicacion.Recibo;
 import com.juegos1000tres.juegos1000tres_backend.comunicacion.Traductor;
-import com.juegos1000tres.juegos1000tres_backend.juegos.SpaceInvaders.SpaceInvader;
 import com.juegos1000tres.juegos1000tres_backend.juegos.Preguntas.PreguntasJuego;
-import java.util.List;
-import java.util.ArrayList;
+import com.juegos1000tres.juegos1000tres_backend.juegos.SpaceInvaders.SpaceInvader;
+import com.juegos1000tres.juegos1000tres_backend.juegos.taptap.TapTapJuego;
+import com.juegos1000tres.juegos1000tres_backend.juegos.taptap.TapTapService;
 
 /**
  * Gestiona instancias de juegos por sala. 
@@ -23,6 +26,11 @@ import java.util.ArrayList;
 public class JuegoManager {
 
     private final Map<String, GameInstance> instances = new ConcurrentHashMap<>();
+    private final SalaService salaService;
+
+    public JuegoManager(@Lazy SalaService salaService) {
+        this.salaService = salaService;
+    }
 
     public synchronized void crearInstanciaJuego(String salaUuid, String juego) {
         String key = keyFor(salaUuid, juego);
@@ -82,8 +90,30 @@ public class JuegoManager {
 
             GameInstance gi = new GameInstance(juegoInstancia, traductor);
             instances.put(key, gi);
+        } else if ("taptap".equalsIgnoreCase(juego)) {
+            Recibo<String> reciboBase = Recibo.paraJsonString();
+            Traductor<String> placeholder = new Traductor<>(
+                new InMemoryConexion(),
+                Envio.paraStringDesdeOut(),
+                reciboBase
+            );
+
+            TapTapService tapTapService = new TapTapService(null); // TODO: Inyectar SalaService
+            tapTapService = new TapTapService(this.salaService);
+            TapTapJuego juegoInstancia = new TapTapJuego(tapTapService, salaUuid, placeholder, placeholder);
+            juegoInstancia.iniciar();
+
+            Recibo<String> reciboConEventos = juegoInstancia.registrarEventosEnRecibo(Recibo.paraJsonString());
+
+            Traductor<String> traductor = new Traductor<>(
+                new InMemoryConexion(),
+                Envio.paraStringDesdeOut(),
+                reciboConEventos
+            );
+
+            GameInstance gi = new GameInstance(juegoInstancia, traductor);
+            instances.put(key, gi);
         }
-        // Para otros juegos, agregar aquí la lógica de creación.
     }
 
     public synchronized void detenerInstancia(String salaUuid, String juego) {
@@ -110,6 +140,10 @@ public class JuegoManager {
             }
         }
 
+        if (gi.juego instanceof PreguntasJuego preguntasJuego) {
+            preguntasJuego.revisarTransicionesAutomaticas(System.currentTimeMillis());
+        }
+
         var respuesta = gi.traductor.procesar(payload);
         return respuesta.orElse(null);
     }
@@ -129,7 +163,20 @@ public class JuegoManager {
             }
         }
 
-        return gi.traductor.traducirEnviableAFormato(gi.juego.crearEstadoEnviable());
+        if (gi.juego instanceof SpaceInvader spaceInvader) {
+            return gi.traductor.traducirEnviableAFormato(spaceInvader.crearEstadoEnviable());
+        }
+
+        if (gi.juego instanceof PreguntasJuego preguntasJuego) {
+            preguntasJuego.revisarTransicionesAutomaticas(System.currentTimeMillis());
+            return gi.traductor.traducirEnviableAFormato(preguntasJuego.crearEstadoEnviable());
+        }
+
+        if (gi.juego instanceof TapTapJuego tapTapJuego) {
+            return gi.traductor.traducirEnviableAFormato(tapTapJuego.crearEstadoEnviable());
+        }
+
+        return "{}";
     }
 
     private String keyFor(String sala, String juego) {
