@@ -1,4 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Outfit:wght@300;400;600;700&display=swap');
+
+:host {
+	--bg-deep: #050510;
+	--bg-panel: #0d0d26;
+	--bg-card: #11112a;
+	--border-dim: rgba(255, 255, 255, 0.07);
+	--border-glow: rgba(255, 255, 255, 0.18);
+	--text-primary: #e8e8ff;
+	--text-muted: #7878aa;
+	--accent: #a855f7;
+	--accent-lit: #c084fc;
+	--green: #00ff88;
+	--red: #ff5c5c;
+	--transition: 0.25s cubic-bezier(.4, 0, .2, 1);
+	--radius-card: 18px;
+	--radius-btn: 12px;
+	--font-pixel: 'Press Start 2P', monospace;
+	--font-ui: 'Outfit', sans-serif;
+
+	display: block;
+	background: var(--bg-deep);
+	color: var(--text-primary);
+	font-family: var(--font-ui);
+	position: relative;
+	min-height: 100vh;
+}
+
+:host::before {
+	content: '';
+	position: fixed;
+	inset: 0;
+	background:
+		radial-gradient(ellipse 80% 60% at 20% 0%, rgba(168, 85, 247, 0.25) 0%, transparent 60%),
+		radial-gradient(ellipse 60% 50% at 80% 100%, rgba(0, 255, 136, 0.12) 0%, transparent 60%);
+	pointer-events: none;
+	z-index: 0;
+}
+
 .lobby {
+	position: relative;
+	z-index: 1;
 	display: flex;
 	flex-direction: column;
 	gap: 1.5rem;
@@ -7,15 +48,31 @@
 	padding: 0 1.5rem;
 }
 
+.lobby h1 {
+	font-family: var(--font-pixel);
+	font-size: 1.5rem;
+	background: linear-gradient(135deg, var(--accent-lit) 0%, var(--green) 100%);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+	letter-spacing: 0.08em;
+	margin: 0;
+}
+
 .sala {
 	margin: 0;
 	padding: 0;
+	position: relative;
+	z-index: 1;
 }
 
-h1,
 h2 {
-	font-family: "Space Grotesk", "Poppins", "Segoe UI", sans-serif;
+	font-family: var(--font-ui);
+	font-size: 1.1rem;
+	font-weight: 700;
+	letter-spacing: 0.05em;
 	margin: 0;
+	color: var(--text-primary);
 }
 
 .join {
@@ -25,14 +82,29 @@ h2 {
 }
 
 .join input {
-	border: 1px solid #c0c0c0;
-	border-radius: 6px;
-	padding: 0.5rem 0.75rem;
+	background: var(--bg-panel);
+	border: 1px solid var(--border-glow);
+	border-radius: 8px;
+	padding: 0.75rem 1rem;
+	color: var(--text-primary);
+	font-family: var(--font-ui);
+	transition: border-color var(--transition);
+}
+
+.join input::placeholder {
+	color: var(--text-muted);
+}
+
+.join input:focus {
+	outline: none;
+	border-color: var(--accent-lit);
+	box-shadow: 0 0 12px rgba(168, 85, 247, 0.3);
 }
 
 .error {
-	color: #c02f2f;
+	color: var(--red);
 	font-weight: 600;
+	font-size: 0.9rem;
 }
 
 .sala-layout {
@@ -41,23 +113,26 @@ h2 {
 	gap: 2rem;
 	padding: 2rem;
 	min-height: calc(100vh - 4rem);
-	background: linear-gradient(135deg, #f6f3ee, #ffffff 55%, #f3f6f9);
+	background: var(--bg-deep);
+	border-radius: var(--radius-card);
 }
 
 .sala-sidebar {
-	background: #ececec;
-	border-radius: 18px;
-	box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+	background: var(--bg-panel);
+	border: 1px solid var(--border-glow);
+	border-radius: var(--radius-card);
 	display: flex;
 	flex-direction: column;
 	gap: 1.2rem;
 	padding: 1.5rem;
+	backdrop-filter: blur(10px);
 }
 
 .sala-tag {
-	background: #101010;
+	background: var(--bg-card);
+	border: 1px solid var(--border-glow);
 	border-radius: 12px;
-	color: #ffffff;
+	color: var(--text-primary);
 	display: flex;
 	flex-direction: column;
 	gap: 0.35rem;
@@ -69,18 +144,21 @@ h2 {
 
 .sala-tag strong {
 	font-size: 1rem;
-	letter-spacing: 0.02em;
+	letter-spacing: 0.05em;
+	color: var(--green);
+	font-weight: 700;
 }
 
 .sala-info {
-	background: #ffffff;
+	background: var(--bg-card);
+	border: 1px solid var(--border-glow);
 	border-radius: 12px;
 	padding: 0.75rem 0.9rem;
-	box-shadow: inset 0 0 0 1px #e3e3e3;
+	backdrop-filter: blur(10px);
 }
 
 .info-label {
-	color: #6b6b6b;
+	color: var(--text-muted);
 	font-size: 0.75rem;
 	letter-spacing: 0.08em;
 	margin: 0;
@@ -88,21 +166,23 @@ h2 {
 }
 
 .info-value {
-	color: #1b1b1b;
+	color: var(--text-primary);
 	font-size: 1rem;
 	font-weight: 700;
 	margin: 0.35rem 0 0;
 }
 
 .sala-reservado {
-	border: 1px dashed #bdbdbd;
+	border: 1px dashed var(--border-glow);
 	border-radius: 12px;
-	color: #7a7a7a;
+	color: var(--text-muted);
 	display: flex;
 	flex: 1;
 	font-size: 0.9rem;
 	padding: 0.9rem;
 	text-align: left;
+	align-items: center;
+	justify-content: center;
 }
 
 .salir-wrap {
@@ -116,8 +196,14 @@ h2 {
 }
 
 .sala-title {
+	font-family: var(--font-pixel);
 	font-size: 2.3rem;
-	letter-spacing: 0.02em;
+	background: linear-gradient(135deg, var(--accent-lit) 0%, var(--green) 100%);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+	letter-spacing: 0.08em;
+	margin: 0;
 }
 
 .sala-content {
@@ -128,10 +214,11 @@ h2 {
 
 .jugadores,
 .juegos {
-	background: #f4f4f4;
-	border-radius: 18px;
-	box-shadow: 0 14px 22px rgba(0, 0, 0, 0.08);
+	background: var(--bg-panel);
+	border: 1px solid var(--border-glow);
+	border-radius: var(--radius-card);
 	padding: 1.25rem 1.4rem;
+	backdrop-filter: blur(10px);
 }
 
 .section-header {
@@ -141,14 +228,19 @@ h2 {
 	margin-bottom: 0.75rem;
 }
 
+.section-header h2 {
+	margin: 0;
+}
+
 .host-indicator {
-	background: #101010;
+	background: var(--accent);
 	border-radius: 999px;
-	color: #ffffff;
+	color: var(--text-primary);
 	font-size: 0.7rem;
 	letter-spacing: 0.08em;
 	padding: 0.35rem 0.65rem;
 	text-transform: uppercase;
+	font-weight: 600;
 }
 
 .jugadores-table {
@@ -157,17 +249,19 @@ h2 {
 }
 
 .jugadores-table th {
-	color: #6b6b6b;
+	color: var(--text-muted);
 	font-size: 0.7rem;
 	letter-spacing: 0.1em;
 	padding: 0.5rem 0;
 	text-align: left;
 	text-transform: uppercase;
+	border-bottom: 1px solid var(--border-glow);
 }
 
 .jugadores-table td {
-	border-top: 1px solid #dfdfdf;
+	border-top: 1px solid var(--border-glow);
 	padding: 0.6rem 0;
+	color: var(--text-primary);
 }
 
 .jugadores-table tr:first-child td {
@@ -175,7 +269,7 @@ h2 {
 }
 
 .radio-wrap input {
-	accent-color: #ff5c5c;
+	accent-color: var(--green);
 }
 
 .wins {
@@ -184,7 +278,7 @@ h2 {
 }
 
 .jugador-ninguno td {
-	color: #7a7a7a;
+	color: var(--text-muted);
 }
 
 .juegos-list {
@@ -197,59 +291,79 @@ h2 {
 
 .juegos-list li {
 	align-items: center;
-	background: #ffffff;
-	border-radius: 14px;
-	box-shadow: inset 0 0 0 1px #e4e4e4;
+	background: var(--bg-card);
+	border: 1px solid var(--border-glow);
+	border-radius: 12px;
 	display: flex;
 	gap: 1rem;
 	justify-content: space-between;
 	padding: 0.75rem 1rem;
+	transition: all var(--transition);
+}
+
+.juegos-list li:hover {
+	border-color: var(--accent-lit);
+	box-shadow: 0 0 12px rgba(168, 85, 247, 0.2);
 }
 
 .juego-link {
 	background: none;
 	border: none;
-	color: #1b1b1b;
+	color: var(--text-primary);
 	cursor: pointer;
 	font: inherit;
 	font-weight: 700;
 	letter-spacing: 0.05em;
 	padding: 0;
 	text-transform: uppercase;
+	transition: color var(--transition);
+}
+
+.juego-link:hover:not(:disabled) {
+	color: var(--green);
 }
 
 .juego-link:disabled {
 	cursor: not-allowed;
 	opacity: 0.5;
+	color: var(--text-muted);
 }
 
 .juego-icon {
 	height: 36px;
 	object-fit: contain;
 	width: 36px;
+	opacity: 0.8;
 }
 
 .nota {
-	color: #6b6b6b;
+	color: var(--text-muted);
 	font-size: 0.9rem;
 	margin-top: 0.75rem;
 }
 
 .juego {
-	background: #101010;
+	background: var(--bg-card);
+	border: 1px solid var(--border-glow);
 	border-radius: 12px;
 	padding: 1rem;
+	position: relative;
+	z-index: 1;
 }
 
 .juego.taptap {
 	background: transparent;
+	border: none;
 	padding: 0;
+	box-shadow: none;
 }
 
 .juego-frame {
 	border: none;
 	width: 100%;
 	height: 560px;
+	border-radius: 8px;
+	background: var(--bg-deep);
 }
 
 .sala.jugando .sala-layout {
@@ -264,10 +378,14 @@ h2 {
 	bottom: 0;
 	padding: 0;
 	border-radius: 0;
+	border: none;
+	background: var(--bg-deep);
+	z-index: 10;
 }
 
 .sala.jugando .juego-frame {
 	height: 100%;
+	border-radius: 0;
 }
 
 @media (max-width: 1000px) {

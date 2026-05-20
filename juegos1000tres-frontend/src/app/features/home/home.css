@@ -1,26 +1,159 @@
-.home-user {
-	position: fixed;
-	top: 1.5rem;
-	left: 1.5rem;
-	background: #101010;
-	color: #ffffff;
-	border-radius: 999px;
-	padding: 0.4rem 0.9rem;
-	font-family: "Space Grotesk", "Poppins", "Segoe UI", sans-serif;
-	font-size: 0.85rem;
-	letter-spacing: 0.05em;
-	text-transform: uppercase;
-	box-shadow: 0 6px 0 rgba(0, 0, 0, 0.35);
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Outfit:wght@300;400;600;700&display=swap');
+
+:host {
+	--bg-deep: #050510;
+	--bg-panel: #0d0d26;
+	--bg-card: #11112a;
+	--border-dim: rgba(255, 255, 255, 0.07);
+	--border-glow: rgba(255, 255, 255, 0.18);
+	--text-primary: #e8e8ff;
+	--text-muted: #7878aa;
+	--accent: #a855f7;
+	--accent-lit: #c084fc;
+	--green: #00ff88;
+	--transition: 0.25s cubic-bezier(.4, 0, .2, 1);
+	--radius-card: 18px;
+	--radius-btn: 12px;
+	--font-pixel: 'Press Start 2P', monospace;
+	--font-ui: 'Outfit', sans-serif;
+
+	display: block;
+	min-height: 100vh;
+	background: var(--bg-deep);
+	color: var(--text-primary);
+	font-family: var(--font-ui);
+	position: relative;
+	overflow: hidden;
 }
 
-.home-user span {
-	opacity: 0.7;
-	margin-right: 0.35rem;
+:host::before {
+	content: '';
+	position: fixed;
+	inset: 0;
+	background:
+		radial-gradient(ellipse 80% 60% at 20% 0%, rgba(124, 58, 237, 0.25) 0%, transparent 60%),
+		radial-gradient(ellipse 60% 50% at 80% 100%, rgba(0, 255, 136, 0.12) 0%, transparent 60%);
+	pointer-events: none;
+	z-index: 0;
+}
+
+.home-page {
+	position: relative;
+	z-index: 1;
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+}
+
+.home-header {
+	position: fixed;
+	top: 2rem;
+	left: 2.5rem;
+	z-index: 2;
+}
+
+.user-badge {
+	background: rgba(13, 13, 38, 0.8);
+	border: 1px solid rgba(255, 255, 255, 0.18);
+	border-radius: 12px;
+	padding: 0.65rem 1rem;
+	backdrop-filter: blur(10px);
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.user-badge span {
+	color: var(--text-muted);
+	font-size: 0.7rem;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.user-badge strong {
+	font-size: 0.9rem;
+	font-weight: 700;
+	color: var(--green);
+}
+
+.home-container {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 2rem;
+	gap: 2.5rem;
+}
+
+.home-emoji {
+	font-size: 6rem;
+	animation: bounce 0.6s ease-in-out infinite;
+	line-height: 1;
+}
+
+@keyframes bounce {
+	0%, 100% {
+		transform: translateY(0);
+	}
+	50% {
+		transform: translateY(-20px);
+	}
+}
+
+.home-content {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 1.5rem;
+	text-align: center;
+	max-width: 500px;
+}
+
+.home-title {
+	font-family: var(--font-pixel);
+	font-size: 1.8rem;
+	letter-spacing: 0.08em;
+	margin: 0;
+	background: linear-gradient(135deg, var(--accent-lit) 0%, var(--green) 100%);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+	line-height: 1.2;
+}
+
+.home-subtitle {
+	font-size: 1rem;
+	color: var(--text-muted);
+	letter-spacing: 0.05em;
+	margin: 0;
+	font-weight: 400;
 }
 
 .home-actions {
 	display: flex;
 	flex-direction: column;
 	gap: 1rem;
+	width: 100%;
 	align-items: center;
+	margin-top: 1rem;
+}
+
+@media (max-width: 600px) {
+	.home-header {
+		top: 1.5rem;
+		left: 1.5rem;
+	}
+
+	.home-emoji {
+		font-size: 4rem;
+	}
+
+	.home-title {
+		font-size: 1.3rem;
+	}
+
+	.home-subtitle {
+		font-size: 0.9rem;
+	}
 }
