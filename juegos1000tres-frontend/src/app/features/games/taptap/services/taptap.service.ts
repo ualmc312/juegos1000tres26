@@ -29,24 +29,30 @@ export interface TapTapFinalRespuesta {
 @Injectable({ providedIn: 'root' })
 export class TapTapService {
   private readonly apiBase = 'http://localhost:8083';
+  private readonly requestOptions = { withCredentials: true };
 
   constructor(private readonly http: HttpClient) {}
 
   obtenerEstado(uuid: string): Observable<TapTapEstado> {
-    return this.http.get<TapTapEstado>(`${this.apiBase}/sala/${uuid}/juego/taptap/estado`);
+    return this.http.get<TapTapEstado>(
+      `${this.apiBase}/sala/${uuid}/juego/taptap/estado`,
+      this.requestOptions
+    );
   }
 
   registrarPunto(uuid: string, jugadorId: string): Observable<TapTapPuntoRespuesta> {
     return this.http.post<TapTapPuntoRespuesta>(
       `${this.apiBase}/sala/${uuid}/juego/taptap/punto?jugadorId=${jugadorId}`,
-      null
+      null,
+      this.requestOptions
     );
   }
 
   finalizarPartida(uuid: string, actorId: string): Observable<TapTapFinalRespuesta> {
     return this.http.post<TapTapFinalRespuesta>(
       `${this.apiBase}/sala/${uuid}/juego/taptap/finalizar?actorId=${actorId}`,
-      null
+      null,
+      this.requestOptions
     );
   }
 }

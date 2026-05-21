@@ -118,6 +118,7 @@ export class ApiConexion implements Conexion<string> {
           method,
           headers,
           body: method === 'GET' ? undefined : (peticion?.body ?? payload),
+          credentials: 'include',
         });
 
         if (!response.ok) {
@@ -156,6 +157,7 @@ export class ApiConexion implements Conexion<string> {
           headers: {
             'Accept': 'application/json',
           },
+          credentials: 'include',
         });
 
         if (!response.ok) {

@@ -21,17 +21,22 @@ export interface HandicapEstado {
 @Injectable({ providedIn: 'root' })
 export class HandicapService {
   private readonly apiBase = 'http://localhost:8083';
+  private readonly requestOptions = { withCredentials: true };
 
   constructor(private readonly http: HttpClient) {}
 
   obtenerEstado(uuid: string): Observable<HandicapEstado> {
-    return this.http.get<HandicapEstado>(`${this.apiBase}/sala/${uuid}/juego/handicap/estado`);
+    return this.http.get<HandicapEstado>(
+      `${this.apiBase}/sala/${uuid}/juego/handicap/estado`,
+      this.requestOptions
+    );
   }
 
   confirmarGanadores(uuid: string, actorId: string, ganadores: string[]): Observable<HandicapEstado> {
     return this.http.post<HandicapEstado>(
       `${this.apiBase}/sala/${uuid}/juego/handicap/confirmar?actorId=${encodeURIComponent(actorId)}`,
-      { ganadores: ganadores ?? [] }
+      { ganadores: ganadores ?? [] },
+      this.requestOptions
     );
   }
 }
