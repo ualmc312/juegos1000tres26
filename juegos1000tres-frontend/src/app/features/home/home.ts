@@ -13,15 +13,17 @@ import { GenericButton } from '../../shared/components/generic-button/generic-bu
 })
 export class Home implements OnInit {
   usuario: AuthSession | null = null;
+  mostrarAmigos = false;
+  esInvitado = false;
 
   constructor(private readonly auth: AuthService, private readonly router: Router) {}
 
   ngOnInit(): void {
     this.auth.loadSession().subscribe(user => {
-      this.usuario = user;
+      this.actualizarUsuario(user);
     });
     this.auth.currentUser$.subscribe(user => {
-      this.usuario = user;
+      this.actualizarUsuario(user);
     });
   }
 
@@ -33,10 +35,26 @@ export class Home implements OnInit {
   }
 
   cerrarSesion(): void {
-    this.usuario = null;
+    this.actualizarUsuario(null);
     this.auth.logout().subscribe({
       next: () => this.router.navigate(['/']),
       error: () => this.router.navigate(['/'])
     });
+  }
+
+  abrirAmigos(): void {
+    if (this.esInvitado) {
+      return;
+    }
+    this.mostrarAmigos = true;
+  }
+
+  cerrarAmigos(): void {
+    this.mostrarAmigos = false;
+  }
+
+  private actualizarUsuario(user: AuthSession | null): void {
+    this.usuario = user;
+    this.esInvitado = user?.role === 'GUEST';
   }
 }
