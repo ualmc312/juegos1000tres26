@@ -133,6 +133,7 @@ h2 {
 	border: 1px solid var(--border-glow);
 	border-radius: 12px;
 	color: var(--text-primary);
+	cursor: pointer;
 	display: flex;
 	flex-direction: column;
 	gap: 0.35rem;

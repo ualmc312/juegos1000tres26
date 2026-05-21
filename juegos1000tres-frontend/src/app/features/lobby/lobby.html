@@ -25,11 +25,15 @@
 			</div>
 			<div class="sala-info">
 				<p class="info-label">Usuario conectado</p>
-				<p class="info-value">{{ jugadorId || '---' }}</p>
+				<p class="info-value" [title]="jugadorId ? 'UUID: ' + jugadorId : ''">
+					{{ usuarioConectadoNombre || '---' }}
+				</p>
 			</div>
 			<div class="sala-info">
 				<p class="info-label">Creador de la sala</p>
-				<p class="info-value">{{ hostId || '---' }}</p>
+				<p class="info-value" [title]="hostId ? 'UUID: ' + hostId : ''">
+					{{ hostNombre || '---' }}
+				</p>
 			</div>
 			<div class="sala-reservado">
 				<p>Espacio reservado para nuevas secciones</p>
@@ -70,7 +74,7 @@
 										/>
 									</label>
 								</td>
-								<td>{{ jugador.nombre }}</td>
+								<td>{{ jugador.nombreSala }}</td>
 								<td class="wins">{{ jugador.victorias || 0 }}</td>
 							</tr>
 							<tr class="jugador-ninguno">

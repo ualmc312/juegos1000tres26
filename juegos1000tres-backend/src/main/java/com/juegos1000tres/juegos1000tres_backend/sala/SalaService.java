@@ -25,9 +25,13 @@ public class SalaService {
         this.pruebaWebSocketManager = pruebaWebSocketManager;
     }
 
-    public SalaRespuesta crearSala() {
+    public SalaRespuesta crearSala(String nombre) {
         String uuid = generarIdUnico();
-        Jugador host = new Jugador("Host");
+        String nombreFinal = (nombre == null || nombre.isBlank()) ? "Host" : nombre.trim();
+        if ("invitado".equalsIgnoreCase(nombreFinal)) {
+            nombreFinal = "invitado";
+        }
+        Jugador host = new Jugador(nombreFinal);
         Sala sala = new Sala(host, new Pantalla("Lobby"));
         SalaRoom room = new SalaRoom(uuid, sala, host.getId().toString());
 

@@ -27,12 +27,61 @@ public class SalaRoom {
     }
 
     public synchronized Jugador agregarJugador(String nombre) {
-        String nombreFinal = (nombre == null || nombre.isBlank())
-                ? "Jugador " + contadorNombres++
-                : nombre.trim();
+        String nombreFinal = resolverNombreJugador(nombre);
         Jugador jugador = new Jugador(nombreFinal);
         sala.agregarJugador(jugador);
         return jugador;
+    }
+
+    private String resolverNombreJugador(String nombre) {
+        String base = (nombre == null || nombre.isBlank())
+                ? "Jugador " + contadorNombres++
+                : nombre.trim();
+
+        if (!esInvitado(base)) {
+            return base;
+        }
+
+        return asignarNombreInvitado();
+    }
+
+    private boolean esInvitado(String nombre) {
+        return "invitado".equalsIgnoreCase(nombre.trim());
+    }
+
+    private String asignarNombreInvitado() {
+        int maxNumero = 0;
+
+        for (Jugador jugador : sala.getJugadores()) {
+            String actual = jugador.getNombre();
+            if (actual == null) {
+                continue;
+            }
+
+            String normalizado = actual.trim().toLowerCase();
+            if (normalizado.equals("invitado")) {
+                maxNumero = Math.max(maxNumero, 1);
+                continue;
+            }
+
+            if (normalizado.startsWith("invitado ")) {
+                String numeroTexto = normalizado.substring("invitado ".length()).trim();
+                try {
+                    int numero = Integer.parseInt(numeroTexto);
+                    if (numero > maxNumero) {
+                        maxNumero = numero;
+                    }
+                } catch (NumberFormatException ex) {
+                    // ignore
+                }
+            }
+        }
+
+        if (maxNumero <= 0) {
+            return "invitado";
+        }
+
+        return "invitado " + (maxNumero + 1);
     }
 
     public synchronized void eliminarJugador(String jugadorId) {

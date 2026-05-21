@@ -23,8 +23,8 @@ public class SalaController {
     }
 
     @GetMapping("/crear")
-    public SalaRespuesta crearSala() {
-        return salaService.crearSala();
+    public SalaRespuesta crearSala(@RequestParam(required = false) String nombre) {
+        return salaService.crearSala(nombre);
     }
 
     @GetMapping("/{uuid}/unirse")
