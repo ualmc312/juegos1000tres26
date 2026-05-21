@@ -171,6 +171,11 @@ function obtenerPrefijoApiSpaceInvaders() {
     return '';
 }
 
+function obtenerSalaId() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('backendSalaId') || params.get('salaId') || 'space-invaders';
+}
+
 // Game timing (rhythm)
 let ticks = 0;
 let waveNumber = 1;
@@ -630,8 +635,9 @@ function initGame() {
     if(animationId) cancelAnimationFrame(animationId);
 
     if (!canalComunicacion) {
-        const apiBase = obtenerPrefijoApiSpaceInvaders();
-        const conexion = new FetchApiConexion(`${apiBase}/api/event`, `${apiBase}/api/updates`, {
+        const apiBase = 'http://localhost:8083';
+        const salaId = obtenerSalaId();
+        const conexion = new FetchApiConexion(`${apiBase}/api/salas/${salaId}/space-invaders/eventos`, `${apiBase}/api/salas/${salaId}/space-invaders/actualizaciones`, {
             playerId,
             pollingIntervalMs: INTERVALO_POLLING_ESTADO_MS,
         });

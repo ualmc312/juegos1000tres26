@@ -24,11 +24,7 @@ export class PreguntasService {
     this.desconectar();
     this.salaActual = uuid.trim();
 
-    const base = `${this.baseApi}/sala/${encodeURIComponent(this.salaActual)}/juego/preguntas`;
-    const conexion = new ApiConexion(this.salaActual, base, {
-      urlRecepcion: `${base}/estado`,
-      resolverPeticion: (payload: string) => this.resolverPeticion(payload, base),
-    });
+    const conexion = new ApiConexion(this.salaActual, this.baseApi, {}, 'preguntas');
 
     const envio = Envio.paraStringDesdeOut();
     const recibo = new Recibo(String, Recibo.extractorComandoDesdeJson())
@@ -107,41 +103,7 @@ export class PreguntasService {
     this.traductor.enviar(new PreguntasEstadoEnviable(datos));
   }
 
-  private resolverPeticion(payload: string, base: string): { url: string; body?: string } {
-    const datos = JSON.parse(payload) as Record<string, unknown>;
-    const comando = String(datos['comando'] ?? '').toUpperCase();
 
-    switch (comando) {
-      case 'REGISTRAR_JUGADOR':
-        return {
-          url: `${base}/registrar?jugadorId=${encodeURIComponent(String(datos['jugadorId'] ?? ''))}&nombre=${encodeURIComponent(String(datos['nombreJugador'] ?? datos['nombre'] ?? 'Jugador'))}`,
-        };
-      case 'INICIAR_RONDA':
-        return {
-          url: `${base}/iniciar-ronda?actorId=${encodeURIComponent(String(datos['actorId'] ?? datos['jugadorId'] ?? ''))}`,
-        };
-      case 'ACTUALIZAR_BORRADOR':
-        return {
-          url: `${base}/actualizar-borrador?jugadorId=${encodeURIComponent(String(datos['jugadorId'] ?? ''))}`,
-          body: JSON.stringify({ texto: String(datos['texto'] ?? '') }),
-        };
-      case 'ENVIAR_RESPUESTA':
-        return {
-          url: `${base}/enviar-respuesta?jugadorId=${encodeURIComponent(String(datos['jugadorId'] ?? ''))}`,
-          body: JSON.stringify({ respuesta: String(datos['respuesta'] ?? '') }),
-        };
-      case 'ELEGIR_RESPUESTA':
-        return {
-          url: `${base}/elegir-respuesta?jugadorId=${encodeURIComponent(String(datos['jugadorId'] ?? ''))}&opcionId=${encodeURIComponent(String(datos['opcionId'] ?? ''))}`,
-        };
-      case 'FINALIZAR':
-        return {
-          url: `${base}/finalizar?actorId=${encodeURIComponent(String(datos['actorId'] ?? datos['jugadorId'] ?? ''))}`,
-        };
-      default:
-        return { url: base };
-    }
-  }
 
   private sincronizarEstado(): void {
     if (!this.traductor) {

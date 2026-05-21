@@ -9,3 +9,4 @@ export { Traductor } from './traductor';
 // Implementaciones
 export { ApiConexion } from './implementaciones/api-conexion';
 export { WebSocketConexion } from './implementaciones/websocket-conexion';
+export { P2PConexion } from './implementaciones/p2p-conexion';

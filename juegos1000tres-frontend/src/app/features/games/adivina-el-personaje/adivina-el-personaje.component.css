@@ -1,0 +1,113 @@
+.adp-root {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #111827 0%, #0f172a 100%);
+  color: #f8fafc;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+}
+
+.adp-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.adp-header h3 {
+  margin: 0;
+  font-size: 1.45rem;
+}
+
+.adp-subtitle,
+.muted,
+.label {
+  color: #94a3b8;
+}
+
+.adp-status {
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(14, 165, 233, 0.16);
+  color: #7dd3fc;
+  font-size: 0.9rem;
+}
+
+.adp-state,
+.adp-form,
+.adp-panel {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.64);
+}
+
+.adp-state {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.adp-message {
+  margin: 0;
+  color: #cbd5e1;
+}
+
+.adp-form label {
+  display: grid;
+  gap: 6px;
+}
+
+.adp-form input,
+.adp-form textarea {
+  width: 100%;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 10px;
+  background: rgba(2, 6, 23, 0.7);
+  color: #f8fafc;
+  padding: 0.75rem 0.9rem;
+  font: inherit;
+}
+
+.adp-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.adp-form button {
+  justify-self: start;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.7rem 1rem;
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+  color: white;
+  cursor: pointer;
+}
+
+.adp-form button.secondary {
+  background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+}
+
+.adp-player-card,
+.adp-history-item {
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(30, 41, 59, 0.9);
+}
+
+.adp-player-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.adp-player-head h5,
+.adp-history-item p {
+  margin: 0;
+}
+
+.adp-panel.final {
+  border: 1px solid rgba(56, 189, 248, 0.25);
+}

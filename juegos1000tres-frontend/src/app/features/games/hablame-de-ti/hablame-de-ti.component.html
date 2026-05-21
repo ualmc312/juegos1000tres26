@@ -1,0 +1,132 @@
+<section class="hdt-root">
+  <header class="hdt-header">
+    <div>
+      <h3>Hablame de ti</h3>
+      <p class="subtitle">{{ esPantalla ? 'Pantalla compartida' : 'Jugador' }} en sala {{ uuid || 'hablame-de-ti' }}</p>
+    </div>
+    <span class="status">{{ estadoConexion }}</span>
+  </header>
+
+  <div class="state-grid">
+    <div>
+      <p class="label">Fase</p>
+      <strong>{{ estado.fase || 'Sin estado' }}</strong>
+    </div>
+    <div>
+      <p class="label">Ronda</p>
+      <strong>{{ estado.rondaActual || 0 }} / {{ estado.totalRondas || 0 }}</strong>
+    </div>
+    <div>
+      <p class="label">Mensaje</p>
+      <strong>{{ estado.mensaje || '---' }}</strong>
+    </div>
+  </div>
+
+  <p class="error" *ngIf="estado.ultimoError">{{ estado.ultimoError }}</p>
+
+  <ng-container *ngIf="!esPantalla; else pantallaTpl">
+    <section class="card" *ngIf="estado.puedeEmpezar && esHost">
+      <button type="button" (click)="iniciarPartida()">Iniciar partida</button>
+    </section>
+
+    <section class="card" *ngIf="estado.puedeResponder && miPregunta">
+      <h4>Tu pregunta</h4>
+      <p>{{ miPregunta.preguntaDirecta }}</p>
+      <textarea
+        [(ngModel)]="respuesta"
+        rows="3"
+        placeholder="Escribe tu respuesta personal"
+        (keydown.enter)="$event.preventDefault(); responderPregunta()"
+      ></textarea>
+      <button type="button" (click)="responderPregunta()" [disabled]="!respuesta.trim() || miPregunta.respondida">Enviar respuesta</button>
+    </section>
+
+    <section class="card" *ngIf="estado.puedeMentir && !soyJugadorObjetivo">
+      <h4>Pregunta del jugador {{ estado.jugadorObjetivo?.nombreJugador || 'objetivo' }}</h4>
+      <p>{{ estado.preguntaPublica }}</p>
+      <textarea
+        [(ngModel)]="mentira"
+        rows="3"
+        placeholder="Escribe una respuesta falsa pero plausible"
+        (keydown.enter)="$event.preventDefault(); enviarMentira()"
+      ></textarea>
+      <button type="button" (click)="enviarMentira()" [disabled]="!mentira.trim()">Enviar mentira</button>
+    </section>
+
+    <section class="card" *ngIf="estado.puedeVotar && !soyJugadorObjetivo">
+      <h4>Vota la respuesta correcta</h4>
+      <p class="muted">Preguntas pendientes de mentira: {{ preguntasPendientesTexto }}</p>
+      <div class="options">
+        <label *ngFor="let opcion of opcionesParaVotar">
+          <input
+            type="radio"
+            name="opcion"
+            [value]="opcion.opcionId"
+            [(ngModel)]="opcionSeleccionada"
+          />
+          <span>{{ opcion.texto }}</span>
+        </label>
+      </div>
+      <button type="button" (click)="votarRespuesta()" [disabled]="!opcionSeleccionada">Votar</button>
+    </section>
+
+    <section class="card">
+      <h4>Marcador</h4>
+      <ul class="score-list">
+        <li *ngFor="let jugador of estado.marcador || []">{{ jugador.nombreJugador }} · {{ jugador.puntos }}</li>
+      </ul>
+    </section>
+  </ng-container>
+
+  <ng-template #pantallaTpl>
+    <section class="screen-stage screen-stage-static" *ngIf="muestraSoloFondoEstatico">
+      <div>
+        <p class="stage-kicker">Preparando ronda</p>
+        <h4>Hablame de ti</h4>
+        <p>Espera a que cada jugador termine su respuesta personal.</p>
+      </div>
+    </section>
+
+    <section class="card" *ngIf="estado.fase === 'ESCRIBIENDO_MENTIRAS'">
+      <h4>Pregunta de la ronda</h4>
+      <p>{{ estado.preguntaPublica }}</p>
+    </section>
+
+    <section class="card" *ngIf="estado.fase === 'VOTANDO'">
+      <h4>Respuestas disponibles</h4>
+      <p class="muted">Elige la que creas correcta.</p>
+      <article *ngFor="let opcion of estado.opciones || []; let indice = index" class="option-card">
+        <strong>Opción {{ indice + 1 }}</strong>
+        <p>{{ opcion.texto }}</p>
+      </article>
+    </section>
+
+    <section class="card" *ngIf="estado.fase === 'MOSTRANDO_RESULTADO' || estado.fase === 'FINALIZADA'">
+      <h4>Scoreboard de la ronda</h4>
+      <div class="round-table">
+        <div class="round-head">
+          <span>Puntos totales</span>
+          <span>Puntos ganados esta ronda</span>
+          <span>Respuesta</span>
+          <span>Num seleccionados</span>
+        </div>
+        <div class="round-row" *ngFor="let fila of estado.resumenRonda || []">
+          <span>{{ fila.puntosTotales }}</span>
+          <span>{{ fila.puntosGanadosEstaRonda }}</span>
+          <span>{{ fila.respuesta }} <small>({{ fila.esOriginal ? 'original' : 'mentira' }})</small></span>
+          <span>{{ fila.numSeleccionados }}</span>
+        </div>
+      </div>
+      <div class="round-table summary-table">
+        <div class="round-head">
+          <span>Jugador</span>
+          <span>Puntos totales</span>
+        </div>
+        <div class="round-row" *ngFor="let jugador of estado.marcador || []">
+          <span>{{ jugador.nombreJugador }}</span>
+          <span>{{ jugador.puntos }}</span>
+        </div>
+      </div>
+    </section>
+  </ng-template>
+</section>

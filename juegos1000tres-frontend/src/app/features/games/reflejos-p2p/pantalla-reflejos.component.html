@@ -1,0 +1,44 @@
+<section class="pantalla-root">
+  <header class="pantalla-header">
+    <div>
+      <p class="eyebrow">PANTALLA</p>
+      <h1>Reflejos</h1>
+    </div>
+    <div class="sala-info">
+      Sala: {{ uuid }}
+    </div>
+  </header>
+
+  <!-- Mostrar error si hay -->
+  <article class="panel error-panel" *ngIf="errorInicial">
+    <p class="error-mensaje">❌ {{ errorInicial }}</p>
+  </article>
+
+  <!-- Pantalla del juego -->
+  <div class="pantalla-contenido" *ngIf="!errorInicial">
+    <!-- Área principal: palabra grande -->
+    <div class="palabra-grande" [ngClass]="'fase-' + estado.fase.toLowerCase()">
+      <div class="palabra">{{ estado.palabraActual || '---' }}</div>
+      <div class="estado-texto">{{ estado.mensaje }}</div>
+    </div>
+
+    <!-- Lateral: puntuaciones -->
+    <aside class="ranking-sidebar">
+      <h2>Ranking</h2>
+      <div class="ranking-contenedor">
+        <div *ngIf="estado.ranking.length > 0" class="ranking-list">
+          <div *ngFor="let item of estado.ranking; let i = index" class="ranking-item">
+            <span class="posicion">{{ i + 1 }}.</span>
+            <span class="nombre">{{ item.jugadorId }}</span>
+            <span class="tiempo">{{ item.tiempoMs }}ms</span>
+          </div>
+        </div>
+        <p *ngIf="estado.ranking.length === 0" class="sin-ranking">Sin resultados aún</p>
+      </div>
+    </aside>
+  </div>
+
+  <footer class="pantalla-footer">
+    <button type="button" class="volver" (click)="volverALobby()">Volver a la sala</button>
+  </footer>
+</section>

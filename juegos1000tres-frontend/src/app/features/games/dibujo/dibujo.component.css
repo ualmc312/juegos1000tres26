@@ -1,0 +1,549 @@
+.dibujo-shell {
+  display: grid;
+  gap: 1.5rem;
+  color: #f8fafc;
+  font-family: 'Outfit', 'Inter', sans-serif;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+/* Cabecera Hero */
+.dibujo-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.eyebrow {
+  margin: 0 0 0.35rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: #fbbf24;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 2rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0;
+}
+
+.subtitle {
+  color: #94a3b8;
+  font-size: 0.95rem;
+  margin-top: 0.25rem;
+}
+
+.subtitle strong {
+  color: #fbbf24;
+}
+
+.estado {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #fca5a5;
+  border-radius: 99px;
+  padding: 0.45rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.estado.conectado {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  color: #a7f3d0;
+}
+
+/* Panels */
+.panel {
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 1.75rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+/* Inputs & Form Fields */
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 1.25rem 0;
+}
+
+.campo label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #94a3b8;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.campo input {
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: #f8fafc;
+  padding: 1rem 1.25rem;
+  font-size: 1.05rem;
+  outline: none;
+  transition: all 0.25s ease;
+}
+
+.campo input:focus {
+  border-color: #fbbf24;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.15);
+}
+
+/* Buttons */
+.action {
+  border: 0;
+  border-radius: 14px;
+  padding: 1rem 1.75rem;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: #0f172a;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.2);
+}
+
+.action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(251, 191, 36, 0.35);
+  filter: brightness(1.05);
+}
+
+.action:active {
+  transform: translateY(0);
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.btn-secundario {
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+  color: #f8fafc;
+  border-radius: 12px;
+  padding: 0.75rem 1.25rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secundario:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.btn-peligro {
+  border: 0;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+  border-radius: 12px;
+  padding: 0.75rem 1.25rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-peligro:hover {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: rgba(239, 68, 68, 0.5);
+  transform: translateY(-1px);
+}
+
+.resultado-intento {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.55rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.resultado-intento.acierto {
+  background: rgba(16, 185, 129, 0.16);
+  border: 1px solid rgba(16, 185, 129, 0.32);
+  color: #a7f3d0;
+}
+
+.resultado-intento.fallo {
+  background: rgba(239, 68, 68, 0.16);
+  border: 1px solid rgba(239, 68, 68, 0.32);
+  color: #fca5a5;
+}
+
+/* Contador de Tiempo */
+.contador-tiempo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 0.5rem 1.25rem;
+  min-width: 70px;
+  text-align: center;
+}
+
+.contador-tiempo span {
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fbbf24;
+}
+
+.contador-tiempo.tiempo-critico {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.35);
+  animation: pulso-critico 1s infinite alternate;
+}
+
+.contador-tiempo.tiempo-critico span {
+  color: #f87171;
+}
+
+@keyframes pulso-critico {
+  from { box-shadow: 0 0 0 0px rgba(239, 68, 68, 0.2); }
+  to { box-shadow: 0 0 10px 4px rgba(239, 68, 68, 0.4); }
+}
+
+/* Canvas y Contenedores */
+.dibujo-canvas {
+  width: 100%;
+  aspect-ratio: 4/3;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: inset 0 2px 10px rgba(0,0,0,0.1), 0 10px 30px rgba(0,0,0,0.25);
+  touch-action: none; /* Previene scroll vertical y zoom al arrastrar el dedo */
+  display: block;
+}
+
+.pintor-canvas {
+  cursor: crosshair;
+}
+
+.miniatura-canvas {
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.lienzo-acciones {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  justify-content: flex-end;
+}
+
+/* Wrapper layouts */
+.pantalla-wrapper {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.pantalla-juego {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.pantalla-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255,255,255,0.03);
+  padding: 1rem 1.5rem;
+  border-radius: 18px;
+}
+
+.info-ronda {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.ronda-badge {
+  background: #3b82f6;
+  color: white;
+  padding: 0.3rem 0.75rem;
+  border-radius: 99px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.info-ronda h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+/* Spinners y Loaders */
+.loader-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  gap: 1.5rem;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(251, 191, 36, 0.1);
+  border-left-color: #fbbf24;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.spinner-small {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-left-color: #fbbf24;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 1.5rem auto;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Panel Temática e Iniciales */
+.panel-tema h3 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.espera-mensaje {
+  text-align: center;
+  padding: 3rem 1.5rem;
+}
+
+.esperando-validar {
+  text-align: center;
+  padding: 2.5rem 1.5rem;
+}
+
+/* Pintor e Instrucciones */
+.panel-juego-pintor {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.pintor-instrucciones {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.palabra-secreta-contenedor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.palabra-secreta-contenedor .etiqueta {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.palabra-secreta-contenedor .palabra-secreta {
+  font-size: 1.75rem;
+  font-weight: 900;
+  color: #10b981;
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 15px rgba(16, 185, 129, 0.35);
+}
+
+/* Adivinadores */
+.panel-juego-adivinador {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.adivinador-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.adivinador-mensaje h3 {
+  font-size: 1.3rem;
+  margin-bottom: 0.25rem;
+}
+
+.adivinador-acciones.acierto {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.35);
+  box-shadow: 0 10px 25px rgba(16, 185, 129, 0.05);
+}
+
+.celebracion-acierto {
+  text-align: center;
+  padding: 1.5rem 1rem;
+}
+
+.celebracion-acierto .icono {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 0.75rem;
+  animation: bounce 0.6s ease infinite alternate;
+}
+
+@keyframes bounce {
+  from { transform: translateY(0); }
+  to { transform: translateY(-8px); }
+}
+
+.celebracion-acierto h3 {
+  color: #34d399;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+}
+
+/* Marcadores y Tablas */
+.marcador-global, .marcador-jugador {
+  margin-top: 1.5rem;
+}
+
+.marcador-global h3, .marcador-jugador h3 {
+  font-size: 1.1rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.marcador-lista {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.marcador-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.25s ease;
+}
+
+.marcador-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.marcador-item.primer-puesto {
+  background: rgba(251, 191, 36, 0.08);
+  border-color: rgba(251, 191, 36, 0.3);
+  box-shadow: 0 0 15px rgba(251, 191, 36, 0.05);
+}
+
+.marcador-item.primer-puesto .posicion {
+  color: #fbbf24;
+}
+
+.marcador-item.primer-puesto .puntos {
+  color: #fbbf24;
+  font-size: 1.25rem;
+}
+
+.marcador-izq {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.posicion {
+  font-family: 'Monaco', monospace;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.nombre {
+  font-weight: 600;
+}
+
+.puntos {
+  font-family: 'Monaco', monospace;
+  font-weight: 700;
+}
+
+.resultados-titulo {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.palabra-revelada {
+  font-size: 1.25rem;
+  margin-top: 0.5rem;
+  color: #cbd5e1;
+}
+
+.palabra-revelada strong {
+  color: #fbbf24;
+  font-size: 1.5rem;
+  text-shadow: 0 0 12px rgba(251, 191, 36, 0.2);
+}
+
+/* Footer / Logs */
+.dibujo-footer {
+  text-align: center;
+  padding: 1rem;
+}
+
+.dibujo-footer p {
+  color: #cbd5e1;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+@media (max-width: 600px) {
+  .dibujo-hero {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  .estado {
+    align-self: flex-end;
+  }
+  .pintor-instrucciones, .adivinador-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  .contador-tiempo {
+    align-self: flex-end;
+  }
+}
+
