@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.juegos1000tres.juegos1000tres_backend.comunicacion.Conexion;
+import com.juegos1000tres.juegos1000tres_backend.comunicacion.DestinoEnvio;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
@@ -87,6 +88,11 @@ public class ApiConexion implements Conexion<String> {
         validarConexionActiva();
         String payloadNoNulo = Objects.requireNonNull(payload, "El payload no puede ser nulo");
         this.ultimoMensaje = payloadNoNulo;
+    }
+
+    @Override
+    public void enviar(String payload, DestinoEnvio destinoEnvio) {
+        enviar(payload);
     }
 
     @Override

@@ -1,11 +1,11 @@
 package com.juegos1000tres.juegos1000tres_backend.sala;
 
-import com.juegos1000tres.juegos1000tres_backend.modelos.Jugador;
-import com.juegos1000tres.juegos1000tres_backend.modelos.Sala;
-
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+
+import com.juegos1000tres.juegos1000tres_backend.modelos.Jugador;
+import com.juegos1000tres.juegos1000tres_backend.modelos.Sala;
 
 public class SalaRoom {
 
@@ -16,6 +16,7 @@ public class SalaRoom {
     private final String creadorId;
     private String pantallaId;
     private String juegoActual;
+    private String p2pHostPeerId;
     private int contadorNombres = 1;
 
     public SalaRoom(String uuid, Sala sala, String creadorId) {
@@ -24,6 +25,7 @@ public class SalaRoom {
         this.creadorId = Objects.requireNonNull(creadorId, "creador requerido");
         this.pantallaId = creadorId;
         this.juegoActual = "";
+        this.p2pHostPeerId = "";
     }
 
     public synchronized Jugador agregarJugador(String nombre) {
@@ -75,6 +77,7 @@ public class SalaRoom {
         }
 
         this.juegoActual = juego.trim();
+        this.p2pHostPeerId = "reflejos-p2p".equalsIgnoreCase(this.juegoActual) ? UUID.randomUUID().toString() : "";
     }
 
     public synchronized void finalizarJuego(String actorId) {
@@ -121,5 +124,9 @@ public class SalaRoom {
 
     public String getJuegoActual() {
         return juegoActual;
+    }
+
+    public String getP2pHostPeerId() {
+        return p2pHostPeerId;
     }
 }

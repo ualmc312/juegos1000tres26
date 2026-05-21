@@ -7,10 +7,14 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.stereotype.Service;
 
+import com.juegos1000tres.juegos1000tres_backend.juegos.AdivinaElPersonaje.AdivinaElPersonajeManager;
+import com.juegos1000tres.juegos1000tres_backend.juegos.Dibujo.DibujoManager;
+import com.juegos1000tres.juegos1000tres_backend.juegos.HablameDeTi.HablameDeTiManager;
+import com.juegos1000tres.juegos1000tres_backend.juegos.PruebaWebSocket.PruebaWebSocketManager;
 import com.juegos1000tres.juegos1000tres_backend.modelos.Jugador;
 import com.juegos1000tres.juegos1000tres_backend.modelos.Pantalla;
 import com.juegos1000tres.juegos1000tres_backend.modelos.Sala;
-import com.juegos1000tres.juegos1000tres_backend.juegos.PruebaWebSocket.PruebaWebSocketManager;
+import com.juegos1000tres.juegos1000tres_backend.sala.p2p.P2PSenalizacionService;
 
 @Service
 public class SalaService {
@@ -19,10 +23,24 @@ public class SalaService {
     private final SecureRandom random = new SecureRandom();
     private final JuegoManager juegoManager;
     private final PruebaWebSocketManager pruebaWebSocketManager;
+    private final AdivinaElPersonajeManager adivinaElPersonajeManager;
+    private final HablameDeTiManager hablameDeTiManager;
+    private final DibujoManager dibujoManager;
+    private final P2PSenalizacionService p2pSenalizacionService;
 
-    public SalaService(JuegoManager juegoManager, PruebaWebSocketManager pruebaWebSocketManager) {
+    public SalaService(
+            JuegoManager juegoManager,
+            PruebaWebSocketManager pruebaWebSocketManager,
+            AdivinaElPersonajeManager adivinaElPersonajeManager,
+            HablameDeTiManager hablameDeTiManager,
+            DibujoManager dibujoManager,
+            P2PSenalizacionService p2pSenalizacionService) {
         this.juegoManager = juegoManager;
         this.pruebaWebSocketManager = pruebaWebSocketManager;
+        this.adivinaElPersonajeManager = adivinaElPersonajeManager;
+        this.hablameDeTiManager = hablameDeTiManager;
+        this.dibujoManager = dibujoManager;
+        this.p2pSenalizacionService = p2pSenalizacionService;
     }
 
     public SalaRespuesta crearSala() {
@@ -63,6 +81,12 @@ public class SalaService {
         try {
             if ("prueba-websocket".equalsIgnoreCase(juego)) {
                 this.pruebaWebSocketManager.crearInstanciaParaSala(uuid);
+            } else if ("adivina-el-personaje".equalsIgnoreCase(juego)) {
+                this.adivinaElPersonajeManager.crearInstanciaParaSala(uuid);
+            } else if ("hablame-de-ti".equalsIgnoreCase(juego)) {
+                this.hablameDeTiManager.crearInstanciaParaSala(uuid);
+            } else if ("dibujo".equalsIgnoreCase(juego)) {
+                this.dibujoManager.crearInstanciaParaSala(uuid);
             } else {
                 this.juegoManager.crearInstanciaJuego(uuid, juego);
             }
@@ -80,6 +104,12 @@ public class SalaService {
         try {
             if ("prueba-websocket".equalsIgnoreCase(juegoAntes)) {
                 this.pruebaWebSocketManager.detenerInstanciaParaSala(uuid);
+            } else if ("adivina-el-personaje".equalsIgnoreCase(juegoAntes)) {
+                this.adivinaElPersonajeManager.detenerInstanciaParaSala(uuid);
+            } else if ("hablame-de-ti".equalsIgnoreCase(juegoAntes)) {
+                this.hablameDeTiManager.detenerInstanciaParaSala(uuid);
+            } else if ("dibujo".equalsIgnoreCase(juegoAntes)) {
+                this.dibujoManager.detenerInstanciaParaSala(uuid);
             } else {
                 this.juegoManager.detenerInstancia(uuid, juegoAntes);
             }
@@ -99,9 +129,12 @@ public class SalaService {
 
     public void salir(String uuid, String jugadorId) {
         SalaRoom room = obtenerSala(uuid);
+        String juegoAntes = room.getJuegoActual();
 
         if (room.esCreador(jugadorId)) {
             salas.remove(uuid);
+            this.p2pSenalizacionService.limpiarSala(uuid);
+            detenerJuegoActivoSiCorresponde(uuid, juegoAntes);
             return;
         }
 
@@ -109,11 +142,15 @@ public class SalaService {
 
         if (!room.isAbierta()) {
             salas.remove(uuid);
+            detenerJuegoActivoSiCorresponde(uuid, juegoAntes);
         }
     }
 
     public void apagar(String uuid) {
+        String juegoAntes = salas.containsKey(uuid) ? salas.get(uuid).getJuegoActual() : null;
         salas.remove(uuid);
+        this.p2pSenalizacionService.limpiarSala(uuid);
+        detenerJuegoActivoSiCorresponde(uuid, juegoAntes);
     }
 
     private SalaRespuesta construirRespuesta(SalaRoom room, String jugadorId) {
@@ -131,6 +168,7 @@ public class SalaService {
                 room.getHostId(),
                 room.getPantallaId(),
             room.getJuegoActual(),
+            room.getP2pHostPeerId(),
             jugadorId
         );
     }
@@ -165,5 +203,21 @@ public class SalaService {
 
     private String formatearId(int valor) {
         return String.format("%06d", Math.abs(valor));
+    }
+
+    private void detenerJuegoActivoSiCorresponde(String uuid, String juego) {
+        try {
+            if ("prueba-websocket".equalsIgnoreCase(juego)) {
+                this.pruebaWebSocketManager.detenerInstanciaParaSala(uuid);
+            } else if ("adivina-el-personaje".equalsIgnoreCase(juego)) {
+                this.adivinaElPersonajeManager.detenerInstanciaParaSala(uuid);
+            } else if ("hablame-de-ti".equalsIgnoreCase(juego)) {
+                this.hablameDeTiManager.detenerInstanciaParaSala(uuid);
+            } else if (juego != null && !juego.isBlank()) {
+                this.juegoManager.detenerInstancia(uuid, juego);
+            }
+        } catch (RuntimeException ex) {
+            // ignore
+        }
     }
 }

@@ -2,6 +2,10 @@
 .DS_Store
 Thumbs.db
 
+# Local launchers
+lanzar-back-front.ps1
+APIKEYGoogle.txt
+
 # Editor
 .vscode/
 .idea/

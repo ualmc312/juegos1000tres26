@@ -4,15 +4,20 @@ import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription, interval } from 'rxjs';
+import { obtenerApiBaseUrl } from '../../core/config/api-base';
 import { GenericButton } from '../../shared/components/generic-button/generic-button';
 import { Taptap } from '../games/taptap/taptap';
 import { SpaceInvadersComponent } from '../games/space-invaders/space-invaders.component';
 import { PruebaWebSocketComponent } from '../games/prueba-websocket/prueba-websocket.component';
 import { PreguntasComponent } from '../games/preguntas/preguntas.component';
+import { AdivinaElPersonajeComponent } from '../games/adivina-el-personaje/adivina-el-personaje.component';
+import { HablameDeTiComponent } from '../games/hablame-de-ti/hablame-de-ti.component';
+import { DibujoComponent } from '../games/dibujo/dibujo.component';
 
 @Component({
   selector: 'app-lobby',
-  imports: [CommonModule, FormsModule, GenericButton, Taptap, PreguntasComponent, SpaceInvadersComponent, PruebaWebSocketComponent],
+  standalone: true,
+  imports: [CommonModule, FormsModule, GenericButton, Taptap, PreguntasComponent, SpaceInvadersComponent, PruebaWebSocketComponent, AdivinaElPersonajeComponent, HablameDeTiComponent, DibujoComponent],
   templateUrl: './lobby.html',
   styleUrl: './lobby.css',
 })
@@ -24,6 +29,7 @@ export class Lobby implements OnInit, OnDestroy {
   uuidActual = '';
   jugadorId = '';
   hostId = '';
+  p2pHostPeerId = '';
   pantallaId = '';
   juegoActual = '';
   jugadores: JugadorResumen[] = [];
@@ -33,13 +39,18 @@ export class Lobby implements OnInit, OnDestroy {
   juegosDisponibles = [
     { id: 'space-invaders', nombre: 'Space Invaders' },
     { id: 'prueba-websocket', nombre: 'Prueba WebSocket' },
+    { id: 'adivina-el-personaje', nombre: 'Adivina el personaje' },
+    { id: 'dibujo', nombre: 'Dibujo' },
+    { id: 'hablame-de-ti', nombre: 'Hablame de ti' },
     { id: 'taptap', nombre: 'TapTap' },
-    { id: 'preguntas', nombre: 'Preguntas' }
+    { id: 'preguntas', nombre: 'Preguntas' },
+    { id: 'reflejos-p2p', nombre: 'Reflejos P2P' }
   ];
 
-  private readonly apiBase = 'http://localhost:8083';
+  private readonly apiBase = obtenerApiBaseUrl();
   private readonly requestOptions = { withCredentials: true };
   private polling?: Subscription;
+  private ultimoJuegoReflejosAbierto = '';
 
   constructor(
     private readonly http: HttpClient,
@@ -60,6 +71,7 @@ export class Lobby implements OnInit, OnDestroy {
         this.uuidActual = uuid;
         this.jugadorId = sessionStorage.getItem('sala.jugadorId') || '';
         this.hostId = sessionStorage.getItem('sala.hostId') || '';
+        this.p2pHostPeerId = sessionStorage.getItem('sala.p2pHostPeerId') || '';
         this.actualizarEstado();
         this.iniciarPolling();
         return;
@@ -154,7 +166,12 @@ export class Lobby implements OnInit, OnDestroy {
         this.requestOptions
       )
       .subscribe({
-        next: respuesta => this.actualizarDatos(respuesta),
+        next: respuesta => {
+          this.actualizarDatos(respuesta);
+          if (juegoId === 'reflejos-p2p') {
+            this.abrirVistaReflejosP2P();
+          }
+        },
         error: () => {
           this.errorUuid = 'No se pudo iniciar el juego';
           this.cdr.detectChanges();
@@ -191,6 +208,7 @@ export class Lobby implements OnInit, OnDestroy {
 
     sessionStorage.setItem('sala.jugadorId', respuesta.jugadorId);
     sessionStorage.setItem('sala.hostId', respuesta.hostId);
+    sessionStorage.setItem('sala.p2pHostPeerId', respuesta.p2pHostPeerId || '');
 
     this.router.navigate(['/sala', respuesta.uuid]);
   }
@@ -217,10 +235,31 @@ export class Lobby implements OnInit, OnDestroy {
     this.uuidActual = respuesta.uuid;
     this.jugadores = respuesta.jugadores || [];
     this.hostId = respuesta.hostId;
+    this.p2pHostPeerId = respuesta.p2pHostPeerId || this.p2pHostPeerId;
     this.pantallaId = respuesta.pantallaId || '';
     this.juegoActual = respuesta.juegoActual || '';
     this.esHost = !!this.jugadorId && this.jugadorId === this.hostId;
     this.cdr.detectChanges();
+
+    this.abrirVistaReflejosP2PAutomaticamente();
+  }
+
+  abrirVistaReflejosP2P(): void {
+    if (!this.uuidActual || !this.p2pHostPeerId) {
+      return;
+    }
+
+    this.ultimoJuegoReflejosAbierto = `${this.uuidActual}:${this.jugadorId}:${this.hostId}`;
+
+    let role = 'player';
+    if (this.esHost) {
+      role = 'host';
+    } else if (this.jugadorId === this.pantallaId) {
+      role = 'pantalla';
+    }
+    
+    const url = `/reflejos-p2p/${encodeURIComponent(this.uuidActual)}?role=${role}&hostPeerId=${encodeURIComponent(this.p2pHostPeerId)}&jugadorId=${encodeURIComponent(this.jugadorId)}&popup=true`;
+    window.open(url, '_blank', 'noopener,noreferrer');
   }
 
   obtenerNombreJugador(id: string): string {
@@ -244,7 +283,30 @@ export class Lobby implements OnInit, OnDestroy {
     this.detenerPolling();
     sessionStorage.removeItem('sala.jugadorId');
     sessionStorage.removeItem('sala.hostId');
+    this.ultimoJuegoReflejosAbierto = '';
     this.router.navigate(['/sala']);
+  }
+
+  private abrirVistaReflejosP2PAutomaticamente(): void {
+    if (this.juegoActual !== 'reflejos-p2p' || !this.uuidActual) {
+      this.ultimoJuegoReflejosAbierto = '';
+      return;
+    }
+
+    if (this.esHost) {
+      return;
+    }
+
+    const marcaActual = `${this.uuidActual}:${this.jugadorId}:${this.hostId}`;
+    if (this.ultimoJuegoReflejosAbierto === marcaActual) {
+      return;
+    }
+
+    this.ultimoJuegoReflejosAbierto = marcaActual;
+    const role = this.jugadorId === this.pantallaId ? 'pantalla' : 'player';
+    this.router.navigate(['/reflejos-p2p', this.uuidActual], {
+      queryParams: { role, hostPeerId: this.p2pHostPeerId || '', jugadorId: this.jugadorId },
+    });
   }
 }
 
@@ -258,6 +320,7 @@ interface SalaRespuesta {
   uuid: string;
   jugadores: JugadorResumen[];
   hostId: string;
+  p2pHostPeerId: string;
   pantallaId: string;
   juegoActual: string;
   jugadorId?: string;

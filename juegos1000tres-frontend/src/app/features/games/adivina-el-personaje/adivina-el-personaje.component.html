@@ -1,0 +1,131 @@
+<section class="adp-root">
+  <header class="adp-header">
+    <div>
+      <h3>Adivina el personaje</h3>
+      <p class="adp-subtitle">
+        {{ esPantalla ? 'Pantalla compartida' : 'Jugador' }} en sala {{ uuid || 'adivina-el-personaje' }}
+      </p>
+    </div>
+    <span class="adp-status">{{ estadoConexion }}</span>
+  </header>
+
+  <div class="adp-state">
+    <div>
+      <p class="label">Fase</p>
+      <strong>{{ estado.fase || 'Sin estado' }}</strong>
+    </div>
+    <div>
+      <p class="label">Tema</p>
+      <strong>{{ estado.tema || 'Pendiente' }}</strong>
+    </div>
+    <div>
+      <p class="label">IA</p>
+      <strong>{{ estado.ultimaRespuestaIA || '---' }}</strong>
+    </div>
+  </div>
+
+  <p class="adp-message" *ngIf="estado.mensaje">{{ estado.mensaje }}</p>
+
+  <ng-container *ngIf="!esPantalla; else pantallaTpl">
+    <div class="adp-form" *ngIf="estado.puedeProponerTema && soyJugadorTema">
+      <label>
+        Nombre
+        <input type="text" [(ngModel)]="nombreJugador" />
+      </label>
+
+      <label>
+        Tema
+        <input
+          type="text"
+          [(ngModel)]="tema"
+          placeholder="Matematicos, Mario Bros, una serie, pelicula..."
+          (keydown.enter)="$event.preventDefault(); proponerTema()"
+        />
+      </label>
+
+      <button type="button" (click)="proponerTema()">Validar y elegir personaje</button>
+    </div>
+
+    <div class="adp-panel" *ngIf="estado.puedeProponerTema && !soyJugadorTema">
+      <h4>Esperando al jugador seleccionado</h4>
+      <p class="muted">Solo el jugador elegido al azar puede proponer el tema.</p>
+    </div>
+
+    <div class="adp-form" *ngIf="estado.puedePreguntar">
+      <label>
+        Pregunta de si o no
+        <textarea
+          [(ngModel)]="pregunta"
+          rows="3"
+          placeholder="Ejemplo: ¿Es un personaje de videojuego?"
+          (keydown.enter)="$event.preventDefault(); enviarPregunta()"
+        ></textarea>
+      </label>
+
+      <div class="adp-actions">
+        <button type="button" (click)="enviarPregunta()">Preguntar</button>
+      </div>
+
+      <label>
+        Intentar adivinar
+        <input
+          type="text"
+          [(ngModel)]="intento"
+          placeholder="Escribe el nombre del personaje"
+          (keydown.enter)="$event.preventDefault(); intentarAdivinar()"
+        />
+      </label>
+
+      <div class="adp-actions">
+        <button type="button" class="secondary" (click)="intentarAdivinar()">Adivinar</button>
+      </div>
+    </div>
+
+    <div class="adp-panel">
+      <h4>Jugadores</h4>
+      <article *ngFor="let jugador of jugadoresOrdenados" class="adp-player-card">
+        <div class="adp-player-head">
+          <h5>{{ jugador.nombreJugador || 'Jugador' }}</h5>
+          <span>{{ jugador.acertado ? 'Adivinó' : 'En juego' }}</span>
+        </div>
+        <p>
+          Preguntas válidas: {{ jugador.preguntasValidas }} | Invalidas: {{ jugador.preguntasInvalidas }} | Para acertar: {{ jugador.preguntasAlAcertar }}
+        </p>
+      </article>
+    </div>
+  </ng-container>
+
+  <ng-template #pantallaTpl>
+    <div class="adp-panel">
+      <h4>Marcador</h4>
+      <article *ngFor="let jugador of jugadoresOrdenados" class="adp-player-card">
+        <div class="adp-player-head">
+          <h5>{{ jugador.nombreJugador || 'Jugador' }}</h5>
+          <span>{{ jugador.acertado ? 'Adivinó' : 'Pendiente' }}</span>
+        </div>
+        <p>Preguntas hechas: {{ jugador.preguntasValidas + jugador.preguntasInvalidas }}</p>
+      </article>
+
+      <p *ngIf="!jugadoresOrdenados.length" class="muted">Esperando jugadores...</p>
+    </div>
+  </ng-template>
+
+  <ng-container *ngIf="!esPantalla">
+    <div class="adp-panel">
+      <h4>Historial reciente</h4>
+      <article *ngFor="let item of historialReciente" class="adp-history-item">
+        <strong>{{ item.tipo }}</strong>
+        <p>{{ item.contenido }}</p>
+        <small>{{ item.respuestaIA }}</small>
+      </article>
+      <p *ngIf="!historialReciente.length" class="muted">Sin actividad todavía.</p>
+    </div>
+
+    <div class="adp-panel final" *ngIf="esFaseFinalizada">
+      <h4>Resultado final</h4>
+      <p>{{ estado.personajeRevelado || 'Sin revelar' }}</p>
+      <p *ngIf="estado.descripcionPersonaje">{{ estado.descripcionPersonaje }}</p>
+      <p *ngIf="estado.ganadores?.length">Ganadores: {{ estado.ganadores?.join(', ') }}</p>
+    </div>
+  </ng-container>
+</section>
