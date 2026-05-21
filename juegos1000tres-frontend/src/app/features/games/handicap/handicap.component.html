@@ -1,0 +1,83 @@
+<section class="handicap-shell" *ngIf="estado; else cargando">
+  <header class="handicap-header">
+    <div>
+      <p class="eyebrow">Minijuego</p>
+      <h3>Handicap</h3>
+    </div>
+    <div class="status" [class.locked]="bloqueoHost">
+      <span>{{ estado.fase === 'SELECCIONANDO' ? 'Seleccion' : 'Resultados' }}</span>
+      <strong *ngIf="estado.fase !== 'SELECCIONANDO'">{{ getTiempoRestanteSegundos() }}s</strong>
+    </div>
+  </header>
+
+  <div class="handicap-grid">
+    <section class="card host-card" *ngIf="esHost">
+      <h4>Menu del host</h4>
+      <p class="hint">Selecciona quien recibe la victoria y pulsa salir.</p>
+
+      <div class="checklist">
+        <label class="check-item" *ngFor="let jugador of estado.jugadores">
+          <input
+            type="checkbox"
+            [checked]="seleccionados.has(jugador.id)"
+            (change)="toggleJugador(jugador.id, $event)"
+            [disabled]="bloqueoHost"
+          />
+          <span>{{ jugador.nombre }}</span>
+          <small *ngIf="jugador.id === jugadorId">(tu)</small>
+        </label>
+      </div>
+
+      <button type="button" class="confirm-btn" (click)="confirmarGanadores()" [disabled]="bloqueoHost">
+        Salir
+      </button>
+      <p class="hint" *ngIf="bloqueoHost">Seleccion enviada. Volviendo en {{ getTiempoRestanteSegundos() }}s.</p>
+    </section>
+
+    <section class="card result-card">
+      <h4>Resultado</h4>
+      <p *ngIf="estado.fase === 'SELECCIONANDO'">Esperando al host...</p>
+
+      <div *ngIf="estado.fase !== 'SELECCIONANDO'">
+        <p *ngIf="estado.ganadores.length">Ganadores:</p>
+        <ul class="ganadores-list" *ngIf="estado.ganadores.length">
+          <li *ngFor="let ganador of estado.ganadores">{{ ganador.nombre }}</li>
+        </ul>
+        <p *ngIf="!estado.ganadores.length">Sin ganadores esta vez.</p>
+        <p class="countdown">Volviendo en {{ getTiempoRestanteSegundos() }}s.</p>
+      </div>
+    </section>
+  </div>
+
+  <details class="debug-panel" *ngIf="!esHost">
+    <summary>Debug de sesion (solo web)</summary>
+    <div class="debug-grid">
+      <div class="debug-card">
+        <h5>Cookies</h5>
+        <pre>{{ debugCookies }}</pre>
+      </div>
+      <div class="debug-card">
+        <h5>URL</h5>
+        <pre>{{ debugLocation }}</pre>
+      </div>
+      <div class="debug-card">
+        <h5>User Agent</h5>
+        <pre>{{ debugUserAgent }}</pre>
+      </div>
+      <div class="debug-card">
+        <h5>Local Storage</h5>
+        <pre>{{ debugLocalStorage }}</pre>
+      </div>
+      <div class="debug-card">
+        <h5>Session Storage</h5>
+        <pre>{{ debugSessionStorage }}</pre>
+      </div>
+    </div>
+  </details>
+</section>
+
+<ng-template #cargando>
+  <section class="handicap-shell">
+    <p class="hint">Cargando estado...</p>
+  </section>
+</ng-template>

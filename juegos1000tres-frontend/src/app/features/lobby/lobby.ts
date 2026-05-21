@@ -9,12 +9,13 @@ import { Taptap } from '../games/taptap/taptap';
 import { SpaceInvadersComponent } from '../games/space-invaders/space-invaders.component';
 import { PruebaWebSocketComponent } from '../games/prueba-websocket/prueba-websocket.component';
 import { PreguntasComponent } from '../games/preguntas/preguntas.component';
+import { HandicapComponent } from '../games/handicap/handicap.component';
 import { AuthService } from '../auth/services/auth.service';
 import { AuthSession } from '../auth/models/auth-session.model';
 
 @Component({
   selector: 'app-lobby',
-  imports: [CommonModule, FormsModule, GenericButton, Taptap, PreguntasComponent, SpaceInvadersComponent, PruebaWebSocketComponent],
+  imports: [CommonModule, FormsModule, GenericButton, Taptap, PreguntasComponent, SpaceInvadersComponent, PruebaWebSocketComponent, HandicapComponent],
   templateUrl: './lobby.html',
   styleUrl: './lobby.css',
 })
@@ -39,7 +40,8 @@ export class Lobby implements OnInit, OnDestroy {
     { id: 'space-invaders', nombre: 'Space Invaders' },
     { id: 'prueba-websocket', nombre: 'Prueba WebSocket' },
     { id: 'taptap', nombre: 'TapTap' },
-    { id: 'preguntas', nombre: 'Preguntas' }
+    { id: 'preguntas', nombre: 'Preguntas' },
+    { id: 'handicap', nombre: 'Handicap' }
   ];
 
   private readonly apiBase = 'http://localhost:8083';

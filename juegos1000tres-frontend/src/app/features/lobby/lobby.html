@@ -15,7 +15,7 @@
 <section
 	class="sala"
 	*ngIf="viewMode === 'sala'"
-	[class.jugando]="juegoActual === 'space-invaders' || juegoActual === 'taptap' || juegoActual === 'prueba-websocket' || juegoActual === 'preguntas'"
+		[class.jugando]="juegoActual === 'space-invaders' || juegoActual === 'taptap' || juegoActual === 'prueba-websocket' || juegoActual === 'preguntas' || juegoActual === 'handicap'"
 >
 	<div class="sala-layout">
 		<aside class="sala-sidebar">
@@ -112,12 +112,12 @@
 							<img
 								class="juego-icon"
 								[src]="
-									juego.id === 'space-invaders' || juego.id === 'taptap'
+									juego.id === 'space-invaders' || juego.id === 'taptap' || juego.id === 'handicap'
 										? '/img/lobby/no-creen-needed.png'
 										: '/img/lobby/screen-needed.png'
 								"
 								[alt]="
-									juego.id === 'space-invaders' || juego.id === 'taptap'
+									juego.id === 'space-invaders' || juego.id === 'taptap' || juego.id === 'handicap'
 										? 'No requiere pantalla'
 										: 'Requiere pantalla'
 								"
@@ -169,6 +169,14 @@
 			[esPantalla]="pantallaId === jugadorId"
 			[esHost]="esHost"
 		></app-preguntas>
+	</div>
+
+	<div class="juego handicap" *ngIf="juegoActual === 'handicap'">
+		<app-handicap
+			[uuid]="uuidActual"
+			[jugadorId]="jugadorId"
+			[esHost]="esHost"
+		></app-handicap>
 	</div>
 
 </section>
