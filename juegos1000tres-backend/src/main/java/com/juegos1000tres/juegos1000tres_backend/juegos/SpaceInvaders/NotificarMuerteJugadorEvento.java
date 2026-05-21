@@ -11,6 +11,8 @@ import com.juegos1000tres.juegos1000tres_backend.comunicacion.Evento;
 public class NotificarMuerteJugadorEvento implements Evento<String> {
 
     private static final Pattern PATRON_JUGADOR_ID = Pattern.compile("\\\"jugadorId\\\"\\s*:\\s*\\\"([^\\\"]+)\\\"");
+    private static final Pattern PATRON_PUNTUACION = Pattern
+        .compile("\\\"(?:puntuacion|puntuacionFinal|puntuacionTotal)\\\"\\s*:\\s*(-?\\d+)");
 
     private final SpaceInvader juego;
 
@@ -27,13 +29,25 @@ public class NotificarMuerteJugadorEvento implements Evento<String> {
         }
 
         UUID jugadorId = extraerJugadorId(payload);
-        ejecutarConDatos(jugadorId, this.juego, contexto);
+        Integer puntuacionFinal = extraerPuntuacionFinal(payload);
+        ejecutarConDatos(jugadorId, puntuacionFinal, this.juego, contexto);
     }
 
     public void ejecutarConDatos(UUID jugadorId, SpaceInvader juegoModelo, ContextoEvento contexto) {
+        ejecutarConDatos(jugadorId, null, juegoModelo, contexto);
+    }
+
+    public void ejecutarConDatos(
+            UUID jugadorId,
+            Integer puntuacionFinal,
+            SpaceInvader juegoModelo,
+            ContextoEvento contexto) {
         Objects.requireNonNull(juegoModelo, "El modelo de juego es obligatorio");
         Objects.requireNonNull(contexto, "El contexto de evento es obligatorio");
 
+        if (puntuacionFinal != null && puntuacionFinal >= 0) {
+            juegoModelo.actualizarPuntuacion(jugadorId, puntuacionFinal);
+        }
         juegoModelo.marcarJugadorComoMuerto(jugadorId);
         contexto.enviar(juegoModelo.crearEstadoEnviable());
     }
@@ -49,5 +63,14 @@ public class NotificarMuerteJugadorEvento implements Evento<String> {
         }
 
         return UUID.fromString(matcher.group(1));
+    }
+
+    private Integer extraerPuntuacionFinal(String payload) {
+        Matcher matcher = PATRON_PUNTUACION.matcher(payload);
+        if (!matcher.find()) {
+            return null;
+        }
+
+        return Integer.parseInt(matcher.group(1));
     }
 }

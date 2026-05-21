@@ -13,7 +13,8 @@ const livesIcons = document.getElementById('livesIcons');
 const livesText = document.getElementById('livesText');
 const gameOverScreen = document.getElementById('gameOverScreen');
 const finalScore = document.getElementById('finalScore');
-const restartBtn = document.getElementById('restartBtn');
+const returnLobbyBtn = document.getElementById('returnLobbyBtn');
+const returnLobbyHint = document.getElementById('returnLobbyHint');
 const roundText = document.getElementById('roundText');
 const rankText = document.getElementById('rankText');
 const playersText = document.getElementById('playersText');
@@ -26,6 +27,7 @@ const COMANDO_NOTIFICAR_MUERTE = 'NOTIFICAR_MUERTE';
 const COMANDO_ESTADO_JUGADORES = 'ESTADO_JUGADORES';
 const INTERVALO_ACTUALIZACION_PUNTUACION_MS = 2000;
 const INTERVALO_POLLING_ESTADO_MS = 1000;
+const ALIEN_BULLETS_MAX = 5;
 
 const PIXEL_SIZE = 3;
 
@@ -158,10 +160,14 @@ let animationId;
 let playerName = obtenerNombreJugador();
 const playerId = obtenerJugadorIdPersistente();
 const salaId = obtenerSalaId();
+const jugadoresEsperados = obtenerJugadoresEsperados();
+const esHost = obtenerEsHost();
 let canalComunicacion = null;
 let posicionRankingActual = null;
 let totalJugadoresConectados = 0;
 let todosLosJugadoresMuertos = false;
+let partidaTerminadaLocalmente = false;
+let estadoJugadoresPorId = new Map();
 
 function obtenerPrefijoApiSpaceInvaders() {
     // Intenta obtener de query param (para testing flexible)
@@ -205,13 +211,34 @@ function obtenerClaveStorageJugador() {
     return `space-invaders-player-id:${salaId}`;
 }
 
+function obtenerJugadoresEsperados() {
+    const params = new URLSearchParams(window.location.search);
+    const jugadoresParam = params.get('jugadores');
+
+    if (typeof jugadoresParam !== 'string' || !jugadoresParam.trim()) {
+        return [playerId];
+    }
+
+    const ids = jugadoresParam
+        .split(',')
+        .map((id) => decodeURIComponent(id).trim())
+        .filter((id) => id && id !== 'NINGUNO');
+
+    return ids.length > 0 ? Array.from(new Set(ids)) : [playerId];
+}
+
+function obtenerEsHost() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('esHost') === 'true';
+}
+
 // Game timing (rhythm)
 let ticks = 0;
 let waveNumber = 1;
-let waveBaseSpeed = 35; // Más desafiante desde R1
+let waveBaseSpeed = 16;
 let moveInterval = waveBaseSpeed;
-let alienFireChance = 0.05; // Más disparos
-let alienBulletSpeed = 7;
+let alienFireChance = 0.14;
+let alienBulletSpeed = 10;
 let currentFireChance = alienFireChance;
 let currentBulletSpeed = alienBulletSpeed;
 let alienDirection = 1;
@@ -429,9 +456,28 @@ function normalizarJugadoresEstado(jugadores) {
 
 function actualizarEstadoMultijugador(jugadores) {
     const jugadoresNormalizados = normalizarJugadoresEstado(jugadores);
-    totalJugadoresConectados = jugadoresNormalizados.length;
-    todosLosJugadoresMuertos =
-        jugadoresNormalizados.length > 0 && jugadoresNormalizados.every((jugador) => jugador.muerto);
+    jugadoresNormalizados.forEach((jugador) => {
+        estadoJugadoresPorId.set(jugador.jugadorId, jugador);
+    });
+
+    recalcularEstadoMultijugador();
+}
+
+function recalcularEstadoMultijugador() {
+    const jugadoresNormalizados = Array.from(estadoJugadoresPorId.values())
+        .sort((a, b) => b.puntuacion - a.puntuacion);
+    const jugadoresPartida = jugadoresEsperados.length > 0
+        ? jugadoresEsperados
+            .map((jugadorId) => estadoJugadoresPorId.get(jugadorId))
+            .filter(Boolean)
+        : jugadoresNormalizados;
+
+    totalJugadoresConectados = jugadoresEsperados.length > 0
+        ? jugadoresEsperados.length
+        : jugadoresNormalizados.length;
+    todosLosJugadoresMuertos = jugadoresEsperados.length > 0
+        ? jugadoresEsperados.every((jugadorId) => estadoJugadoresPorId.get(jugadorId)?.muerto === true)
+        : jugadoresNormalizados.length > 0 && jugadoresNormalizados.every((jugador) => jugador.muerto);
 
     const indiceJugador = jugadoresNormalizados.findIndex((jugador) => jugador.jugadorId === playerId);
     posicionRankingActual = indiceJugador >= 0 ? indiceJugador + 1 : null;
@@ -443,8 +489,48 @@ function actualizarEstadoMultijugador(jugadores) {
     }
 
     if (playersText) {
-        playersText.innerText = `${totalJugadoresConectados}`;
+        playersText.innerText = `${jugadoresPartida.length}/${totalJugadoresConectados}`;
     }
+
+    actualizarEstadoBotonVolver();
+}
+
+function registrarMuerteLocal() {
+    const estadoActual = estadoJugadoresPorId.get(playerId);
+    estadoJugadoresPorId.set(playerId, {
+        jugadorId: playerId,
+        nombreJugador: estadoActual?.nombreJugador || playerName,
+        puntuacion: Math.max(score, estadoActual?.puntuacion || 0),
+        muerto: true,
+    });
+    recalcularEstadoMultijugador();
+}
+
+function actualizarEstadoBotonVolver() {
+    if (!returnLobbyBtn || !returnLobbyHint) {
+        return;
+    }
+
+    if (!partidaTerminadaLocalmente) {
+        returnLobbyBtn.disabled = true;
+        returnLobbyHint.innerText = '';
+        return;
+    }
+
+    const puedeCerrarPartida = esHost && todosLosJugadoresMuertos;
+    returnLobbyBtn.disabled = !puedeCerrarPartida;
+    returnLobbyBtn.classList.toggle('hidden', !esHost);
+
+    if (!esHost) {
+        returnLobbyHint.innerText = todosLosJugadoresMuertos
+            ? 'Esperando a que el creador vuelva a la sala...'
+            : 'Esperando al resto de jugadores...';
+        return;
+    }
+
+    returnLobbyHint.innerText = todosLosJugadoresMuertos
+        ? 'Todos han terminado. Vuelve a la sala.'
+        : 'Esperando al resto de jugadores...';
 }
 
 function obtenerNombreJugador() {
@@ -697,7 +783,10 @@ function initGame() {
     }
 
     canalComunicacion.reiniciarPartida();
+    estadoJugadoresPorId = new Map();
     actualizarEstadoMultijugador([]);
+    partidaTerminadaLocalmente = false;
+    actualizarEstadoBotonVolver();
     
     player = new Player();
     aliens = [];
@@ -708,10 +797,10 @@ function initGame() {
     score = 0;
     lives = 3;
     waveNumber = 1;
-    waveBaseSpeed = 35; 
+    waveBaseSpeed = 16; 
     moveInterval = waveBaseSpeed;
-    alienFireChance = 0.05; 
-    alienBulletSpeed = 7;
+    alienFireChance = 0.14; 
+    alienBulletSpeed = 10;
     alienDirection = 1;
     gameState = 'playing';
 
@@ -793,9 +882,8 @@ function updateAliens() {
         // La velocidad escala de waveBaseSpeed a un 40% (antes era 20%, ahora es más lento al final)
         moveInterval = Math.max(1, Math.floor(waveBaseSpeed * (0.4 + 0.6 * countRatio)));
         
-        // La agresividad escala menos agresivamente durante la horda
-        currentFireChance = alienFireChance * (1 + inverseRatio * 0.8); 
-        currentBulletSpeed = alienBulletSpeed * (1 + inverseRatio * 0.3);
+        currentFireChance = alienFireChance * (1 + inverseRatio * 1.2); 
+        currentBulletSpeed = alienBulletSpeed * (1 + inverseRatio * 0.45);
     }
 
     // 2. Control del paso de tiempo y movimiento
@@ -834,9 +922,9 @@ function updateAliens() {
         waveNumber++;
         
         // En lugar de heredar el máximo pico, subimos la dificultad base un 25% respecto al inicio anterior
-        waveBaseSpeed = Math.max(5, Math.floor(waveBaseSpeed * 0.75)); 
-        alienFireChance = Math.min(0.20, alienFireChance + 0.01);
-        alienBulletSpeed = Math.min(12, alienBulletSpeed + 1);
+        waveBaseSpeed = Math.max(3, Math.floor(waveBaseSpeed * 0.68)); 
+        alienFireChance = Math.min(0.32, alienFireChance + 0.025);
+        alienBulletSpeed = Math.min(15, alienBulletSpeed + 1.25);
 
         spawnAliens();
         spawnShields(); 
@@ -845,7 +933,7 @@ function updateAliens() {
 }
 
 function fireAlienBullet() {
-    if (aliens.length > 0 && alienBullets.length < 3) {
+    if (aliens.length > 0 && alienBullets.length < ALIEN_BULLETS_MAX) {
         if (Math.random() < currentFireChance) {
             let shooter = aliens[Math.floor(Math.random() * aliens.length)];
             alienBullets.push(new Bullet(
@@ -930,8 +1018,11 @@ function gameOver() {
     }
 
     gameState = 'gameover';
+    partidaTerminadaLocalmente = true;
     finalScore.innerText = padScore(score);
     gameOverScreen.classList.remove('hidden');
+    registrarMuerteLocal();
+    actualizarEstadoBotonVolver();
 
     if (canalComunicacion) {
         canalComunicacion.notificarMuerte(score)
@@ -950,6 +1041,26 @@ function notificarFinPartidaAlContenedor() {
     window.parent.postMessage(
         {
             type: 'SPACE_INVADERS_GAME_OVER',
+            jugadorId: playerId,
+            nombreJugador: playerName,
+            puntuacionFinal: score,
+        },
+        window.location.origin
+    );
+}
+
+function solicitarVolverASala() {
+    if (!partidaTerminadaLocalmente || !esHost || !todosLosJugadoresMuertos) {
+        return;
+    }
+
+    if (!window.parent || window.parent === window) {
+        return;
+    }
+
+    window.parent.postMessage(
+        {
+            type: 'SPACE_INVADERS_RETURN_TO_LOBBY',
             jugadorId: playerId,
             nombreJugador: playerName,
             puntuacionFinal: score,
@@ -993,7 +1104,7 @@ function gameLoop() {
     animationId = requestAnimationFrame(gameLoop);
 }
 
-restartBtn.addEventListener('click', initGame);
+returnLobbyBtn?.addEventListener('click', solicitarVolverASala);
 
 // Instead of auto-starting, we initialize and run
 initGame();

@@ -327,6 +327,7 @@ export class FetchApiConexion extends Conexion {
       try {
         const response = await fetch(this.endpointEventos, {
           method: "POST",
+          credentials: "include",
           headers: {
             "Content-Type": "application/json",
           },
@@ -429,6 +430,7 @@ export class FetchApiConexion extends Conexion {
         try {
           const response = await fetch(this.construirUrlActualizaciones(), {
             method: "GET",
+            credentials: "include",
             headers: {
               "Accept": "application/json",
             },

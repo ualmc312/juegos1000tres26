@@ -15,7 +15,7 @@
 <section
 	class="sala"
 	*ngIf="viewMode === 'sala'"
-	[class.jugando]="juegoActual === 'space-invaders' || juegoActual === 'taptap' || juegoActual === 'prueba-websocket' || juegoActual === 'adivina-el-personaje' || juegoActual === 'dibujo' || juegoActual === 'hablame-de-ti' || juegoActual === 'preguntas' || juegoActual === 'handicap'"
+	[class.jugando]="estaMostrandoJuego()"
 >
 	<div class="sala-layout">
 		<aside class="sala-sidebar">
@@ -132,7 +132,7 @@
 		</main>
 	</div>
 
-	<div class="juego" *ngIf="juegoActual === 'space-invaders'">
+	<div class="juego" *ngIf="juegoActual === 'space-invaders' && !juegoOcultoLocalmente">
 		<app-space-invaders
 			[uuid]="uuidActual"
 			[jugadorId]="jugadorId"
@@ -140,6 +140,8 @@
 			[pantallaId]="pantallaId"
 			[esPantalla]="pantallaId === jugadorId"
 			[esHost]="esHost"
+			[jugadores]="jugadores"
+			(volverSala)="volverDesdeSpaceInvaders()"
 		></app-space-invaders>
 	</div>
 

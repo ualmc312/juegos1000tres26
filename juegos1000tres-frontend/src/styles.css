@@ -1,1 +1,28 @@
-/* You can add global styles to this file, and also import other style files */
+* {
+	box-sizing: border-box;
+}
+
+html {
+	background: #050510;
+	scroll-behavior: smooth;
+}
+
+body {
+	margin: 0;
+	min-width: 320px;
+	background: #050510;
+	text-rendering: geometricPrecision;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+button,
+input,
+textarea {
+	font: inherit;
+}
+
+::selection {
+	background: rgba(0, 255, 136, 0.32);
+	color: #ffffff;
+}

@@ -4,13 +4,15 @@
 }
 
 .handicap-shell {
-  background: var(--bg-panel, #0d0d26);
+  background: linear-gradient(180deg, rgba(17, 17, 42, 0.92), rgba(13, 13, 38, 0.88));
   border: 1px solid var(--border-glow, rgba(255, 255, 255, 0.18));
   border-radius: var(--radius-card, 18px);
   padding: 1.5rem;
   display: grid;
   gap: 1.5rem;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 26px 64px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(12px);
+  animation: panel-in 360ms ease both;
 }
 
 .handicap-header {
@@ -45,6 +47,7 @@
   text-transform: uppercase;
   letter-spacing: 0.12em;
   font-size: 0.65rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .status.locked {
@@ -58,12 +61,13 @@
 }
 
 .card {
-  background: var(--bg-card, #11112a);
+  background: rgba(17, 17, 42, 0.78);
   border: 1px solid var(--border-glow, rgba(255, 255, 255, 0.18));
   border-radius: 14px;
   padding: 1.1rem;
   display: grid;
   gap: 0.85rem;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .card h4 {
@@ -100,11 +104,13 @@
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid transparent;
-  transition: border-color 0.2s ease;
+  transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
 }
 
 .check-item:hover {
   border-color: var(--border-glow, rgba(255, 255, 255, 0.18));
+  background: rgba(255, 255, 255, 0.065);
+  transform: translateX(2px);
 }
 
 .check-item input {
@@ -124,17 +130,30 @@
   font-weight: 700;
   color: var(--text-primary, #e8e8ff);
   background: linear-gradient(135deg, var(--accent, #a855f7), var(--accent-lit, #c084fc));
-  transition: transform 0.15s ease, opacity 0.2s ease;
+  box-shadow: 0 12px 24px rgba(168, 85, 247, 0.18);
+  transition: transform 0.15s ease, opacity 0.2s ease, box-shadow 0.2s ease;
 }
 
 .confirm-btn:hover {
   transform: translateY(-1px);
+  box-shadow: 0 16px 30px rgba(168, 85, 247, 0.24);
 }
 
 .confirm-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
+}
+
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .ganadores-list {

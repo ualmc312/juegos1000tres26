@@ -91,6 +91,23 @@
       .muted {
         color: var(--muted);
       }
+
+      .winner-row {
+        background: rgba(43, 214, 123, 0.16);
+        box-shadow: inset 4px 0 0 var(--border);
+      }
+
+      .winner-badge {
+        display: inline-block;
+        margin-left: 8px;
+        padding: 2px 6px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        color: var(--border);
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+      }
     </style>
   </head>
   <body>
@@ -172,25 +189,39 @@
                 : 0,
             dead: typeof item.muerto === 'boolean' ? item.muerto : Boolean(item.dead),
           }))
-          .sort((a, b) => b.score - a.score);
+          .sort((a, b) => b.score - a.score || a.player.localeCompare(b.player));
+
+        const todosMuertos = ordenados.length > 0 && ordenados.every((item) => item.dead);
 
         const lider = ordenados[0];
-        leaderText.textContent = `Lider: ${lider.player} con ${lider.score} puntos`;
+        leaderText.textContent = todosMuertos
+          ? `Ganador: ${lider.player} con ${lider.score} puntos`
+          : `Lider: ${lider.player} con ${lider.score} puntos`;
 
         tablaJugadores.innerHTML = ordenados
           .map((item, index) => {
             const estadoLabel = item.dead ? 'MUERTO' : 'VIVO';
             const estadoClass = item.dead ? 'dead' : 'alive';
+            const esGanador = todosMuertos && index === 0;
             return `
-              <tr>
+              <tr class="${esGanador ? 'winner-row' : ''}">
                 <td>${index + 1}</td>
-                <td>${item.player}</td>
+                <td>${escapeHtml(item.player)}${esGanador ? '<span class="winner-badge">GANADOR</span>' : ''}</td>
                 <td>${item.score}</td>
                 <td class="${estadoClass}">${estadoLabel}</td>
               </tr>
             `;
           })
           .join('');
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? '')
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#039;');
       }
 
       class EstadoJugadoresPantallaEvento {

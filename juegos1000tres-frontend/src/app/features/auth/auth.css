@@ -12,6 +12,7 @@
 	--accent-lit: #a855f7;
 	--green: #00ff88;
 	--transition: 0.25s cubic-bezier(.4, 0, .2, 1);
+	--shadow-panel: 0 24px 70px rgba(0, 0, 0, 0.42);
 	--radius-card: 18px;
 	--radius-btn: 12px;
 	--font-pixel: 'Press Start 2P', monospace;
@@ -32,7 +33,10 @@
 	inset: 0;
 	background:
 		radial-gradient(ellipse 80% 60% at 20% 0%, rgba(124, 58, 237, 0.25) 0%, transparent 60%),
-		radial-gradient(ellipse 60% 50% at 80% 100%, rgba(0, 255, 136, 0.12) 0%, transparent 60%);
+		radial-gradient(ellipse 60% 50% at 80% 100%, rgba(0, 255, 136, 0.12) 0%, transparent 60%),
+		linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+		linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+	background-size: auto, auto, 42px 42px, 42px 42px;
 	pointer-events: none;
 	z-index: 0;
 }
@@ -46,6 +50,7 @@
 	display: flex;
 	flex-direction: column;
 	gap: 2rem;
+	animation: auth-enter 480ms ease both;
 }
 
 .auth-header {
@@ -54,6 +59,12 @@
 	gap: 1.5rem;
 	padding-bottom: 1.5rem;
 	border-bottom: 1px solid var(--border-dim);
+	background: rgba(13, 13, 38, 0.34);
+	border: 1px solid rgba(255, 255, 255, 0.09);
+	border-radius: 20px;
+	padding: 1.25rem 1.35rem;
+	box-shadow: var(--shadow-panel), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+	backdrop-filter: blur(14px);
 }
 
 .auth-logo {
@@ -102,10 +113,13 @@
 	color: var(--accent-lit);
 	text-decoration: none;
 	font-weight: 600;
+	transition: color var(--transition), text-shadow var(--transition);
 }
 
 .auth-link:hover {
-	text-decoration: underline;
+	color: var(--green);
+	text-decoration: none;
+	text-shadow: 0 0 16px rgba(0, 255, 136, 0.26);
 }
 
 .auth-flash {
@@ -119,6 +133,18 @@
 	letter-spacing: 0.05em;
 	text-align: center;
 	max-width: 520px;
+	box-shadow: 0 14px 34px rgba(0, 0, 0, 0.22);
+}
+
+@keyframes auth-enter {
+	from {
+		opacity: 0;
+		transform: translateY(14px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
 }
 
 @media (max-width: 640px) {

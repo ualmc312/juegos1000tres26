@@ -1,11 +1,13 @@
 .preguntas-root {
   display: grid;
-  gap: 12px;
-  padding: 16px;
-  border-radius: 14px;
-  background: linear-gradient(180deg, #171717 0%, #202020 100%);
+  gap: 16px;
+  padding: 20px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(23, 23, 23, 0.96) 0%, rgba(32, 32, 32, 0.92) 100%);
   color: #f4f4f4;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  animation: panel-in 360ms ease both;
 }
 
 .preguntas-header {
@@ -29,14 +31,18 @@
   border-radius: 999px;
   background: rgba(34, 197, 94, 0.16);
   color: #86efac;
+  border: 1px solid rgba(34, 197, 94, 0.28);
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.1);
 }
 
 .card {
-  padding: 12px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.04);
+  padding: 16px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   display: grid;
   gap: 10px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 textarea {
@@ -51,10 +57,24 @@ button {
   background: rgba(0, 0, 0, 0.25);
   color: inherit;
   padding: 0.75rem 0.9rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 button {
   cursor: pointer;
+  font-weight: 700;
+}
+
+textarea:focus,
+button:focus-visible {
+  outline: none;
+  border-color: rgba(134, 239, 172, 0.5);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.14);
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(134, 239, 172, 0.42);
 }
 
 button:disabled {
@@ -66,4 +86,15 @@ button:disabled {
 .options {
   display: grid;
   gap: 8px;
+}
+
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

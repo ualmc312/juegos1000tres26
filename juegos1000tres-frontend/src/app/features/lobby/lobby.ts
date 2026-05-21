@@ -47,6 +47,7 @@ export class Lobby implements OnInit, OnDestroy {
   p2pHostPeerId = '';
   pantallaId = '';
   juegoActual = '';
+  juegoOcultoLocalmente = false;
   jugadores: JugadorResumen[] = [];
   usuarioConectadoNombre = '';
   hostNombre = '';
@@ -195,6 +196,8 @@ export class Lobby implements OnInit, OnDestroy {
       return;
     }
 
+    this.juegoOcultoLocalmente = false;
+
     this.http
       .post<SalaRespuesta>(
         `${this.apiBase}/sala/${this.uuidActual}/juego?actorId=${actorId}&juego=${juegoId}`,
@@ -234,6 +237,33 @@ export class Lobby implements OnInit, OnDestroy {
       next: () => this.limpiarSesion(),
       error: () => this.limpiarSesion()
     });
+  }
+
+  volverDesdeSpaceInvaders(): void {
+    if (!this.esHost || !this.uuidActual || !this.jugadorId) {
+      return;
+    }
+
+    this.http
+      .post<void>(
+        `${this.apiBase}/sala/${this.uuidActual}/juego/finalizar?actorId=${this.jugadorId}`,
+        null,
+        this.requestOptions
+      )
+      .subscribe({
+        next: () => {
+          this.juegoOcultoLocalmente = false;
+          this.actualizarEstado();
+        },
+        error: () => {
+          this.errorUuid = 'No se pudo volver a la sala';
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  estaMostrandoJuego(): boolean {
+    return this.esJuegoActivo() && !this.juegoOcultoLocalmente;
   }
 
   copiarUUID(): void {
@@ -286,7 +316,11 @@ export class Lobby implements OnInit, OnDestroy {
     this.hostId = respuesta.hostId;
     this.p2pHostPeerId = respuesta.p2pHostPeerId || this.p2pHostPeerId;
     this.pantallaId = respuesta.pantallaId || '';
-    this.juegoActual = respuesta.juegoActual || '';
+    const siguienteJuego = respuesta.juegoActual || '';
+    if (siguienteJuego !== this.juegoActual) {
+      this.juegoOcultoLocalmente = false;
+    }
+    this.juegoActual = siguienteJuego;
     this.esHost = !!this.jugadorId && this.jugadorId === this.hostId;
     this.actualizarNombresClave();
     this.cdr.detectChanges();
@@ -315,6 +349,18 @@ export class Lobby implements OnInit, OnDestroy {
   obtenerNombreJugador(id: string): string {
     const j = this.jugadores.find(x => x.id === id);
     return j ? j.nombre : 'Jugador';
+  }
+
+  private esJuegoActivo(): boolean {
+    return this.juegoActual === 'space-invaders'
+      || this.juegoActual === 'taptap'
+      || this.juegoActual === 'prueba-websocket'
+      || this.juegoActual === 'adivina-el-personaje'
+      || this.juegoActual === 'dibujo'
+      || this.juegoActual === 'hablame-de-ti'
+      || this.juegoActual === 'preguntas'
+      || this.juegoActual === 'reflejos-p2p'
+      || this.juegoActual === 'handicap';
   }
 
 

@@ -4,17 +4,23 @@
   gap: 8px;
   width: 100%;
   min-height: 640px;
+  background: #050510;
 }
 
 .space-status {
   color: #dde7ff;
   font-size: 0.9rem;
+  padding: 0.65rem 0.9rem;
+  background: rgba(13, 13, 38, 0.78);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
 }
 
 .space-game-frame {
   width: 100%;
   min-height: 640px;
   border: 0;
-  border-radius: 12px;
+  border-radius: 0;
   background: #000;
+  filter: drop-shadow(0 26px 70px rgba(0, 0, 0, 0.45));
 }

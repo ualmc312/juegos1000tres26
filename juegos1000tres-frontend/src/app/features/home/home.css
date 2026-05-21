@@ -12,6 +12,8 @@
 	--accent-lit: #c084fc;
 	--green: #00ff88;
 	--transition: 0.25s cubic-bezier(.4, 0, .2, 1);
+	--shadow-panel: 0 24px 70px rgba(0, 0, 0, 0.42);
+	--shadow-glow: 0 0 36px rgba(168, 85, 247, 0.16);
 	--radius-card: 18px;
 	--radius-btn: 12px;
 	--font-pixel: 'Press Start 2P', monospace;
@@ -32,7 +34,19 @@
 	inset: 0;
 	background:
 		radial-gradient(ellipse 80% 60% at 20% 0%, rgba(124, 58, 237, 0.25) 0%, transparent 60%),
-		radial-gradient(ellipse 60% 50% at 80% 100%, rgba(0, 255, 136, 0.12) 0%, transparent 60%);
+		radial-gradient(ellipse 60% 50% at 80% 100%, rgba(0, 255, 136, 0.12) 0%, transparent 60%),
+		linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+		linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+	background-size: auto, auto, 42px 42px, 42px 42px;
+	pointer-events: none;
+	z-index: 0;
+}
+
+:host::after {
+	content: "";
+	position: fixed;
+	inset: 0;
+	background: radial-gradient(circle at 50% 50%, transparent 0%, rgba(5, 5, 16, 0.26) 68%, rgba(0, 0, 0, 0.44) 100%);
 	pointer-events: none;
 	z-index: 0;
 }
@@ -61,6 +75,8 @@
 	display: flex;
 	flex-direction: column;
 	gap: 0.25rem;
+	box-shadow: var(--shadow-panel);
+	animation: fade-slide 420ms ease both;
 }
 
 .user-badge span {
@@ -88,16 +104,17 @@
 
 .home-emoji {
 	font-size: 6rem;
-	animation: bounce 0.6s ease-in-out infinite;
+	animation: float-bob 3.2s ease-in-out infinite;
+	filter: drop-shadow(0 0 24px rgba(0, 255, 136, 0.22)) drop-shadow(0 18px 24px rgba(0, 0, 0, 0.34));
 	line-height: 1;
 }
 
-@keyframes bounce {
+@keyframes float-bob {
 	0%, 100% {
-		transform: translateY(0);
+		transform: translateY(0) rotate(-2deg);
 	}
 	50% {
-		transform: translateY(-20px);
+		transform: translateY(-16px) rotate(2deg);
 	}
 }
 
@@ -108,6 +125,13 @@
 	gap: 1.5rem;
 	text-align: center;
 	max-width: 500px;
+	padding: 2.25rem;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-radius: 24px;
+	background: linear-gradient(180deg, rgba(17, 17, 42, 0.66), rgba(13, 13, 38, 0.38));
+	box-shadow: var(--shadow-panel), var(--shadow-glow), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+	backdrop-filter: blur(16px);
+	animation: fade-slide 520ms ease both;
 }
 
 .home-title {
@@ -120,6 +144,7 @@
 	-webkit-text-fill-color: transparent;
 	background-clip: text;
 	line-height: 1.2;
+	text-shadow: 0 0 22px rgba(168, 85, 247, 0.18);
 }
 
 .home-subtitle {
@@ -137,6 +162,17 @@
 	width: 100%;
 	align-items: center;
 	margin-top: 1rem;
+}
+
+@keyframes fade-slide {
+	from {
+		opacity: 0;
+		transform: translateY(16px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
 }
 
 @media (max-width: 600px) {

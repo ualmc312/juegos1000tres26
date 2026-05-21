@@ -1,46 +1,78 @@
 .generic-button {
 	align-items: center;
 	appearance: none;
-	border: 1px solid #bdbdbd;
-	border-radius: 10px;
-	box-shadow: 0 6px 0 rgba(0, 0, 0, 0.35);
+	border: 1px solid rgba(255, 255, 255, 0.22);
+	border-radius: 12px;
+	box-shadow:
+		0 8px 0 rgba(0, 0, 0, 0.34),
+		0 18px 28px rgba(0, 0, 0, 0.22),
+		inset 0 1px 0 rgba(255, 255, 255, 0.22);
 	color: #101010;
 	cursor: pointer;
 	display: inline-flex;
-	font-family: "Space Grotesk", "Poppins", "Segoe UI", sans-serif;
+	font-family: "Outfit", "Space Grotesk", "Poppins", "Segoe UI", sans-serif;
 	font-size: 1rem;
-	font-weight: 700;
+	font-weight: 800;
 	justify-content: center;
-	letter-spacing: 0.02em;
+	letter-spacing: 0.06em;
 	min-width: 140px;
 	padding: 0.75rem 1.5rem;
+	position: relative;
+	overflow: hidden;
 	text-decoration: none;
 	text-transform: uppercase;
-	transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
+	transition:
+		transform 160ms ease,
+		box-shadow 160ms ease,
+		filter 160ms ease,
+		border-color 160ms ease;
 	user-select: none;
+}
+
+.generic-button::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(120deg, transparent 0%, rgba(255, 255, 255, 0.28) 45%, transparent 72%);
+	transform: translateX(-120%);
+	transition: transform 420ms ease;
+}
+
+.generic-button:hover::before {
+	transform: translateX(120%);
+}
+
+.generic-button:hover {
+	filter: brightness(1.05) saturate(1.06);
+	transform: translateY(-2px);
+	box-shadow:
+		0 10px 0 rgba(0, 0, 0, 0.35),
+		0 22px 34px rgba(0, 0, 0, 0.28),
+		inset 0 1px 0 rgba(255, 255, 255, 0.28);
 }
 
 .generic-button:active {
 	box-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
-	transform: translateY(4px);
+	transform: translateY(5px);
+}
+
+.generic-button:focus-visible {
+	outline: 3px solid rgba(0, 255, 136, 0.4);
+	outline-offset: 4px;
 }
 
 .generic-button.red {
-	background: #ff5c5c;
+	background: linear-gradient(180deg, #ff7777 0%, #ff5c5c 100%);
 }
 
 .generic-button.green {
-	background: #35d08a;
+	background: linear-gradient(180deg, #5df0aa 0%, #35d08a 100%);
 }
 
 .generic-button.purple {
-	background: #a855f7;
+	background: linear-gradient(180deg, #c084fc 0%, #a855f7 100%);
 }
 
 .generic-button.gray {
-	background: #d7d7d7;
-}
-
-.generic-button:hover {
-	filter: brightness(0.98);
+	background: linear-gradient(180deg, #eeeeee 0%, #d7d7d7 100%);
 }
