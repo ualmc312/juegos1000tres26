@@ -291,6 +291,10 @@ h2 {
 }
 
 .juegos-list li {
+	list-style: none;
+}
+
+.juego-card {
 	align-items: center;
 	background: var(--bg-card);
 	border: 1px solid var(--border-glow);
@@ -300,34 +304,32 @@ h2 {
 	justify-content: space-between;
 	padding: 0.75rem 1rem;
 	transition: all var(--transition);
+	width: 100%;
+	text-align: left;
+	cursor: pointer;
 }
 
-.juegos-list li:hover {
+.juego-card:hover:not(:disabled) {
 	border-color: var(--accent-lit);
 	box-shadow: 0 0 12px rgba(168, 85, 247, 0.2);
 }
 
+.juego-card:disabled {
+	cursor: not-allowed;
+	opacity: 0.5;
+}
+
 .juego-link {
-	background: none;
-	border: none;
 	color: var(--text-primary);
-	cursor: pointer;
 	font: inherit;
 	font-weight: 700;
 	letter-spacing: 0.05em;
-	padding: 0;
 	text-transform: uppercase;
 	transition: color var(--transition);
 }
 
-.juego-link:hover:not(:disabled) {
+.juego-card:hover:not(:disabled) .juego-link {
 	color: var(--green);
-}
-
-.juego-link:disabled {
-	cursor: not-allowed;
-	opacity: 0.5;
-	color: var(--text-muted);
 }
 
 .juego-icon {

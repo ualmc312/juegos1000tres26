@@ -103,25 +103,26 @@
 					<ul class="juegos-list">
 						<li *ngFor="let juego of juegosDisponibles">
 							<button
-								class="juego-link"
+								class="juego-card"
+								type="button"
 								(click)="iniciarJuego(juego.id)"
 								[disabled]="!esHost"
 							>
-								{{ juego.nombre }}
+								<span class="juego-link">{{ juego.nombre }}</span>
+								<img
+									class="juego-icon"
+									[src]="
+										juego.id === 'space-invaders' || juego.id === 'taptap'
+											? '/img/lobby/no-creen-needed.png'
+											: '/img/lobby/screen-needed.png'
+									"
+									[alt]="
+										juego.id === 'space-invaders' || juego.id === 'taptap'
+											? 'No requiere pantalla'
+											: 'Requiere pantalla'
+									"
+								/>
 							</button>
-							<img
-								class="juego-icon"
-								[src]="
-									juego.id === 'space-invaders' || juego.id === 'taptap' || juego.id === 'handicap'
-										? '/img/lobby/no-creen-needed.png'
-										: '/img/lobby/screen-needed.png'
-								"
-								[alt]="
-									juego.id === 'space-invaders' || juego.id === 'taptap' || juego.id === 'handicap'
-										? 'No requiere pantalla'
-										: 'Requiere pantalla'
-								"
-							/>
 						</li>
 					</ul>
 					<p class="nota" *ngIf="!esHost">Solo el creador puede iniciar un juego.</p>
