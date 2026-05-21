@@ -8,6 +8,7 @@ public record SalaRespuesta(
         String hostId,
         String pantallaId,
         String juegoActual,
+        String p2pHostPeerId,
         String jugadorId
 ) {
 }

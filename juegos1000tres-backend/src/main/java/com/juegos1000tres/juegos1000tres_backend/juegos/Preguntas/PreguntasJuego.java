@@ -541,8 +541,8 @@ public class PreguntasJuego extends Juego {
         this.mensajeEstado = "Turno de " + jugadorElegido.nombre + " para elegir su respuesta favorita";
     }
 
-    private List<Map<String, Object>> construirRespondedoresPendientes() {
-        List<Map<String, Object>> pendientes = new ArrayList<>();
+    private List<String> construirRespondedoresPendientes() {
+        List<String> pendientes = new ArrayList<>();
 
         for (String jugadorId : this.respondedoresEsperados) {
             if (this.respuestasConfirmadas.contains(jugadorId)) {
@@ -554,13 +554,9 @@ public class PreguntasJuego extends Juego {
                 continue;
             }
 
-            Map<String, Object> item = new LinkedHashMap<>();
-            item.put("jugadorId", jugador.jugadorId);
-            item.put("nombreJugador", jugador.nombre);
-            pendientes.add(item);
+            pendientes.add(jugador.jugadorId);
         }
 
-        pendientes.sort(Comparator.comparing((item) -> (String) item.get("nombreJugador")));
         return pendientes;
     }
 

@@ -1,0 +1,21 @@
+# Formato: pregunta directa||pregunta publica con [NOMBRE_JUGADOR]
+¿Qué canción no puedes dejar de escuchar?||¿Qué canción no puede dejar de escuchar el jugador [NOMBRE_JUGADOR]?
+¿Cuál es tu experiencia más paranormal?||¿Cuál es la experiencia más paranormal del jugador [NOMBRE_JUGADOR]?
+¿Qué comida te representa más?||¿Qué comida representa mejor al jugador [NOMBRE_JUGADOR]?
+¿Qué plan te hace feliz sin gastar mucho?||¿Qué plan feliz y barato prefiere el jugador [NOMBRE_JUGADOR]?
+¿Qué objeto siempre llevarías a una isla desierta?||¿Qué objeto llevaría siempre el jugador [NOMBRE_JUGADOR] a una isla desierta?
+¿Qué serie volverías a ver entera?||¿Qué serie volvería a ver entera el jugador [NOMBRE_JUGADOR]?
+¿Qué hobby te gustaría dominar?||¿Qué hobby le gustaría dominar al jugador [NOMBRE_JUGADOR]?
+¿Qué villano te parece irresistible?||¿Qué villano le parece irresistible al jugador [NOMBRE_JUGADOR]?
+¿Qué lugar te da paz instantánea?||¿Qué lugar le da paz instantánea al jugador [NOMBRE_JUGADOR]?
+¿Qué videojuego te define mejor?||¿Qué videojuego define mejor al jugador [NOMBRE_JUGADOR]?
+¿Qué objeto de tu infancia no olvidarías?||¿Qué objeto de la infancia no olvidaría el jugador [NOMBRE_JUGADOR]?
+¿Qué talento oculto tienes?||¿Qué talento oculto tiene el jugador [NOMBRE_JUGADOR]?
+¿Qué libro recomendarías siempre?||¿Qué libro recomendaría siempre el jugador [NOMBRE_JUGADOR]?
+¿Qué olor te trae un recuerdo fuerte?||¿Qué olor le trae un recuerdo fuerte al jugador [NOMBRE_JUGADOR]?
+¿Qué accesorio usarías a diario?||¿Qué accesorio usaría a diario el jugador [NOMBRE_JUGADOR]?
+¿Qué película te sabes de memoria?||¿Qué película se sabe de memoria el jugador [NOMBRE_JUGADOR]?
+¿Qué postre pedirías siempre?||¿Qué postre pediría siempre el jugador [NOMBRE_JUGADOR]?
+¿Qué app abres sin pensar?||¿Qué app abre sin pensar el jugador [NOMBRE_JUGADOR]?
+¿Qué animal te describe mejor?||¿Qué animal describe mejor al jugador [NOMBRE_JUGADOR]?
+¿Qué concierto recordarías toda tu vida?||¿Qué concierto recordaría toda su vida el jugador [NOMBRE_JUGADOR]?

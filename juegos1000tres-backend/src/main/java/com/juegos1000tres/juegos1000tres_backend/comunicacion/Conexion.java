@@ -10,6 +10,10 @@ public interface Conexion<PAYLOAD> {
 
     void enviar(PAYLOAD payload);
 
+    default void enviar(PAYLOAD payload, DestinoEnvio destinoEnvio) {
+        enviar(payload);
+    }
+
     PAYLOAD recibir();
 
     Class<PAYLOAD> getClasePayload();

@@ -12,6 +12,7 @@ import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
 
 import com.juegos1000tres.juegos1000tres_backend.comunicacion.Conexion;
+import com.juegos1000tres.juegos1000tres_backend.comunicacion.DestinoEnvio;
 
 public class WebSocketConexion implements Conexion<String> {
 
@@ -68,6 +69,28 @@ public class WebSocketConexion implements Conexion<String> {
     public void enviar(String payload) {
         validarConexionActiva();
         RuntimeCanalesWebSocket.enviar(this.canalSala, Objects.requireNonNull(payload, "El payload no puede ser nulo"));
+    }
+
+    @Override
+    public void enviar(String payload, DestinoEnvio destinoEnvio) {
+        validarConexionActiva();
+
+        if (destinoEnvio == null || destinoEnvio.esGlobal() || destinoEnvio.esPantalla() || destinoEnvio.esVariosJugadores()) {
+            enviar(payload);
+            return;
+        }
+
+        if (destinoEnvio.esJugador()) {
+            RuntimeCanalesWebSocket.enviarParaJugador(this.canalSala, destinoEnvio.getJugadorId(), Objects.requireNonNull(payload, "El payload no puede ser nulo"));
+            return;
+        }
+
+        enviar(payload);
+    }
+
+    public void enviarParaJugador(String jugadorId, String payload) {
+        validarConexionActiva();
+        RuntimeCanalesWebSocket.enviarParaJugador(this.canalSala, jugadorId, Objects.requireNonNull(payload, "El payload no puede ser nulo"));
     }
 
     @Override
@@ -203,11 +226,36 @@ public class WebSocketConexion implements Conexion<String> {
 
         private static void enviar(String canal, String payload) {
             EstadoCanal estado = obtenerCanalActivo(canal);
-            estado.bufferMensajes.offer(payload);
 
             for (WebSocket cliente : estado.clientes) {
                 if (cliente != null && cliente.isOpen()) {
                     cliente.send(payload);
+                }
+            }
+        }
+
+        private static void enviarParaJugador(String canal, String jugadorId, String payload) {
+            if (jugadorId == null || jugadorId.isBlank()) {
+                enviar(canal, payload);
+                return;
+            }
+
+            EstadoCanal estado = obtenerCanalActivo(canal);
+
+            for (WebSocket cliente : estado.clientes) {
+                if (cliente == null || !cliente.isOpen()) continue;
+                String descriptor = cliente.getResourceDescriptor();
+                if (descriptor == null) continue;
+                int idx = descriptor.indexOf('?');
+                String query = idx >= 0 ? descriptor.substring(idx + 1) : "";
+                // parse simple query param jugadorId
+                String[] parts = query.split("&");
+                for (String p : parts) {
+                    String[] kv = p.split("=", 2);
+                    if (kv.length == 2 && kv[0].equalsIgnoreCase("jugadorId") && kv[1].equals(jugadorId)) {
+                        cliente.send(payload);
+                        break;
+                    }
                 }
             }
         }

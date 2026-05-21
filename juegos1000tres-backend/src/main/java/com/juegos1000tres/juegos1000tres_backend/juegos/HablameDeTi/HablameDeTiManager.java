@@ -1,0 +1,122 @@
+package com.juegos1000tres.juegos1000tres_backend.juegos.HablameDeTi;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.springframework.stereotype.Service;
+
+import com.juegos1000tres.juegos1000tres_backend.comunicacion.Envio;
+import com.juegos1000tres.juegos1000tres_backend.comunicacion.Recibo;
+import com.juegos1000tres.juegos1000tres_backend.comunicacion.Traductor;
+import com.juegos1000tres.juegos1000tres_backend.comunicacion.implementaciones.ComunicacionRuntimeConfig;
+import com.juegos1000tres.juegos1000tres_backend.comunicacion.implementaciones.WebSocketConexion;
+
+@Service
+public class HablameDeTiManager {
+
+    private static final long SLEEP_MS = 40L;
+    private static final String PAYLOAD_VACIO = "{}";
+
+    private final Map<String, InstanciaSala> instancias = new ConcurrentHashMap<>();
+
+    public synchronized void crearInstanciaParaSala(String salaUuid) {
+        if (instancias.containsKey(salaUuid)) {
+            return;
+        }
+
+        int puerto = ComunicacionRuntimeConfig.websocketPuerto();
+        WebSocketConexion conexionJugadores = new WebSocketConexion(salaUuid, "jugadores", puerto);
+        WebSocketConexion conexionPantalla = new WebSocketConexion(salaUuid, "pantalla", puerto);
+
+        Traductor<String> traductorJugadores = new Traductor<>(
+                conexionJugadores,
+                Envio.paraStringDesdeOut(),
+                Recibo.paraJsonString());
+
+        Traductor<String> traductorPantalla = new Traductor<>(
+                conexionPantalla,
+                Envio.paraStringDesdeOut(),
+                Recibo.paraJsonString());
+
+        HablameDeTiJuego juego = new HablameDeTiJuego(traductorJugadores, traductorPantalla);
+        Recibo<String> reciboEventos = juego.registrarEventosEnRecibo(Recibo.paraJsonString());
+
+        Traductor<String> traductorEventos = new Traductor<>(
+                conexionJugadores,
+                Envio.paraStringDesdeOut(),
+                reciboEventos);
+
+        juego.iniciar();
+
+        AtomicBoolean activo = new AtomicBoolean(true);
+        ExecutorService executor = Executors.newSingleThreadExecutor(runnable -> {
+            Thread hilo = new Thread(runnable, "hablame-de-ti-loop-" + salaUuid);
+            hilo.setDaemon(true);
+            return hilo;
+        });
+
+        executor.submit(() -> bucleProcesamiento(juego, traductorEventos, activo));
+
+        instancias.put(salaUuid, new InstanciaSala(
+                juego,
+                conexionJugadores,
+                conexionPantalla,
+                traductorEventos,
+                activo,
+                executor));
+    }
+
+    public synchronized void detenerInstanciaParaSala(String salaUuid) {
+        InstanciaSala instancia = instancias.remove(salaUuid);
+        if (instancia == null) {
+            return;
+        }
+
+        instancia.activo().set(false);
+        instancia.juego().terminar();
+        instancia.executor().shutdownNow();
+        instancia.conexionJugadores().desconectar();
+        instancia.conexionPantalla().desconectar();
+    }
+
+    private void bucleProcesamiento(HablameDeTiJuego juego, Traductor<String> traductorEventos, AtomicBoolean activo) {
+        while (activo.get()) {
+            try {
+                long ahoraMs = System.currentTimeMillis();
+                if (juego.revisarTransicionesAutomaticas(ahoraMs)) {
+                    traductorEventos.enviar(juego.crearEstadoEnviable());
+                }
+
+                String payload = traductorEventos.recibirPayload();
+                if (payload == null || payload.isBlank() || PAYLOAD_VACIO.equals(payload.trim())) {
+                    dormirBreve();
+                    continue;
+                }
+
+                traductorEventos.procesar(payload);
+            } catch (RuntimeException ex) {
+                dormirBreve();
+            }
+        }
+    }
+
+    private void dormirBreve() {
+        try {
+            Thread.sleep(SLEEP_MS);
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    private record InstanciaSala(
+            HablameDeTiJuego juego,
+            WebSocketConexion conexionJugadores,
+            WebSocketConexion conexionPantalla,
+            Traductor<String> traductorEventos,
+            AtomicBoolean activo,
+            ExecutorService executor) {
+    }
+}

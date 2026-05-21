@@ -15,7 +15,7 @@
 <section
 	class="sala"
 	*ngIf="viewMode === 'sala'"
-		[class.jugando]="juegoActual === 'space-invaders' || juegoActual === 'taptap' || juegoActual === 'prueba-websocket' || juegoActual === 'preguntas' || juegoActual === 'handicap'"
+	[class.jugando]="juegoActual === 'space-invaders' || juegoActual === 'taptap' || juegoActual === 'prueba-websocket' || juegoActual === 'adivina-el-personaje' || juegoActual === 'dibujo' || juegoActual === 'hablame-de-ti' || juegoActual === 'preguntas' || juegoActual === 'handicap'"
 >
 	<div class="sala-layout">
 		<aside class="sala-sidebar">
@@ -136,6 +136,7 @@
 		<app-space-invaders
 			[uuid]="uuidActual"
 			[jugadorId]="jugadorId"
+			[nombreJugador]="obtenerNombreJugador(jugadorId)"
 			[pantallaId]="pantallaId"
 			[esPantalla]="pantallaId === jugadorId"
 			[esHost]="esHost"
@@ -150,6 +151,36 @@
 			[esPantalla]="pantallaId === jugadorId"
 			[esHost]="esHost"
 		></app-prueba-websocket>
+	</div>
+
+	<div class="juego" *ngIf="juegoActual === 'adivina-el-personaje'">
+		<app-adivina-el-personaje
+			[uuid]="uuidActual"
+			[jugadorId]="jugadorId"
+			[pantallaId]="pantallaId"
+			[esPantalla]="pantallaId === jugadorId"
+			[esHost]="esHost"
+		></app-adivina-el-personaje>
+	</div>
+
+	<div class="juego" *ngIf="juegoActual === 'dibujo'">
+		<app-dibujo
+			[uuid]="uuidActual"
+			[jugadorId]="jugadorId"
+			[pantallaId]="pantallaId"
+			[esPantalla]="pantallaId === jugadorId"
+			[esHost]="esHost"
+		></app-dibujo>
+	</div>
+
+	<div class="juego" *ngIf="juegoActual === 'hablame-de-ti'">
+		<app-hablame-de-ti
+			[uuid]="uuidActual"
+			[jugadorId]="jugadorId"
+			[pantallaId]="pantallaId"
+			[esPantalla]="pantallaId === jugadorId"
+			[esHost]="esHost"
+		></app-hablame-de-ti>
 	</div>
 
 	<div class="juego taptap" *ngIf="juegoActual === 'taptap'">
@@ -172,6 +203,12 @@
 		></app-preguntas>
 	</div>
 
+	<div class="juego reflejos-p2p" *ngIf="juegoActual === 'reflejos-p2p'">
+		<div class="reflejos-launcher">
+			<p>La partida de Reflejos P2P se abre en una vista aparte.</p>
+			<generic-button color="gray" (click)="abrirVistaReflejosP2P()">Abrir Reflejos P2P</generic-button>
+		</div>
+	</div>
 	<div class="juego handicap" *ngIf="juegoActual === 'handicap'">
 		<app-handicap
 			[uuid]="uuidActual"

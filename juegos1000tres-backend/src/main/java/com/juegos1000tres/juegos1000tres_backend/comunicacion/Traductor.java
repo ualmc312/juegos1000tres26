@@ -25,13 +25,22 @@ public class Traductor<PAYLOAD> {
     }
 
     public void enviar(Enviable enviable) {
+        enviar(enviable, DestinoEnvio.global());
+    }
+
+    public void enviar(Enviable enviable, DestinoEnvio destinoEnvio) {
         PAYLOAD payload = traducirEnviableAFormato(enviable);
-        conexion.enviar(payload);
+        conexion.enviar(payload, destinoEnvio == null ? DestinoEnvio.global() : destinoEnvio);
     }
 
     public void enviarPayload(PAYLOAD payload) {
         Objects.requireNonNull(payload, "El payload es obligatorio");
         conexion.enviar(payload);
+    }
+
+    public void enviarPayload(PAYLOAD payload, DestinoEnvio destinoEnvio) {
+        Objects.requireNonNull(payload, "El payload es obligatorio");
+        conexion.enviar(payload, destinoEnvio == null ? DestinoEnvio.global() : destinoEnvio);
     }
 
     public Optional<PAYLOAD> procesar(PAYLOAD payload) {
@@ -60,6 +69,10 @@ public class Traductor<PAYLOAD> {
 
     public Class<PAYLOAD> getClasePayload() {
         return clasePayload;
+    }
+
+    public Conexion<PAYLOAD> getConexion() {
+        return this.conexion;
     }
 
     private void validarCompatibilidadDePayload(Class<PAYLOAD> claseBase, Class<PAYLOAD> claseDependencia, String dependencia) {

@@ -381,6 +381,8 @@ h2 {
 	bottom: 0;
 	padding: 0;
 	border-radius: 0;
+	overflow-y: auto;
+	-webkit-overflow-scrolling: touch;
 	border: none;
 	background: var(--bg-deep);
 	z-index: 10;

@@ -41,7 +41,7 @@ Define la lógica de un comando entrante mediante hacer(payload, contexto). El e
 Permite publicar la respuesta principal sin acoplarse al transporte: contexto.enviar(enviable).
 
 Estado actual:
-
+>
 1. Solo permite una respuesta principal por evento.
 2. Expone tieneRespuesta()/getRespuesta() para que Traductor decida si serializa y envia.
 

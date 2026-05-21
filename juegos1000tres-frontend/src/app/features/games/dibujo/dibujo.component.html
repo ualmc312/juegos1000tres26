@@ -1,0 +1,185 @@
+<section class="dibujo-shell">
+  <!-- Cabecera de Conexión y Título -->
+  <header class="dibujo-hero">
+    <div>
+      <p class="eyebrow">Dibuja & Adivina</p>
+      <h2>Dibujo</h2>
+      <p class="subtitle" *ngIf="estado.tema">Temática de esta partida: <strong>{{ estado.tema }}</strong></p>
+      <p class="subtitle" *ngIf="!estado.tema">Espera a que comience la partida y se elija una temática.</p>
+    </div>
+    <div class="estado" [ngClass]="{'conectado': estadoConexion === 'Conectado'}">{{ estadoConexion }}</div>
+  </header>
+
+  <!-- PANTALLA PÚBLICA -->
+  <div *ngIf="esPantalla; else jugadoresTemplate">
+    <div class="pantalla-wrapper panel">
+      <!-- Fase Jugando en Pantalla -->
+      <div *ngIf="estado.fase === 'JUGANDO'" class="pantalla-juego">
+        <div class="pantalla-header">
+          <div class="info-ronda">
+            <span class="ronda-badge">Ronda {{ estado.rondaActual }} / {{ estado.totalRondas }}</span>
+            <h3>{{ estado.mensaje }}</h3>
+          </div>
+          <div class="contador-tiempo" [class.tiempo-critico]="segundosRestantes <= 10">
+            <span>{{ segundosRestantes }}s</span>
+          </div>
+        </div>
+        <canvas #canvas class="dibujo-canvas"></canvas>
+      </div>
+
+      <!-- Fase Mostrar Resultados / Finalizada en Pantalla -->
+      <div *ngIf="estado.fase === 'MOSTRANDO_RESULTADO' || estado.fase === 'FINALIZADA'" class="pantalla-resultados">
+        <div class="pantalla-resultados-header">
+          <h2>{{ estado.fase === 'FINALIZADA' ? '¡Partida Finalizada!' : 'Fin de la Ronda' }}</h2>
+          <p class="palabra-revelada" *ngIf="estado.palabraSecreta">
+            La palabra era: <strong>{{ estado.palabraSecreta }}</strong>
+          </p>
+        </div>
+
+        <div class="marcador-global">
+          <h3>Clasificación</h3>
+          <div class="marcador-lista">
+            <div class="marcador-item" *ngFor="let jugador of estado.marcador; let idx = index" [class.primer-puesto]="idx === 0">
+              <div class="marcador-izq">
+                <span class="posicion">#{{ idx + 1 }}</span>
+                <span class="nombre">{{ jugador.nombre }}</span>
+              </div>
+              <strong class="puntos">{{ jugador.puntos }} pts</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fases Iniciales en Pantalla -->
+      <div *ngIf="estado.fase === 'ESPERANDO_TEMA' || estado.fase === 'VALIDANDO_TEMA'" class="pantalla-inicial">
+        <div class="loader-container">
+          <div class="spinner"></div>
+          <h3>{{ estado.mensaje || 'Esperando temática...' }}</h3>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JUGADORES (No es pantalla pública) -->
+  <ng-template #jugadoresTemplate>
+    <div class="jugador-wrapper">
+      
+      <!-- FASE 1: ESPERANDO TEMA -->
+      <div *ngIf="estado.fase === 'ESPERANDO_TEMA'" class="panel-fase">
+        <div *ngIf="esProponenteTema; else esperandoTemaTemplate" class="panel-tema">
+          <h3>Te toca proponer temática</h3>
+          <p class="hint">Escribe una temática divertida y la IA validará si es apta para jugar.</p>
+          <div class="campo">
+            <input [(ngModel)]="tema" placeholder="Ej. Animales salvajes, Superhéroes, Comida..." (keyup.enter)="proponerTema()" />
+          </div>
+          <button class="action btn-block" (click)="proponerTema()">Enviar temática</button>
+        </div>
+        <ng-template #esperandoTemaTemplate>
+          <div class="espera-mensaje">
+            <div class="spinner-small"></div>
+            <p>{{ estado.mensaje || 'Esperando a que se proponga un tema...' }}</p>
+          </div>
+        </ng-template>
+      </div>
+
+      <!-- FASE 2: VALIDANDO TEMA -->
+      <div *ngIf="estado.fase === 'VALIDANDO_TEMA'" class="panel-fase esperando-validar">
+        <div class="spinner-small"></div>
+        <p>Validando la temática con la Inteligencia Artificial...</p>
+      </div>
+
+      <!-- FASE 3: JUGANDO -->
+      <div *ngIf="estado.fase === 'JUGANDO'">
+        <!-- EL JUGADOR ES EL PINTOR -->
+        <div *ngIf="esPintor" class="panel-juego-pintor">
+          <div class="pintor-instrucciones panel">
+            <div class="palabra-secreta-contenedor">
+              <span class="etiqueta">Tienes que dibujar:</span>
+              <span class="palabra-secreta">{{ estado.palabraSecreta }}</span>
+            </div>
+            <div class="contador-tiempo" [class.tiempo-critico]="segundosRestantes <= 10">
+              <span>{{ segundosRestantes }}s</span>
+            </div>
+          </div>
+
+          <div class="lienzo-contenedor panel">
+            <canvas #canvas class="dibujo-canvas pintor-canvas"
+                    (mousedown)="iniciarDibujo($event)"
+                    (mousemove)="dibujar($event)"
+                    (mouseup)="detenerDibujo()"
+                    (mouseleave)="detenerDibujo()"
+                    (touchstart)="iniciarDibujo($event)"
+                    (touchmove)="dibujar($event)"
+                    (touchend)="detenerDibujo()"></canvas>
+            
+            <div class="lienzo-acciones">
+              <button class="btn-secundario" (click)="deshacer()">Deshacer</button>
+              <button class="btn-peligro" (click)="limpiar()">Limpiar lienzo</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- EL JUGADOR ES ADIVINADOR -->
+        <div *ngIf="!esPintor" class="panel-juego-adivinador">
+          <div class="adivinador-header panel">
+            <div class="adivinador-mensaje">
+              <h3>{{ estado.mensaje }}</h3>
+              <p class="hint">Escribe tu respuesta y envíala cuando creas que ya la tienes.</p>
+            </div>
+            <div class="contador-tiempo" [class.tiempo-critico]="segundosRestantes <= 10">
+              <span>{{ segundosRestantes }}s</span>
+            </div>
+          </div>
+
+          <div class="panel adivinador-acciones" [ngClass]="{'acierto': yaAcerto}">
+            <div *ngIf="estado.resultadoIntento" class="resultado-intento" [ngClass]="estado.resultadoIntento === 'ACIERTO' ? 'acierto' : 'fallo'">
+              <span>{{ estado.resultadoIntento === 'ACIERTO' ? 'Acertaste' : 'No es correcta' }}</span>
+            </div>
+
+            <div *ngIf="yaAcerto" class="celebracion-acierto">
+              <span class="icono">🎉</span>
+              <h3>¡Respuesta Correcta!</h3>
+              <p>Has ganado puntos por velocidad. Esperando a que termine el turno...</p>
+            </div>
+
+            <div *ngIf="!yaAcerto" class="formulario-adivinar">
+              <div class="campo">
+                <input [(ngModel)]="intento" placeholder="Escribe tu adivinanza aquí..." (keyup.enter)="intentarAdivinar()" />
+              </div>
+              <button class="action btn-block" (click)="intentarAdivinar()">Enviar respuesta</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FASE 4: MOSTRANDO RESULTADO / FINALIZADA -->
+      <div *ngIf="estado.fase === 'MOSTRANDO_RESULTADO' || estado.fase === 'FINALIZADA'" class="panel-fase panel-resultados-jugador panel">
+        <div class="resultados-titulo">
+          <h2>{{ estado.fase === 'FINALIZADA' ? '¡Partida Terminada!' : 'Fin del Turno' }}</h2>
+          <p class="palabra-revelada" *ngIf="estado.palabraSecreta">
+            La palabra correcta era: <strong>{{ estado.palabraSecreta }}</strong>
+          </p>
+        </div>
+
+        <div class="marcador-jugador">
+          <h3>Marcador Actual</h3>
+          <div class="marcador-lista">
+            <div class="marcador-item" *ngFor="let jugador of estado.marcador; let idx = index" [class.primer-puesto]="idx === 0">
+              <div class="marcador-izq">
+                <span class="posicion">#{{ idx + 1 }}</span>
+                <span class="nombre">{{ jugador.nombre }}</span>
+              </div>
+              <strong class="puntos">{{ jugador.puntos }} pts</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </ng-template>
+
+  <!-- Mensajes de Estado Generales -->
+  <footer class="dibujo-footer panel" *ngIf="estado.mensaje && estado.fase !== 'JUGANDO' && estado.fase !== 'MOSTRANDO_RESULTADO' && estado.fase !== 'FINALIZADA'">
+    <p class="resumen">{{ estado.mensaje }}</p>
+  </footer>
+</section>
