@@ -39,7 +39,7 @@
         <div class="marcador-global">
           <h3>Clasificación</h3>
           <div class="marcador-lista">
-            <div class="marcador-item" *ngFor="let jugador of estado.marcador; let idx = index" [class.primer-puesto]="idx === 0">
+            <div class="marcador-item" *ngFor="let jugador of estado.marcador; let idx = index" [class.primer-puesto]="idx === 0" [class.ganador]="esFaseFinalizada && idx === 0">
               <div class="marcador-izq">
                 <span class="posicion">#{{ idx + 1 }}</span>
                 <span class="nombre">{{ jugador.nombre }}</span>
@@ -164,7 +164,7 @@
         <div class="marcador-jugador">
           <h3>Marcador Actual</h3>
           <div class="marcador-lista">
-            <div class="marcador-item" *ngFor="let jugador of estado.marcador; let idx = index" [class.primer-puesto]="idx === 0">
+            <div class="marcador-item" *ngFor="let jugador of estado.marcador; let idx = index" [class.primer-puesto]="idx === 0" [class.ganador]="esFaseFinalizada && idx === 0">
               <div class="marcador-izq">
                 <span class="posicion">#{{ idx + 1 }}</span>
                 <span class="nombre">{{ jugador.nombre }}</span>
@@ -182,4 +182,11 @@
   <footer class="dibujo-footer panel" *ngIf="estado.mensaje && estado.fase !== 'JUGANDO' && estado.fase !== 'MOSTRANDO_RESULTADO' && estado.fase !== 'FINALIZADA'">
     <p class="resumen">{{ estado.mensaje }}</p>
   </footer>
+
+  <div class="game-return-panel" *ngIf="esFaseFinalizada">
+    <button type="button" class="game-return-button" *ngIf="esHost" (click)="volverALaSala()">
+      VOLVER A SALA
+    </button>
+    <p class="game-return-note" *ngIf="!esHost">Esperando a que el host vuelva a la sala...</p>
+  </div>
 </section>

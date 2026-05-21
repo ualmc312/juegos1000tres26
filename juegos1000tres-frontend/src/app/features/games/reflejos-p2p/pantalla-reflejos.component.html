@@ -27,7 +27,7 @@
       <h2>Ranking</h2>
       <div class="ranking-contenedor">
         <div *ngIf="estado.ranking.length > 0" class="ranking-list">
-          <div *ngFor="let item of estado.ranking; let i = index" class="ranking-item">
+          <div *ngFor="let item of estado.ranking; let i = index" class="ranking-item" [class.ganador]="estado.fase === 'RESULTADO' && i === 0">
             <span class="posicion">{{ i + 1 }}.</span>
             <span class="nombre">{{ item.jugadorId }}</span>
             <span class="tiempo">{{ item.tiempoMs }}ms</span>
@@ -38,7 +38,7 @@
     </aside>
   </div>
 
-  <footer class="pantalla-footer">
-    <button type="button" class="volver" (click)="volverALobby()">Volver a la sala</button>
+  <footer class="pantalla-footer" *ngIf="estado.fase === 'RESULTADO'">
+    <p class="sin-ranking">Esperando a que el host vuelva a la sala...</p>
   </footer>
 </section>

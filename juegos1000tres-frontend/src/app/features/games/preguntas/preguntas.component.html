@@ -17,7 +17,7 @@
   <section class="card" *ngIf="estado.marcador?.length">
     <h4>Marcador</h4>
     <ul class="score-list">
-      <li *ngFor="let jugador of estado.marcador">{{ jugador.nombre }} · {{ jugador.puntos }}</li>
+      <li *ngFor="let jugador of estado.marcador; let idx = index" [class.ganador]="puedeVolverALaSala && idx === 0">{{ jugador.nombre }} - {{ jugador.puntos }}</li>
     </ul>
   </section>
 
@@ -43,4 +43,10 @@
   <section class="card" *ngIf="esHost && estado.puedeIniciarRonda">
     <button type="button" (click)="iniciarRonda()">Iniciar ronda</button>
   </section>
+  <div class="game-return-panel" *ngIf="puedeVolverALaSala">
+    <button type="button" class="game-return-button" *ngIf="esHost" (click)="volverALaSala()">
+      VOLVER A SALA
+    </button>
+    <p class="game-return-note" *ngIf="!esHost">Esperando a que el host vuelva a la sala...</p>
+  </div>
 </section>

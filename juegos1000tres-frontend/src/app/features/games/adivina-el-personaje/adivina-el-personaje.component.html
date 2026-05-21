@@ -83,7 +83,7 @@
 
     <div class="adp-panel">
       <h4>Jugadores</h4>
-      <article *ngFor="let jugador of jugadoresOrdenados" class="adp-player-card">
+      <article *ngFor="let jugador of jugadoresOrdenados" class="adp-player-card" [class.ganador]="esGanador(jugador)">
         <div class="adp-player-head">
           <h5>{{ jugador.nombreJugador || 'Jugador' }}</h5>
           <span>{{ jugador.acertado ? 'Adivinó' : 'En juego' }}</span>
@@ -98,7 +98,7 @@
   <ng-template #pantallaTpl>
     <div class="adp-panel">
       <h4>Marcador</h4>
-      <article *ngFor="let jugador of jugadoresOrdenados" class="adp-player-card">
+      <article *ngFor="let jugador of jugadoresOrdenados" class="adp-player-card" [class.ganador]="esGanador(jugador)">
         <div class="adp-player-head">
           <h5>{{ jugador.nombreJugador || 'Jugador' }}</h5>
           <span>{{ jugador.acertado ? 'Adivinó' : 'Pendiente' }}</span>
@@ -128,4 +128,11 @@
       <p *ngIf="estado.ganadores?.length">Ganadores: {{ estado.ganadores?.join(', ') }}</p>
     </div>
   </ng-container>
+
+  <div class="game-return-panel" *ngIf="esFaseFinalizada">
+    <button type="button" class="game-return-button" *ngIf="esHost" (click)="volverALaSala()">
+      VOLVER A SALA
+    </button>
+    <p class="game-return-note" *ngIf="!esHost">Esperando a que el host vuelva a la sala...</p>
+  </div>
 </section>

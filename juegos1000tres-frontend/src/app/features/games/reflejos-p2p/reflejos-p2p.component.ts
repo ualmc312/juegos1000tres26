@@ -1,10 +1,12 @@
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import { Component, Input, OnDestroy, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ReflejosP2PService } from './reflejos-p2p.service';
 import { ReflejosEstado, ReflejosResultadoItem } from './comunicacion/reflejos.model';
+import { obtenerApiBaseUrl } from '../../../core/config/api-base';
 
 @Component({
   selector: 'app-reflejos-p2p',
@@ -37,9 +39,9 @@ export class ReflejosP2PComponent implements OnInit, OnDestroy {
   salaManual = '';
   peerIdActual = ''; // Mostrar el peerId actual del servicio
   errorInicial = ''; // Para mostrar errores de inicialización
-  private redireccionProgramada = false;
   private backendNotificado = false;
   private esPopup = false;
+  private pollingSalaId: ReturnType<typeof setInterval> | null = null;
 
   private sub?: Subscription;
 
@@ -47,7 +49,8 @@ export class ReflejosP2PComponent implements OnInit, OnDestroy {
     private readonly reflejos: ReflejosP2PService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
-    private readonly cdr: ChangeDetectorRef
+    private readonly cdr: ChangeDetectorRef,
+    private readonly http: HttpClient
   ) {}
 
   ngOnInit(): void {
@@ -85,20 +88,8 @@ export class ReflejosP2PComponent implements OnInit, OnDestroy {
         this.estado = estado;
         this.cdr.detectChanges();
 
-        if (estado.fase === 'RESULTADO' && !this.redireccionProgramada) {
-          this.redireccionProgramada = true;
-          
-          if (this.esHost && !this.backendNotificado) {
-            // El host avisa al backend inmediatamente para que la sala se actualice
-            this.backendNotificado = true;
-            const actorId = sessionStorage.getItem('sala.jugadorId') || '';
-            this.reflejos.finalizarJuegoEnBackend(actorId);
-          }
-
-          // Ambos esperan 5 segundos para que los usuarios vean los resultados antes de salir
-          setTimeout(() => {
-            this.volverALobby();
-          }, 5000);
+        if (estado.fase === 'RESULTADO' && !this.esHost) {
+          this.iniciarPollingFinDeSala();
         }
       });
     } catch (error) {
@@ -110,6 +101,7 @@ export class ReflejosP2PComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.sub?.unsubscribe();
+    this.detenerPollingFinDeSala();
     this.reflejos.desconectar();
   }
 
@@ -144,5 +136,39 @@ export class ReflejosP2PComponent implements OnInit, OnDestroy {
 
   get esBotonHabilitado(): boolean {
     return this.estado.fase === 'FUEGO' || this.estado.fase === 'PALABRA';
+  }
+
+  get puedeVolverALaSala(): boolean {
+    return this.esHost && this.estado.fase === 'RESULTADO';
+  }
+
+  private iniciarPollingFinDeSala(): void {
+    if (this.pollingSalaId !== null || !this.uuid) {
+      return;
+    }
+
+    this.pollingSalaId = setInterval(() => {
+      this.http
+        .get<{ juegoActual?: string }>(`${obtenerApiBaseUrl()}/sala/${this.uuid}/estado`, { withCredentials: true })
+        .subscribe({
+          next: respuesta => {
+            if ((respuesta.juegoActual || '') !== 'reflejos-p2p') {
+              this.ejecutarCierre();
+            }
+          },
+          error: () => {
+            // Mantener la pantalla final si la sala tarda en responder.
+          }
+        });
+    }, 1500);
+  }
+
+  private detenerPollingFinDeSala(): void {
+    if (this.pollingSalaId === null) {
+      return;
+    }
+
+    clearInterval(this.pollingSalaId);
+    this.pollingSalaId = null;
   }
 }

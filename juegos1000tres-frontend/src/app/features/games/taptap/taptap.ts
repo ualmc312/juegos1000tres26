@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { Subscription, interval } from 'rxjs';
 import { TapTapEstado, TapTapPuntuacion, TapTapService } from './services/taptap.service';
 
@@ -22,16 +22,18 @@ export class Taptap implements OnInit, OnDestroy {
   @Input() pantallaId = '';
   @Input() esPantalla = false;
   @Input() esHost = false;
+  @Output() volverSala = new EventEmitter<void>();
 
   puntos = 0;
   segundosRestantes = 60;
   estadoTexto = 'Preparando duelo...';
   objetivos: TapTarget[] = [];
   tabla: TapTapPuntuacion[] = [];
+  finalizado = false;
+  ganadorId: string | null = null;
 
   private inicioEpochMs = 0;
   private duracionMs = 60_000;
-  private finalizado = false;
   private finalizacionEnviada = false;
   private cargandoEstado = false;
   private contadorObjetivos = 1;
@@ -118,8 +120,17 @@ export class Taptap implements OnInit, OnDestroy {
 
     if (estado.finalizada) {
       this.finalizado = true;
+      this.ganadorId = estado.ganadorId ?? null;
       this.estadoTexto = 'Duelo terminado';
     }
+  }
+
+  volverALaSala(): void {
+    if (!this.esHost || !this.finalizado) {
+      return;
+    }
+
+    this.volverSala.emit();
   }
 
   private actualizarReloj(): void {

@@ -5,8 +5,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
+import com.juegos1000tres.juegos1000tres_backend.juegos.handicap.HandicapService;
 import com.juegos1000tres.juegos1000tres_backend.juegos.AdivinaElPersonaje.AdivinaElPersonajeManager;
 import com.juegos1000tres.juegos1000tres_backend.juegos.Dibujo.DibujoManager;
 import com.juegos1000tres.juegos1000tres_backend.juegos.HablameDeTi.HablameDeTiManager;
@@ -27,6 +29,7 @@ public class SalaService {
     private final HablameDeTiManager hablameDeTiManager;
     private final DibujoManager dibujoManager;
     private final P2PSenalizacionService p2pSenalizacionService;
+    private final ObjectProvider<HandicapService> handicapServiceProvider;
 
     public SalaService(
             JuegoManager juegoManager,
@@ -34,13 +37,15 @@ public class SalaService {
             AdivinaElPersonajeManager adivinaElPersonajeManager,
             HablameDeTiManager hablameDeTiManager,
             DibujoManager dibujoManager,
-            P2PSenalizacionService p2pSenalizacionService) {
+            P2PSenalizacionService p2pSenalizacionService,
+            ObjectProvider<HandicapService> handicapServiceProvider) {
         this.juegoManager = juegoManager;
         this.pruebaWebSocketManager = pruebaWebSocketManager;
         this.adivinaElPersonajeManager = adivinaElPersonajeManager;
         this.hablameDeTiManager = hablameDeTiManager;
         this.dibujoManager = dibujoManager;
         this.p2pSenalizacionService = p2pSenalizacionService;
+        this.handicapServiceProvider = handicapServiceProvider;
     }
 
     public SalaRespuesta crearSala(String nombre, String usuarioId, boolean esInvitado) {
@@ -126,6 +131,8 @@ public class SalaService {
         } catch (RuntimeException ex) {
             // ignore
         }
+
+        limpiarEstadoJuegoEspecial(uuid, juegoAntes);
     }
 
     public void incrementarVictoria(String uuid, String jugadorId) {
@@ -228,6 +235,17 @@ public class SalaService {
             }
         } catch (RuntimeException ex) {
             // ignore
+        }
+
+        limpiarEstadoJuegoEspecial(uuid, juego);
+    }
+
+    private void limpiarEstadoJuegoEspecial(String uuid, String juego) {
+        if ("handicap".equalsIgnoreCase(juego)) {
+            HandicapService handicapService = this.handicapServiceProvider.getIfAvailable();
+            if (handicapService != null) {
+                handicapService.limpiarPartida(uuid);
+            }
         }
     }
 }

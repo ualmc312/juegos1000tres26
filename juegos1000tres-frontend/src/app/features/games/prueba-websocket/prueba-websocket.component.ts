@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Enviable, Envio, Recibo, Traductor, WebSocketConexion } from '../../../core/comunicacion';
 
@@ -22,6 +22,7 @@ export class PruebaWebSocketComponent implements OnInit, OnDestroy {
   @Input() pantallaId = '';
   @Input() esPantalla = false;
   @Input() esHost = false;
+  @Output() volverSala = new EventEmitter<void>();
 
   nombreJugador = 'Jugador';
   texto = '';
@@ -69,6 +70,14 @@ export class PruebaWebSocketComponent implements OnInit, OnDestroy {
 
   esVistaPantalla(): boolean {
     return this.esPantalla;
+  }
+
+  volverALaSala(): void {
+    if (!this.esHost) {
+      return;
+    }
+
+    this.volverSala.emit();
   }
 
   private inicializarComunicacion(): void {

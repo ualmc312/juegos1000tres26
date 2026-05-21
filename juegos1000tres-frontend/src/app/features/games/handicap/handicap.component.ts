@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { Subscription, interval } from 'rxjs';
 import { HandicapEstado, HandicapService } from './handicap.service';
 
@@ -14,6 +14,7 @@ export class HandicapComponent implements OnInit, OnDestroy {
   @Input() uuid = '';
   @Input() jugadorId = '';
   @Input() esHost = false;
+  @Output() volverSala = new EventEmitter<void>();
 
   estado: HandicapEstado | null = null;
   seleccionados = new Set<string>();
@@ -73,6 +74,14 @@ export class HandicapComponent implements OnInit, OnDestroy {
     this.handicapService.confirmarGanadores(this.uuid, this.jugadorId, ganadores).subscribe({
       next: (estado) => this.aplicarEstado(estado),
     });
+  }
+
+  volverALaSala(): void {
+    if (!this.esHost || !this.estado || this.estado.fase === 'SELECCIONANDO') {
+      return;
+    }
+
+    this.volverSala.emit();
   }
 
   getTiempoRestanteSegundos(): number {

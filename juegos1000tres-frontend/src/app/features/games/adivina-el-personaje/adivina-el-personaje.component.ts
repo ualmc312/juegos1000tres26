@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Enviable, Envio, Recibo, Traductor, WebSocketConexion } from '../../../core/comunicacion';
 
@@ -51,6 +51,7 @@ export class AdivinaElPersonajeComponent implements OnInit, OnDestroy {
   @Input() pantallaId = '';
   @Input() esPantalla = false;
   @Input() esHost = false;
+  @Output() volverSala = new EventEmitter<void>();
 
   nombreJugador = 'Jugador';
   tema = '';
@@ -125,6 +126,20 @@ export class AdivinaElPersonajeComponent implements OnInit, OnDestroy {
 
   get esFaseFinalizada(): boolean {
     return this.estado.fase === 'FINALIZADA';
+  }
+
+  esGanador(jugador: JugadorEstado): boolean {
+    const ganadores = this.estado.ganadores || [];
+    return this.esFaseFinalizada
+      && (ganadores.includes(jugador.jugadorId) || ganadores.includes(jugador.nombreJugador));
+  }
+
+  volverALaSala(): void {
+    if (!this.esHost || !this.esFaseFinalizada) {
+      return;
+    }
+
+    this.volverSala.emit();
   }
 
   private inicializarComunicacion(): void {
