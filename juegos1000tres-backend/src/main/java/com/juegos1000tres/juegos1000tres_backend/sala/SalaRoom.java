@@ -4,8 +4,10 @@ import com.juegos1000tres.juegos1000tres_backend.modelos.Jugador;
 import com.juegos1000tres.juegos1000tres_backend.modelos.Sala;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class SalaRoom {
 
@@ -17,6 +19,8 @@ public class SalaRoom {
     private String pantallaId;
     private String juegoActual;
     private int contadorNombres = 1;
+    private int contadorInvitados = 1;
+    private final Map<String, Integer> invitadosPorUsuario = new ConcurrentHashMap<>();
 
     public SalaRoom(String uuid, Sala sala, String creadorId) {
         this.uuid = Objects.requireNonNull(uuid, "uuid requerido");
@@ -26,62 +30,53 @@ public class SalaRoom {
         this.juegoActual = "";
     }
 
-    public synchronized Jugador agregarJugador(String nombre) {
-        String nombreFinal = resolverNombreJugador(nombre);
+    public synchronized Jugador agregarJugador(String nombre, String usuarioId, boolean esInvitado) {
+        String nombreFinal = esInvitado
+                ? resolverNombreInvitado(usuarioId)
+                : resolverNombreJugador(nombre);
         Jugador jugador = new Jugador(nombreFinal);
         sala.agregarJugador(jugador);
         return jugador;
     }
 
+    public synchronized void registrarInvitado(String usuarioId) {
+        String clave = (usuarioId == null || usuarioId.isBlank()) ? null : usuarioId.trim();
+
+        if (clave != null && !invitadosPorUsuario.containsKey(clave)) {
+            invitadosPorUsuario.put(clave, 1);
+        }
+
+        if (contadorInvitados <= 1) {
+            contadorInvitados = 2;
+        }
+    }
+
     private String resolverNombreJugador(String nombre) {
-        String base = (nombre == null || nombre.isBlank())
+        return (nombre == null || nombre.isBlank())
                 ? "Jugador " + contadorNombres++
                 : nombre.trim();
-
-        if (!esInvitado(base)) {
-            return base;
-        }
-
-        return asignarNombreInvitado();
     }
 
-    private boolean esInvitado(String nombre) {
-        return "invitado".equalsIgnoreCase(nombre.trim());
-    }
+    private String resolverNombreInvitado(String usuarioId) {
+        String clave = (usuarioId == null || usuarioId.isBlank()) ? null : usuarioId.trim();
+        int numero;
 
-    private String asignarNombreInvitado() {
-        int maxNumero = 0;
-
-        for (Jugador jugador : sala.getJugadores()) {
-            String actual = jugador.getNombre();
-            if (actual == null) {
-                continue;
+        if (clave == null) {
+            numero = contadorInvitados++;
+        } else {
+            Integer asignado = invitadosPorUsuario.get(clave);
+            if (asignado == null) {
+                asignado = contadorInvitados++;
+                invitadosPorUsuario.put(clave, asignado);
             }
-
-            String normalizado = actual.trim().toLowerCase();
-            if (normalizado.equals("invitado")) {
-                maxNumero = Math.max(maxNumero, 1);
-                continue;
-            }
-
-            if (normalizado.startsWith("invitado ")) {
-                String numeroTexto = normalizado.substring("invitado ".length()).trim();
-                try {
-                    int numero = Integer.parseInt(numeroTexto);
-                    if (numero > maxNumero) {
-                        maxNumero = numero;
-                    }
-                } catch (NumberFormatException ex) {
-                    // ignore
-                }
-            }
+            numero = asignado;
         }
 
-        if (maxNumero <= 0) {
+        if (numero == 1) {
             return "invitado";
         }
 
-        return "invitado " + (maxNumero + 1);
+        return "invitado " + numero;
     }
 
     public synchronized void eliminarJugador(String jugadorId) {

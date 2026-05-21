@@ -28,7 +28,7 @@ export class Lobby implements OnInit, OnDestroy {
   hostId = '';
   pantallaId = '';
   juegoActual = '';
-  jugadores: JugadorSala[] = [];
+  jugadores: JugadorResumen[] = [];
   usuarioConectadoNombre = '';
   hostNombre = '';
   esHost = false;
@@ -47,7 +47,7 @@ export class Lobby implements OnInit, OnDestroy {
   private polling?: Subscription;
   private authSessionSub?: Subscription;
   private authSub?: Subscription;
-  private jugadoresPorId = new Map<string, JugadorSala>();
+  private jugadoresPorId = new Map<string, JugadorResumen>();
 
   constructor(
     private readonly http: HttpClient,
@@ -249,7 +249,8 @@ export class Lobby implements OnInit, OnDestroy {
       this.jugadorId = respuesta.jugadorId;
       sessionStorage.setItem('sala.jugadorId', respuesta.jugadorId);
     }
-    this.jugadores = this.prepararJugadores(respuesta.jugadores || []);
+    this.jugadores = respuesta.jugadores || [];
+    this.jugadoresPorId = new Map(this.jugadores.map(jugador => [jugador.id, jugador]));
     this.hostId = respuesta.hostId;
     this.pantallaId = respuesta.pantallaId || '';
     this.juegoActual = respuesta.juegoActual || '';
@@ -287,76 +288,6 @@ export class Lobby implements OnInit, OnDestroy {
     return new HttpParams().set('nombre', nombre);
   }
 
-  private prepararJugadores(jugadores: JugadorResumen[]): JugadorSala[] {
-    const nombresBase = jugadores.map(jugador => {
-      const nombreAutenticado = this.usuarioActual?.nombre?.trim();
-      const nombreBase = nombreAutenticado && jugador.id === this.jugadorId
-        ? nombreAutenticado
-        : (jugador.nombre || '').trim();
-
-      return {
-        jugador,
-        nombreBase: nombreBase || '---'
-      };
-    });
-
-    const invitadosUsados = new Set<number>();
-
-    nombresBase.forEach(item => {
-      const invitado = this.obtenerNumeroInvitado(item.nombreBase);
-      if (invitado?.tieneSufijo) {
-        invitadosUsados.add(invitado.numero);
-      }
-    });
-
-    let siguienteNumero = 1;
-    const jugadoresSala = nombresBase.map(item => {
-      const invitado = this.obtenerNumeroInvitado(item.nombreBase);
-      let nombreSala = item.nombreBase;
-
-      if (invitado) {
-        if (invitado.tieneSufijo) {
-          nombreSala = `invitado ${invitado.numero}`;
-        } else {
-          while (invitadosUsados.has(siguienteNumero)) {
-            siguienteNumero += 1;
-          }
-
-          nombreSala = siguienteNumero === 1
-            ? 'invitado'
-            : `invitado ${siguienteNumero}`;
-          invitadosUsados.add(siguienteNumero);
-          siguienteNumero += 1;
-        }
-      }
-
-      return {
-        ...item.jugador,
-        nombreSala
-      };
-    });
-
-    this.jugadoresPorId = new Map(jugadoresSala.map(jugador => [jugador.id, jugador]));
-    return jugadoresSala;
-  }
-
-  private obtenerNumeroInvitado(nombre: string): { numero: number; tieneSufijo: boolean } | null {
-    const match = nombre.trim().toLowerCase().match(/^invitado(?:\s+(\d+))?$/);
-
-    if (!match) {
-      return null;
-    }
-
-    if (match[1]) {
-      const numero = Number.parseInt(match[1], 10);
-      if (Number.isNaN(numero)) {
-        return null;
-      }
-      return { numero, tieneSufijo: true };
-    }
-
-    return { numero: 1, tieneSufijo: false };
-  }
 
   private actualizarNombresClave(): void {
     this.usuarioConectadoNombre = this.obtenerNombrePorId(this.jugadorId);
@@ -369,14 +300,9 @@ export class Lobby implements OnInit, OnDestroy {
     }
 
     const jugador = this.jugadoresPorId.get(id);
-    if (jugador?.nombreSala) {
-      return jugador.nombreSala;
+    if (jugador?.nombre) {
+      return jugador.nombre;
     }
-
-    if (this.usuarioActual?.nombre && id === this.jugadorId) {
-      return this.usuarioActual.nombre;
-    }
-
     return '';
   }
 }
@@ -387,9 +313,6 @@ interface JugadorResumen {
   victorias: number;
 }
 
-interface JugadorSala extends JugadorResumen {
-  nombreSala: string;
-}
 
 interface SalaRespuesta {
   uuid: string;

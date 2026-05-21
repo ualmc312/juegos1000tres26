@@ -11,27 +11,47 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.juegos1000tres.juegos1000tres_backend.auth.AuthRole;
+import com.juegos1000tres.juegos1000tres_backend.auth.AuthUser;
+import com.juegos1000tres.juegos1000tres_backend.auth.JwtService;
+
 @RestController
 @RequestMapping("/sala")
 @CrossOrigin(origins = "*")
 public class SalaController {
 
     private final SalaService salaService;
+    private final JwtService jwtService;
 
-    public SalaController(SalaService salaService) {
+    public SalaController(SalaService salaService, JwtService jwtService) {
         this.salaService = salaService;
+        this.jwtService = jwtService;
     }
 
     @GetMapping("/crear")
     public SalaRespuesta crearSala(@RequestParam(required = false) String nombre) {
-        return salaService.crearSala(nombre);
+        SalaActor actor = obtenerActor(nombre);
+        return salaService.crearSala(actor.nombre(), actor.usuarioId(), actor.esInvitado());
     }
 
     @GetMapping("/{uuid}/unirse")
     public SalaRespuesta unirseSala(@PathVariable String uuid,
                                     @RequestParam(required = false) String nombre) {
-        return salaService.unirse(uuid, nombre);
+        SalaActor actor = obtenerActor(nombre);
+        return salaService.unirse(uuid, actor.nombre(), actor.usuarioId(), actor.esInvitado());
     }
+
+    private SalaActor obtenerActor(String nombreFallback) {
+        AuthUser user = jwtService.getCurrentUser();
+        if (user == null) {
+            return new SalaActor(nombreFallback, null, false);
+        }
+
+        boolean esInvitado = user.role() == AuthRole.GUEST;
+        return new SalaActor(user.nombre(), user.email(), esInvitado);
+    }
+
+    private record SalaActor(String nombre, String usuarioId, boolean esInvitado) {}
 
     @GetMapping("/{uuid}/estado")
     public SalaRespuesta estadoSala(@PathVariable String uuid) {

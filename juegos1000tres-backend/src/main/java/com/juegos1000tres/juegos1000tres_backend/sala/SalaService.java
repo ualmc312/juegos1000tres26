@@ -25,24 +25,30 @@ public class SalaService {
         this.pruebaWebSocketManager = pruebaWebSocketManager;
     }
 
-    public SalaRespuesta crearSala(String nombre) {
+    public SalaRespuesta crearSala(String nombre, String usuarioId, boolean esInvitado) {
         String uuid = generarIdUnico();
         String nombreFinal = (nombre == null || nombre.isBlank()) ? "Host" : nombre.trim();
-        if ("invitado".equalsIgnoreCase(nombreFinal)) {
+
+        if (esInvitado) {
             nombreFinal = "invitado";
         }
+
         Jugador host = new Jugador(nombreFinal);
         Sala sala = new Sala(host, new Pantalla("Lobby"));
         SalaRoom room = new SalaRoom(uuid, sala, host.getId().toString());
+
+        if (esInvitado) {
+            room.registrarInvitado(usuarioId);
+        }
 
         salas.put(uuid, room);
 
         return construirRespuesta(room, host.getId().toString());
     }
 
-    public SalaRespuesta unirse(String uuid, String nombre) {
+    public SalaRespuesta unirse(String uuid, String nombre, String usuarioId, boolean esInvitado) {
         SalaRoom room = obtenerSala(uuid);
-        Jugador jugador = room.agregarJugador(nombre);
+        Jugador jugador = room.agregarJugador(nombre, usuarioId, esInvitado);
 
         return construirRespuesta(room, jugador.getId().toString());
     }
