@@ -79,6 +79,47 @@
 	animation: fade-slide 420ms ease both;
 }
 
+.menu-bubbles {
+	margin-top: 0.75rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+}
+
+.menu-bubble {
+	background: rgba(13, 13, 38, 0.8);
+	border: 1px solid rgba(255, 255, 255, 0.18);
+	border-radius: 12px;
+	padding: 0.6rem 1rem;
+	color: var(--green);
+	font-size: 0.85rem;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	text-align: left;
+	cursor: pointer;
+	box-shadow: var(--shadow-panel);
+	transition: transform var(--transition), border-color var(--transition), box-shadow var(--transition);
+}
+
+.menu-bubble:hover {
+	transform: translateY(-1px);
+	border-color: rgba(255, 255, 255, 0.3);
+	box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+.menu-bubble:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+	transform: none;
+	box-shadow: var(--shadow-panel);
+}
+
+.menu-bubble:focus-visible {
+	outline: 2px solid rgba(0, 255, 136, 0.6);
+	outline-offset: 2px;
+}
+
 .user-badge span {
 	color: var(--text-muted);
 	font-size: 0.7rem;
@@ -162,6 +203,61 @@
 	width: 100%;
 	align-items: center;
 	margin-top: 1rem;
+}
+
+.popup-backdrop {
+	position: fixed;
+	inset: 0;
+	background: rgba(5, 5, 16, 0.72);
+	backdrop-filter: blur(8px);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 5;
+}
+
+.popup-panel {
+	width: min(900px, 92vw);
+	height: min(75vh, 680px);
+	background: linear-gradient(180deg, rgba(17, 17, 42, 0.95), rgba(13, 13, 38, 0.9));
+	border: 1px solid rgba(255, 255, 255, 0.18);
+	border-radius: 22px;
+	box-shadow: var(--shadow-panel);
+	padding: 2rem;
+	display: flex;
+	flex-direction: column;
+	animation: fade-slide 320ms ease both;
+}
+
+.popup-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+}
+
+.popup-header h2 {
+	margin: 0;
+	color: var(--green);
+	font-size: 1.4rem;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+.popup-close {
+	background: rgba(17, 17, 42, 0.9);
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	border-radius: 10px;
+	color: var(--text-primary);
+	padding: 0.5rem 0.9rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition: border-color var(--transition), transform var(--transition);
+}
+
+.popup-close:hover {
+	transform: translateY(-1px);
+	border-color: rgba(255, 255, 255, 0.35);
 }
 
 @keyframes fade-slide {
