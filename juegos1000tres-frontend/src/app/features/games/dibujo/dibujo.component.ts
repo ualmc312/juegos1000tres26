@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnDestroy, OnInit, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, AfterViewInit, ViewChild, ElementRef, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Enviable, Envio, Recibo, Traductor, WebSocketConexion } from '../../../core/comunicacion';
 
@@ -36,6 +36,7 @@ export class DibujoComponent implements OnInit, AfterViewInit, OnDestroy {
   @Input() pantallaId = '';
   @Input() esPantalla = false;
   @Input() esHost = false;
+  @Output() volverSala = new EventEmitter<void>();
 
   estadoConexion = 'Preparando WebSocket...';
   nombreJugador = 'Jugador';
@@ -127,6 +128,18 @@ export class DibujoComponent implements OnInit, AfterViewInit, OnDestroy {
       return Math.max(0, Math.ceil((this.finRondaEpochMs - this.ahoraMs) / 1000));
     }
     return Math.max(0, Math.ceil((this.estado.tiempoRestanteMs ?? 0) / 1000));
+  }
+
+  get esFaseFinalizada(): boolean {
+    return this.estado.fase === 'FINALIZADA';
+  }
+
+  volverALaSala(): void {
+    if (!this.esHost || !this.esFaseFinalizada) {
+      return;
+    }
+
+    this.volverSala.emit();
   }
 
   // Métodos del lienzo para el pintor

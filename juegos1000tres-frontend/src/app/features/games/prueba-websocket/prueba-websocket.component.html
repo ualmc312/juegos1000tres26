@@ -51,4 +51,10 @@
       <p *ngIf="!jugadores.length" class="muted">Esperando actividad...</p>
     </div>
   </ng-template>
+
+  <div class="game-return-panel" *ngIf="esHost">
+    <button type="button" class="game-return-button" (click)="volverALaSala()">
+      VOLVER A SALA
+    </button>
+  </div>
 </section>

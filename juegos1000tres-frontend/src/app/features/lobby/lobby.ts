@@ -239,7 +239,7 @@ export class Lobby implements OnInit, OnDestroy {
     });
   }
 
-  volverDesdeSpaceInvaders(): void {
+  volverDesdeJuego(): void {
     if (!this.esHost || !this.uuidActual || !this.jugadorId) {
       return;
     }
@@ -260,6 +260,10 @@ export class Lobby implements OnInit, OnDestroy {
           this.cdr.detectChanges();
         }
       });
+  }
+
+  volverDesdeSpaceInvaders(): void {
+    this.volverDesdeJuego();
   }
 
   estaMostrandoJuego(): boolean {

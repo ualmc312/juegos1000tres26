@@ -27,7 +27,7 @@ public class TapTapService {
         validarJuegoActivo(sala);
 
         TapTapPartida partida = partidas.compute(uuid, (key, actual) -> {
-            if (actual == null || actual.estaFinalizada()) {
+            if (actual == null) {
                 return crearPartida();
             }
             return actual;
@@ -51,6 +51,10 @@ public class TapTapService {
         SalaRoom sala = salaService.obtenerSalaRoom(uuid);
         validarJuegoActivo(sala);
 
+        if (!sala.getHostId().equals(actorId)) {
+            throw new SecurityException("Solo el host puede finalizar TapTap");
+        }
+
         TapTapPartida partida = obtenerPartida(uuid);
         long ahora = System.currentTimeMillis();
 
@@ -67,7 +71,6 @@ public class TapTapService {
                 victoriaRegistrada = true;
             }
 
-            salaService.finalizarJuego(uuid, actorId);
             partida.finalizar(ganadores.size() == 1 ? ganadores.get(0) : null);
 
             return new TapTapFinalRespuesta(ganadores.size() == 1 ? ganadores.get(0) : null, victoriaRegistrada);

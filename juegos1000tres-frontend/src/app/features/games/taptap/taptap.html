@@ -40,12 +40,19 @@
 				</tr>
 			</thead>
 			<tbody>
-				<tr *ngFor="let jugador of tabla">
+				<tr *ngFor="let jugador of tabla" [class.ganador]="finalizado && jugador.jugadorId === ganadorId">
 					<td>{{ jugador.nombre }}</td>
 					<td class="puntos">{{ jugador.puntos }}</td>
 				</tr>
 			</tbody>
 		</table>
 		<p class="nota" *ngIf="tabla.length === 0">Esperando pistoleros...</p>
+	</div>
+
+	<div class="game-return-panel" *ngIf="finalizado">
+		<button type="button" class="game-return-button" *ngIf="esHost" (click)="volverALaSala()">
+			VOLVER A SALA
+		</button>
+		<p class="game-return-note" *ngIf="!esHost">Esperando a que el host vuelva a la sala...</p>
 	</div>
 </section>

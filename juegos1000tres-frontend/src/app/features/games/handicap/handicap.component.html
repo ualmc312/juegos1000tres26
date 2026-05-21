@@ -13,7 +13,7 @@
   <div class="handicap-grid">
     <section class="card host-card" *ngIf="esHost">
       <h4>Menu del host</h4>
-      <p class="hint">Selecciona quien recibe la victoria y pulsa salir.</p>
+      <p class="hint">Selecciona quien recibe la victoria y confirma el resultado.</p>
       <p class="hint hint-note">Nota: No se recomienda que el host sea la pantalla.</p>
 
       <div class="checklist">
@@ -30,9 +30,17 @@
       </div>
 
       <button type="button" class="confirm-btn" (click)="confirmarGanadores()" [disabled]="bloqueoHost">
-        Salir
+        Confirmar resultado
       </button>
-      <p class="hint" *ngIf="bloqueoHost">Seleccion enviada. Volviendo en {{ getTiempoRestanteSegundos() }}s.</p>
+      <button
+        type="button"
+        class="confirm-btn"
+        *ngIf="estado.fase !== 'SELECCIONANDO'"
+        (click)="volverALaSala()"
+      >
+        VOLVER A SALA
+      </button>
+      <p class="hint" *ngIf="bloqueoHost">Seleccion enviada. Esperando la vuelta a sala.</p>
     </section>
 
     <section class="card result-card">
@@ -45,7 +53,7 @@
           <li *ngFor="let ganador of estado.ganadores">{{ ganador.nombre }}</li>
         </ul>
         <p *ngIf="!estado.ganadores.length">Sin ganadores esta vez.</p>
-        <p class="countdown">Volviendo en {{ getTiempoRestanteSegundos() }}s.</p>
+        <p class="countdown" *ngIf="!esHost">Esperando a que el host vuelva a la sala...</p>
       </div>
     </section>
   </div>

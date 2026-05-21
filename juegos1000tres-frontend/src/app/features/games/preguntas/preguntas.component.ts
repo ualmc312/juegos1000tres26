@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { PreguntasService } from './preguntas.service';
@@ -19,6 +19,7 @@ export class PreguntasComponent implements OnInit, OnDestroy {
   @Input() pantallaId = '';
   @Input() esPantalla = false;
   @Input() esHost = false;
+  @Output() volverSala = new EventEmitter<void>();
 
   estado: Partial<EstadoPreguntas> = {};
   respuestaLocal = '';
@@ -91,5 +92,17 @@ export class PreguntasComponent implements OnInit, OnDestroy {
 
   getTiempoRestanteSegundos(): number {
     return Math.ceil((this.estado.tiempoRestanteMs || 0) / 1000);
+  }
+
+  get puedeVolverALaSala(): boolean {
+    return this.estado.fase === 'MOSTRANDO_RESULTADO';
+  }
+
+  volverALaSala(): void {
+    if (!this.esHost || !this.puedeVolverALaSala) {
+      return;
+    }
+
+    this.volverSala.emit();
   }
 }

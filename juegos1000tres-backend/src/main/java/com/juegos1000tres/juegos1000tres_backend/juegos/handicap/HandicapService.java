@@ -17,8 +17,6 @@ import com.juegos1000tres.juegos1000tres_backend.sala.SalaService;
 @Service
 public class HandicapService {
 
-    private static final long RETARDO_CIERRE_MS = 3_000L;
-
     private final Map<String, HandicapPartida> partidas = new ConcurrentHashMap<>();
     private final SalaService salaService;
 
@@ -38,12 +36,7 @@ public class HandicapService {
             throw new IllegalArgumentException("Juego no activo");
         }
 
-        long ahora = System.currentTimeMillis();
-        if (partida.debeFinalizar(ahora)) {
-            aplicarResultados(uuid, sala, partida);
-        }
-
-        return construirRespuesta(sala, partida, ahora);
+        return construirRespuesta(sala, partida);
     }
 
     public HandicapEstadoRespuesta confirmarSeleccion(String uuid, String actorId, List<String> ganadores) {
@@ -59,10 +52,19 @@ public class HandicapService {
         HandicapPartida partida = partidas.computeIfAbsent(uuid, key -> new HandicapPartida());
         if (!partida.isConfirmada()) {
             List<String> ganadoresValidados = filtrarGanadores(sala, ganadores);
-            partida.confirmar(ganadoresValidados, System.currentTimeMillis());
+            partida.confirmar(ganadoresValidados);
+            aplicarResultados(uuid, partida);
         }
 
-        return construirRespuesta(sala, partida, System.currentTimeMillis());
+        return construirRespuesta(sala, partida);
+    }
+
+    public void limpiarPartida(String uuid) {
+        if (uuid == null || uuid.isBlank()) {
+            return;
+        }
+
+        partidas.remove(uuid);
     }
 
     private List<String> filtrarGanadores(SalaRoom sala, List<String> ganadores) {
@@ -85,7 +87,7 @@ public class HandicapService {
         return new ArrayList<>(resultado);
     }
 
-    private void aplicarResultados(String uuid, SalaRoom sala, HandicapPartida partida) {
+    private void aplicarResultados(String uuid, HandicapPartida partida) {
         if (partida.isResultadosAplicados()) {
             return;
         }
@@ -95,15 +97,9 @@ public class HandicapService {
         }
 
         partida.marcarResultadosAplicados();
-        partida.marcarFinalizada();
-
-        String hostId = sala.getHostId();
-        if (hostId != null && !hostId.isBlank()) {
-            salaService.finalizarJuego(uuid, hostId);
-        }
     }
 
-    private HandicapEstadoRespuesta construirRespuesta(SalaRoom sala, HandicapPartida partida, long ahora) {
+    private HandicapEstadoRespuesta construirRespuesta(SalaRoom sala, HandicapPartida partida) {
         List<JugadorRespuesta> jugadores = sala.getJugadores().stream()
                 .map(jugador -> new JugadorRespuesta(
                         jugador.getId().toString(),
@@ -123,15 +119,11 @@ public class HandicapService {
                 ? "FINALIZADO"
                 : partida.isConfirmada() ? "MOSTRANDO_RESULTADO" : "SELECCIONANDO";
 
-        long restanteMs = partida.isConfirmada() && !partida.isFinalizada()
-                ? partida.getTiempoRestanteMs(ahora)
-                : 0L;
-
         return new HandicapEstadoRespuesta(
                 fase,
                 jugadores,
                 ganadores,
-                restanteMs,
+                0L,
                 partida.isConfirmada());
     }
 
@@ -141,12 +133,12 @@ public class HandicapService {
 
     private static final class HandicapPartida {
         private List<String> ganadores = new ArrayList<>();
-        private Long confirmacionEpochMs;
+        private boolean confirmada;
         private boolean resultadosAplicados;
         private boolean finalizada;
 
         boolean isConfirmada() {
-            return confirmacionEpochMs != null;
+            return confirmada;
         }
 
         boolean isResultadosAplicados() {
@@ -161,26 +153,12 @@ public class HandicapService {
             return ganadores;
         }
 
-        void confirmar(List<String> ganadores, long ahora) {
-            if (confirmacionEpochMs != null) {
+        void confirmar(List<String> ganadores) {
+            if (confirmada) {
                 return;
             }
             this.ganadores = ganadores == null ? List.of() : List.copyOf(ganadores);
-            this.confirmacionEpochMs = ahora;
-        }
-
-        long getTiempoRestanteMs(long ahora) {
-            if (confirmacionEpochMs == null) {
-                return 0L;
-            }
-            long restante = RETARDO_CIERRE_MS - (ahora - confirmacionEpochMs);
-            return Math.max(restante, 0L);
-        }
-
-        boolean debeFinalizar(long ahora) {
-            return confirmacionEpochMs != null
-                    && !finalizada
-                    && (ahora - confirmacionEpochMs) >= RETARDO_CIERRE_MS;
+            this.confirmada = true;
         }
 
         void marcarResultadosAplicados() {

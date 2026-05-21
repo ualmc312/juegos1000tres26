@@ -38,7 +38,7 @@
   <article class="panel ranking-panel" *ngIf="!errorInicial">
     <h3>Ranking</h3>
     <ol *ngIf="estado.ranking.length > 0">
-      <li *ngFor="let item of estado.ranking">
+      <li *ngFor="let item of estado.ranking; let idx = index" [class.ganador]="estado.fase === 'RESULTADO' && idx === 0">
         {{ item.jugadorId }} - {{ item.tiempoMs }} ms
       </li>
     </ol>
@@ -46,6 +46,7 @@
   </article>
 
   <footer class="panel footer-panel">
-    <button type="button" class="volver" (click)="volverALobby()">Volver a la sala</button>
+    <button type="button" class="volver" *ngIf="puedeVolverALaSala" (click)="volverALobby()">VOLVER A SALA</button>
+    <p class="nota" *ngIf="estado.fase === 'RESULTADO' && !esHost">Esperando a que el host vuelva a la sala...</p>
   </footer>
 </section>
