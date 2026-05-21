@@ -13,18 +13,26 @@ import { PreguntasComponent } from '../games/preguntas/preguntas.component';
 import { AdivinaElPersonajeComponent } from '../games/adivina-el-personaje/adivina-el-personaje.component';
 import { HablameDeTiComponent } from '../games/hablame-de-ti/hablame-de-ti.component';
 import { DibujoComponent } from '../games/dibujo/dibujo.component';
-
-@Component({
-  selector: 'app-lobby',
-  standalone: true,
-  imports: [CommonModule, FormsModule, GenericButton, Taptap, PreguntasComponent, SpaceInvadersComponent, PruebaWebSocketComponent, AdivinaElPersonajeComponent, HablameDeTiComponent, DibujoComponent],
 import { HandicapComponent } from '../games/handicap/handicap.component';
 import { AuthService } from '../auth/services/auth.service';
 import { AuthSession } from '../auth/models/auth-session.model';
 
 @Component({
   selector: 'app-lobby',
-  imports: [CommonModule, FormsModule, GenericButton, Taptap, PreguntasComponent, SpaceInvadersComponent, PruebaWebSocketComponent, HandicapComponent],
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    GenericButton,
+    Taptap,
+    PreguntasComponent,
+    SpaceInvadersComponent,
+    PruebaWebSocketComponent,
+    AdivinaElPersonajeComponent,
+    HablameDeTiComponent,
+    DibujoComponent,
+    HandicapComponent
+  ],
   templateUrl: './lobby.html',
   styleUrl: './lobby.css',
 })
@@ -54,7 +62,7 @@ export class Lobby implements OnInit, OnDestroy {
     { id: 'hablame-de-ti', nombre: 'Hablame de ti' },
     { id: 'taptap', nombre: 'TapTap' },
     { id: 'preguntas', nombre: 'Preguntas' },
-    { id: 'reflejos-p2p', nombre: 'Reflejos P2P' }
+    { id: 'reflejos-p2p', nombre: 'Reflejos P2P' },
     { id: 'handicap', nombre: 'Handicap' }
   ];
 
@@ -349,6 +357,8 @@ export class Lobby implements OnInit, OnDestroy {
     this.router.navigate(['/reflejos-p2p', this.uuidActual], {
       queryParams: { role, hostPeerId: this.p2pHostPeerId || '', jugadorId: this.jugadorId },
     });
+  }
+
   private crearParamsNombre(): HttpParams | undefined {
     const nombre = this.usuarioActual?.nombre?.trim();
 
