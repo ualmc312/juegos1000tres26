@@ -293,6 +293,12 @@
   border: 1px solid var(--accent-lit);
 }
 
+.btn-anadir {
+  display: block;
+  width: fit-content;
+  margin: 1.25rem auto 0;
+}
+
 .btn-primario:hover,
 .btn-enviar:hover,
 .btn-anadir:hover {
