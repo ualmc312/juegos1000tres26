@@ -15,7 +15,7 @@ public class Usuario {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 80)
+    @Column(nullable = false, length = 80)
     private String nombre;
 
     @Column(nullable = false, unique = true, length = 120)
@@ -29,7 +29,7 @@ public class Usuario {
 
     public Usuario(String nombre, String email, String password) {
         this.nombre = nombre;
-        this.email = email;
+        this.email = email != null ? email.toLowerCase().trim() : null;
         this.password = password;
     }
 
@@ -50,7 +50,7 @@ public class Usuario {
     }
 
     public void setEmail(String email) {
-        this.email = email;
+        this.email = email != null ? email.toLowerCase().trim() : null;
     }
 
     public String getPassword() {

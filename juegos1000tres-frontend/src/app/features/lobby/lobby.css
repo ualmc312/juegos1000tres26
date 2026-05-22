@@ -116,6 +116,23 @@ h2 {
 	font-size: 0.9rem;
 }
 
+.botones-principales {
+	display: flex;
+	gap: 1rem;
+	flex-wrap: wrap;
+}
+
+.botones-principales generic-button {
+	flex: 1;
+	min-width: 160px;
+}
+
+.sala-botones {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
 .sala-layout {
 	display: grid;
 	grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);

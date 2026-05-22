@@ -4,10 +4,11 @@ import { Router } from '@angular/router';
 import { AuthService } from '../auth/services/auth.service';
 import { AuthSession } from '../auth/models/auth-session.model';
 import { GenericButton } from '../../shared/components/generic-button/generic-button';
+import { AmigosModal } from '../amigos/amigos-modal';
 
 @Component({
   selector: 'app-home',
-  imports: [GenericButton, NgIf],
+  imports: [GenericButton, NgIf, AmigosModal],
   templateUrl: './home.html',
   styleUrl: './home.css',
 })

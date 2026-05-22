@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, catchError, map, of, tap } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, of, tap } from 'rxjs';
 import { AuthSession } from '../models/auth-session.model';
 import { Usuario } from '../models/usuario.model';
 
@@ -18,7 +18,12 @@ export class AuthService {
     const stored = sessionStorage.getItem(this.storageKey);
     if (stored) {
       try {
-        this.currentUserSubject.next(JSON.parse(stored) as AuthSession);
+        const parsed = JSON.parse(stored) as AuthSession;
+        if (parsed.role === 'USER' && !parsed.id) {
+          this.clearSession();
+        } else {
+          this.currentUserSubject.next(parsed);
+        }
       } catch {
         sessionStorage.removeItem(this.storageKey);
       }
@@ -48,7 +53,8 @@ export class AuthService {
   }
 
   loadSession(): Observable<AuthSession | null> {
-    if (this.currentUserSubject.value) {
+    const current = this.currentUserSubject.value;
+    if (current && (current.role === 'GUEST' || current.id != null)) {
       return of(this.currentUserSubject.value);
     }
 

@@ -53,12 +53,5 @@
 		</div>
 	</div>
 
-	<div class="popup-backdrop" *ngIf="mostrarAmigos" (click)="cerrarAmigos()">
-		<div class="popup-panel" role="dialog" aria-modal="true" aria-label="Amigos" (click)="$event.stopPropagation()">
-			<div class="popup-header">
-				<h2>Amigos</h2>
-				<button type="button" class="popup-close" (click)="cerrarAmigos()">Cerrar</button>
-			</div>
-		</div>
-	</div>
+	<app-amigos-modal *ngIf="mostrarAmigos" [usuarioActual]="usuario" (cerrar)="cerrarAmigos()"></app-amigos-modal>
 </section>

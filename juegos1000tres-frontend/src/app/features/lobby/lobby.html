@@ -1,7 +1,10 @@
 <section class="lobby" *ngIf="viewMode === 'lobby'">
 	<h1>Salas</h1>
 
-	<generic-button color="red" (click)="crearSala()">Crear sala</generic-button>
+	<div class="botones-principales">
+		<generic-button color="red" (click)="crearSala()">Crear sala</generic-button>
+		<generic-button color="purple" (click)="abrirAmigos()" *ngIf="usuarioActual">👥 Amigos</generic-button>
+	</div>
 
 	<div class="join">
 		<label for="uuid">UUID</label>
@@ -34,6 +37,11 @@
 				<p class="info-value" [title]="hostId ? 'UUID: ' + hostId : ''">
 					{{ hostNombre || '---' }}
 				</p>
+			</div>
+			<div class="sala-botones">
+				<generic-button color="purple" (click)="abrirAmigos()" *ngIf="usuarioActual" [class.full-width]="true">
+					👥 Amigos
+				</generic-button>
 			</div>
 			<div class="sala-reservado">
 				<p>Espacio reservado para nuevas secciones</p>
@@ -227,3 +235,10 @@
 	</div>
 
 </section>
+
+<!-- Modal de Amigos -->
+<app-amigos-modal
+	*ngIf="mostrarAmigos"
+	[usuarioActual]="usuarioActual"
+	(cerrar)="cerrarAmigos()"
+></app-amigos-modal>

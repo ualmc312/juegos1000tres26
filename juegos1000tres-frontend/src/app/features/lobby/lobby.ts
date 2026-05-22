@@ -16,6 +16,7 @@ import { DibujoComponent } from '../games/dibujo/dibujo.component';
 import { HandicapComponent } from '../games/handicap/handicap.component';
 import { AuthService } from '../auth/services/auth.service';
 import { AuthSession } from '../auth/models/auth-session.model';
+import { AmigosModal } from '../amigos/amigos-modal';
 
 @Component({
   selector: 'app-lobby',
@@ -31,7 +32,8 @@ import { AuthSession } from '../auth/models/auth-session.model';
     AdivinaElPersonajeComponent,
     HablameDeTiComponent,
     DibujoComponent,
-    HandicapComponent
+    HandicapComponent,
+    AmigosModal
   ],
   templateUrl: './lobby.html',
   styleUrl: './lobby.css',
@@ -54,6 +56,7 @@ export class Lobby implements OnInit, OnDestroy {
   esHost = false;
   pantallaNingunoId = 'NINGUNO';
   usuarioActual: AuthSession | null = null;
+  mostrarAmigos = false;
 
   juegosDisponibles = [
     { id: 'space-invaders', nombre: 'Space Invaders' },
@@ -435,6 +438,14 @@ export class Lobby implements OnInit, OnDestroy {
       return jugador.nombre;
     }
     return '';
+  }
+
+  abrirAmigos(): void {
+    this.mostrarAmigos = true;
+  }
+
+  cerrarAmigos(): void {
+    this.mostrarAmigos = false;
   }
 }
 

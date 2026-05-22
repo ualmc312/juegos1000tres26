@@ -1,0 +1,178 @@
+<div class="amigos-overlay" (click)="cerrar.emit()">
+  <div class="amigos-modal" (click)="$event.stopPropagation()">
+    <!-- Header -->
+    <div class="amigos-header">
+      <h2>Amigos</h2>
+      <button class="cerrar-btn" (click)="cerrar.emit()">✕</button>
+    </div>
+
+    <!-- Mensajes -->
+    <div class="mensaje-container" *ngIf="errorMensaje" [@fadeInOut]>
+      <div class="mensaje error">{{ errorMensaje }}</div>
+    </div>
+    <div class="mensaje-container" *ngIf="exitoMensaje" [@fadeInOut]>
+      <div class="mensaje exito">{{ exitoMensaje }}</div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="amigos-tabs">
+      <button 
+        class="tab-btn" 
+        [class.active]="tab === 'amigos'"
+        (click)="tab = 'amigos'"
+      >
+        Mis Amigos ({{ amigos.length }})
+      </button>
+      <button 
+        class="tab-btn" 
+        [class.active]="tab === 'solicitudes'"
+        (click)="tab = 'solicitudes'"
+      >
+        Solicitudes ({{ solicitudesRecibidas.length }})
+      </button>
+    </div>
+
+    <!-- Contenido -->
+    <div class="amigos-content">
+      <!-- Tab: Mis Amigos -->
+      <div class="tab-content" *ngIf="tab === 'amigos'">
+        <div class="amigos-list">
+          <div *ngIf="amigos.length === 0 && !mostrarAnadirAmigo" class="vacio">
+            <p>No tienes amigos aún</p>
+            <button class="btn-primario" (click)="mostrarFormularioAnadir()">
+              Añadir amigo
+            </button>
+          </div>
+
+          <div *ngIf="amigos.length > 0" class="amigos-grid">
+            <div *ngFor="let amigo of amigos" class="amigo-card">
+              <div class="amigo-info">
+                <p class="amigo-nombre">{{ amigo.nombre }}</p>
+                <p class="amigo-email">{{ amigo.email }}</p>
+              </div>
+              <button 
+                class="btn-eliminar" 
+                (click)="eliminarAmigo(amigo.id)"
+                title="Eliminar amigo"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <button 
+          *ngIf="!mostrarAnadirAmigo && amigos.length > 0"
+          class="btn-anadir"
+          (click)="mostrarFormularioAnadir()"
+        >
+          + Añadir amigo
+        </button>
+
+        <!-- Formulario añadir amigo -->
+        <div *ngIf="mostrarAnadirAmigo" class="formulario-anadir">
+          <h3>Añadir nuevo amigo</h3>
+          
+          <div class="busqueda-grupo">
+            <input
+              type="text"
+              placeholder="Ingresa el email del usuario..."
+              [(ngModel)]="busquedaUsuario"
+              (keyup)="buscarUsuario()"
+              class="input-busqueda"
+            />
+          </div>
+
+          <div *ngIf="usuariosBusqueda.length > 0" class="resultados-busqueda">
+            <button
+              *ngFor="let usuario of usuariosBusqueda"
+              type="button"
+              class="resultado-busqueda"
+              (click)="seleccionarUsuario(usuario)"
+            >
+              <span class="resultado-nombre">{{ usuario.nombre }}</span>
+              <span class="resultado-email">{{ usuario.email }}</span>
+            </button>
+          </div>
+
+          <div *ngIf="usuarioSeleccionado" class="usuario-seleccionado">
+            <div class="usuario-info">
+              <p class="usuario-nombre">{{ usuarioSeleccionado.nombre }}</p>
+              <p class="usuario-email">{{ usuarioSeleccionado.email }}</p>
+            </div>
+          </div>
+
+          <div class="formulario-botones">
+            <button class="btn-cancelar" (click)="cancelarAnadir()">Cancelar</button>
+            <button 
+              class="btn-enviar" 
+              [disabled]="!usuarioSeleccionado"
+              (click)="enviarSolicitud()"
+            >
+              Enviar solicitud
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Solicitudes -->
+      <div class="tab-content" *ngIf="tab === 'solicitudes'">
+        <div class="solicitudes-list">
+          <!-- Solicitudes recibidas -->
+          <div class="solicitud-seccion">
+            <h3>Solicitudes recibidas</h3>
+            <div *ngIf="solicitudesRecibidas.length === 0" class="vacio-pequeño">
+              <p>No tienes solicitudes pendientes</p>
+            </div>
+
+            <div *ngFor="let solicitud of solicitudesRecibidas" class="solicitud-card">
+              <div class="solicitud-info">
+                <p class="solicitud-nombre">{{ solicitud.usuarioSolicitante.nombre }}</p>
+                <p class="solicitud-email">{{ solicitud.usuarioSolicitante.email }}</p>
+              </div>
+              <div class="solicitud-acciones">
+                <button 
+                  class="btn-aceptar"
+                  (click)="aceptarSolicitud(solicitud)"
+                  title="Aceptar solicitud"
+                >
+                  ✓
+                </button>
+                <button 
+                  class="btn-rechazar"
+                  (click)="rechazarSolicitud(solicitud)"
+                  title="Rechazar solicitud"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Solicitudes enviadas -->
+          <div class="solicitud-seccion">
+            <h3>Solicitudes enviadas</h3>
+            <div *ngIf="solicitudesEnviadas.length === 0" class="vacio-pequeño">
+              <p>No hay solicitudes pendientes</p>
+            </div>
+
+            <div *ngFor="let solicitud of solicitudesEnviadas" class="solicitud-card enviada">
+              <div class="solicitud-info">
+                <p class="solicitud-nombre">{{ solicitud.usuarioReceptor.nombre }}</p>
+                <p class="solicitud-email">{{ solicitud.usuarioReceptor.email }}</p>
+              </div>
+              <div class="solicitud-estado">
+                <p>Pendiente...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="cargando" class="loading-overlay">
+      <div class="spinner"></div>
+    </div>
+  </div>
+</div>

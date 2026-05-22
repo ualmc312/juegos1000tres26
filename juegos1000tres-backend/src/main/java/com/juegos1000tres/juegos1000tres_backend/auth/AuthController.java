@@ -47,7 +47,7 @@ public class AuthController {
         ResponseCookie cookie = jwtService.buildCookie(COOKIE_NAME, token);
         response.addHeader("Set-Cookie", cookie.toString());
 
-        return ResponseEntity.ok(AuthUserResponse.from(authUser));
+        return ResponseEntity.ok(AuthUserResponse.from(authUser, usuario.getId()));
     }
 
     @PostMapping("/guest")
@@ -58,7 +58,7 @@ public class AuthController {
         ResponseCookie cookie = jwtService.buildCookie(COOKIE_NAME, token);
         response.addHeader("Set-Cookie", cookie.toString());
 
-        return ResponseEntity.ok(AuthUserResponse.from(authUser));
+        return ResponseEntity.ok(AuthUserResponse.from(authUser, null));
     }
 
     @PostMapping("/logout")
@@ -80,6 +80,12 @@ public class AuthController {
         if (current == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        return ResponseEntity.ok(AuthUserResponse.from(current));
+        Long id = null;
+        if (current.role() == AuthRole.USER) {
+            id = usuarioRepository.findByEmailIgnoreCase(current.email())
+                .map(Usuario::getId)
+                .orElse(null);
+        }
+        return ResponseEntity.ok(AuthUserResponse.from(current, id));
     }
 }
