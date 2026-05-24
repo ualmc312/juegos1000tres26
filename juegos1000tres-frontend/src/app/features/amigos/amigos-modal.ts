@@ -1,8 +1,10 @@
-import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AmigosService, Usuario, SolicitudAmistad } from './amigos.service';
+import { Router } from '@angular/router';
+import { AmigosService, Usuario, SolicitudAmistad, SalaRespuesta } from './amigos.service';
 import { AuthSession } from '../auth/models/auth-session.model';
+import { catchError, finalize, forkJoin, of } from 'rxjs';
 
 @Component({
   selector: 'app-amigos-modal',
@@ -21,6 +23,8 @@ export class AmigosModal implements OnInit {
   solicitudesEnviadas: SolicitudAmistad[] = [];
   
   cargando = false;
+  operacionEnCurso = false;
+  private cargaInicialTimeoutId: ReturnType<typeof setTimeout> | null = null;
   mostrarAnadirAmigo = false;
   busquedaUsuario = '';
   usuarioSeleccionado: Usuario | null = null;
@@ -29,7 +33,11 @@ export class AmigosModal implements OnInit {
   usuariosBusqueda: Usuario[] = [];
   mostrandoResultadosBusqueda = false;
 
-  constructor(private readonly amigosService: AmigosService) {}
+  constructor(
+    private readonly amigosService: AmigosService,
+    private readonly router: Router,
+    private readonly cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     this.cargarDatos();
@@ -38,92 +46,140 @@ export class AmigosModal implements OnInit {
   cargarDatos(): void {
     if (!this.usuarioActual?.id) return;
 
+    if (this.cargaInicialTimeoutId) {
+      clearTimeout(this.cargaInicialTimeoutId);
+    }
+
     this.cargando = true;
-    this.amigosService.obtenerAmigos(this.usuarioActual.id).subscribe({
-      next: (amigos) => {
-        this.amigos = amigos;
-      },
-      error: (err) => {
+    this.cargaInicialTimeoutId = setTimeout(() => {
+      if (this.cargando) {
+        this.cargando = false;
+        this.cdr.detectChanges();
+      }
+    }, 2000);
+
+    this.amigosService.obtenerAmigos(this.usuarioActual.id).pipe(
+      catchError((err) => {
         console.error('Error al cargar amigos:', err);
         this.mostrarError('Error al cargar la lista de amigos');
+        return of([] as Usuario[]);
+      })
+    ).pipe(
+      finalize(() => {
+        if (this.cargaInicialTimeoutId) {
+          clearTimeout(this.cargaInicialTimeoutId);
+          this.cargaInicialTimeoutId = null;
+        }
         this.cargando = false;
-      },
-      complete: () => {
-        this.cargarSolicitudes();
+        this.cdr.detectChanges();
+      })
+    ).subscribe({
+      next: (amigos) => {
+        this.amigos = amigos;
+        this.cdr.detectChanges();
+        this.cargarSolicitudesSinBloqueo();
       }
     });
   }
 
-  cargarSolicitudes(): void {
+  private cargarSolicitudesSinBloqueo(): void {
     if (!this.usuarioActual?.id) return;
 
-    this.amigosService.obtenerSolicitudesRecibidas(this.usuarioActual.id).subscribe({
-      next: (solicitudes) => {
-        this.solicitudesRecibidas = solicitudes;
-      },
-      error: (err) => console.error('Error al cargar solicitudes recibidas:', err),
-      complete: () => {
-        this.cargarSolicitudesEnviadas();
-      }
-    });
-  }
+    const solicitudesRecibidas$ = this.amigosService.obtenerSolicitudesRecibidas(this.usuarioActual.id).pipe(
+      catchError((err) => {
+        console.error('Error al cargar solicitudes recibidas:', err);
+        return of([] as SolicitudAmistad[]);
+      })
+    );
 
-  cargarSolicitudesEnviadas(): void {
-    if (!this.usuarioActual?.id) return;
+    const solicitudesEnviadas$ = this.amigosService.obtenerSolicitudesEnviadas(this.usuarioActual.id).pipe(
+      catchError((err) => {
+        console.error('Error al cargar solicitudes enviadas:', err);
+        return of([] as SolicitudAmistad[]);
+      })
+    );
 
-    this.amigosService.obtenerSolicitudesEnviadas(this.usuarioActual.id).subscribe({
-      next: (solicitudes) => {
-        this.solicitudesEnviadas = solicitudes;
-      },
-      error: (err) => console.error('Error al cargar solicitudes enviadas:', err),
-      complete: () => {
-        this.cargando = false;
+    forkJoin({
+      solicitudesRecibidas: solicitudesRecibidas$,
+      solicitudesEnviadas: solicitudesEnviadas$
+    }).subscribe({
+      next: ({ solicitudesRecibidas, solicitudesEnviadas }) => {
+        this.solicitudesRecibidas = solicitudesRecibidas;
+        this.solicitudesEnviadas = solicitudesEnviadas;
+        this.cdr.detectChanges();
       }
     });
   }
 
   eliminarAmigo(amigoId: number): void {
     if (!this.usuarioActual?.id) return;
+    if (this.operacionEnCurso) return;
 
     if (!confirm('¿Estás seguro de que quieres eliminar este amigo?')) {
       return;
     }
 
+    this.operacionEnCurso = true;
+
     this.amigosService.eliminarAmistad(this.usuarioActual.id, amigoId).subscribe({
       next: () => {
         this.amigos = this.amigos.filter(a => a.id !== amigoId);
         this.mostrarExito('Amigo eliminado correctamente');
+        this.cargarSolicitudesSinBloqueo();
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error al eliminar amigo:', err);
         this.mostrarError('Error al eliminar amigo');
+      },
+      complete: () => {
+        this.operacionEnCurso = false;
+        this.cdr.detectChanges();
       }
     });
   }
 
   aceptarSolicitud(solicitud: SolicitudAmistad): void {
+    if (this.operacionEnCurso) return;
+    this.operacionEnCurso = true;
+
     this.amigosService.aceptarSolicitud(solicitud.id).subscribe({
       next: () => {
         this.solicitudesRecibidas = this.solicitudesRecibidas.filter(s => s.id !== solicitud.id);
         this.amigos.push(solicitud.usuarioSolicitante);
         this.mostrarExito('Solicitud aceptada');
+        this.cargarSolicitudesSinBloqueo();
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error al aceptar solicitud:', err);
         this.mostrarError('Error al aceptar solicitud');
+      },
+      complete: () => {
+        this.operacionEnCurso = false;
+        this.cdr.detectChanges();
       }
     });
   }
 
   rechazarSolicitud(solicitud: SolicitudAmistad): void {
+    if (this.operacionEnCurso) return;
+    this.operacionEnCurso = true;
+
     this.amigosService.rechazarSolicitud(solicitud.id).subscribe({
       next: () => {
         this.solicitudesRecibidas = this.solicitudesRecibidas.filter(s => s.id !== solicitud.id);
         this.mostrarExito('Solicitud rechazada');
+        this.cargarSolicitudesSinBloqueo();
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error al rechazar solicitud:', err);
         this.mostrarError('Error al rechazar solicitud');
+      },
+      complete: () => {
+        this.operacionEnCurso = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -201,22 +257,68 @@ export class AmigosModal implements OnInit {
     this.busquedaUsuario = usuario.email;
   }
 
+  unirseASalaAmigo(amigo: Usuario): void {
+    if (!amigo.salaUuid) {
+      return;
+    }
+
+    if (this.operacionEnCurso) {
+      return;
+    }
+
+    this.operacionEnCurso = true;
+
+    this.amigosService.unirseASala(amigo.salaUuid).subscribe({
+      next: (respuesta: SalaRespuesta) => {
+        if (!respuesta.uuid || !respuesta.jugadorId) {
+          this.mostrarError('No se pudo entrar en la sala del amigo');
+          return;
+        }
+
+        sessionStorage.setItem('sala.jugadorId', respuesta.jugadorId);
+        sessionStorage.setItem('sala.hostId', respuesta.hostId);
+        sessionStorage.setItem('sala.p2pHostPeerId', respuesta.p2pHostPeerId || '');
+
+        this.cerrar.emit();
+        this.router.navigate(['/sala', respuesta.uuid]);
+      },
+      error: (err) => {
+        console.error('Error al unirse a la sala del amigo:', err);
+        this.mostrarError('No se pudo entrar en la sala del amigo');
+        this.operacionEnCurso = false;
+        this.cdr.detectChanges();
+      },
+      complete: () => {
+        this.operacionEnCurso = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
   enviarSolicitud(): void {
     if (!this.usuarioActual?.id || !this.usuarioSeleccionado?.id) {
       this.mostrarError('Error: usuario no válido');
       return;
     }
 
+    if (this.operacionEnCurso) return;
+    this.operacionEnCurso = true;
+
     this.amigosService.enviarSolicitud(this.usuarioActual.id, this.usuarioSeleccionado.id).subscribe({
       next: () => {
         this.mostrarExito('Solicitud de amistad enviada');
         this.cancelarAnadir();
-        this.cargarSolicitudesEnviadas();
+        this.cargarSolicitudesSinBloqueo();
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error al enviar solicitud:', err);
         const errorMsg = err.error?.error || 'Error al enviar solicitud';
         this.mostrarError(errorMsg);
+      },
+      complete: () => {
+        this.operacionEnCurso = false;
+        this.cdr.detectChanges();
       }
     });
   }

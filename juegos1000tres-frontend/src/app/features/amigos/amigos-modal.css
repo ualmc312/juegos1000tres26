@@ -237,6 +237,13 @@
   flex: 1;
 }
 
+.amigo-acciones {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: 0.75rem;
+}
+
 .amigo-nombre {
   margin: 0;
   color: var(--text-primary);
@@ -270,6 +277,30 @@
   border-color: var(--red);
 }
 
+.btn-unir {
+  padding: 0.5rem 0.85rem;
+  border: 1px solid rgba(0, 255, 136, 0.4);
+  border-radius: 999px;
+  background: rgba(0, 255, 136, 0.12);
+  color: var(--green);
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.btn-unir:hover {
+  background: rgba(0, 255, 136, 0.2);
+  border-color: var(--green);
+}
+
+.sala-inactiva {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
 /* Botones */
 .btn-primario,
 .btn-anadir,
@@ -291,6 +322,12 @@
   background: linear-gradient(135deg, var(--accent) 0%, var(--accent-lit) 100%);
   color: white;
   border: 1px solid var(--accent-lit);
+}
+
+.btn-anadir {
+  display: block;
+  width: fit-content;
+  margin: 1.25rem auto 0;
 }
 
 .btn-primario:hover,

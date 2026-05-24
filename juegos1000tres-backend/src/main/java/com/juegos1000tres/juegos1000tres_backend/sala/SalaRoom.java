@@ -16,6 +16,7 @@ public class SalaRoom {
     private final String uuid;
     private final Sala sala;
     private final String creadorId;
+    private final String creadorUsuarioId;
     private String pantallaId;
     private String juegoActual;
     private String p2pHostPeerId;
@@ -23,10 +24,11 @@ public class SalaRoom {
     private int contadorInvitados = 1;
     private final Map<String, Integer> invitadosPorUsuario = new ConcurrentHashMap<>();
 
-    public SalaRoom(String uuid, Sala sala, String creadorId) {
+    public SalaRoom(String uuid, Sala sala, String creadorId, String creadorUsuarioId) {
         this.uuid = Objects.requireNonNull(uuid, "uuid requerido");
         this.sala = Objects.requireNonNull(sala, "sala requerida");
         this.creadorId = Objects.requireNonNull(creadorId, "creador requerido");
+        this.creadorUsuarioId = creadorUsuarioId == null ? "" : creadorUsuarioId.trim();
         this.pantallaId = creadorId;
         this.juegoActual = "";
         this.p2pHostPeerId = "";
@@ -160,6 +162,10 @@ public class SalaRoom {
 
     public String getHostId() {
         return sala.getHost() == null ? "" : sala.getHost().getId().toString();
+    }
+
+    public String getCreadorUsuarioId() {
+        return creadorUsuarioId;
     }
 
     public String getPantallaId() {

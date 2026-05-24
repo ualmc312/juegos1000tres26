@@ -4,14 +4,20 @@ public class UsuarioRespuesta {
     private Long id;
     private String nombre;
     private String email;
+    private String salaUuid;
 
     public UsuarioRespuesta() {
     }
 
     public UsuarioRespuesta(Long id, String nombre, String email) {
+        this(id, nombre, email, null);
+    }
+
+    public UsuarioRespuesta(Long id, String nombre, String email, String salaUuid) {
         this.id = id;
         this.nombre = nombre;
         this.email = email;
+        this.salaUuid = salaUuid;
     }
 
     // Getters y setters
@@ -37,5 +43,13 @@ public class UsuarioRespuesta {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getSalaUuid() {
+        return salaUuid;
+    }
+
+    public void setSalaUuid(String salaUuid) {
+        this.salaUuid = salaUuid;
     }
 }

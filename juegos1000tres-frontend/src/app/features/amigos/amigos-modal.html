@@ -3,7 +3,7 @@
     <!-- Header -->
     <div class="amigos-header">
       <h2>Amigos</h2>
-      <button class="cerrar-btn" (click)="cerrar.emit()">✕</button>
+      <button type="button" class="cerrar-btn" (click)="cerrar.emit()">✕</button>
     </div>
 
     <!-- Mensajes -->
@@ -39,7 +39,7 @@
         <div class="amigos-list">
           <div *ngIf="amigos.length === 0 && !mostrarAnadirAmigo" class="vacio">
             <p>No tienes amigos aún</p>
-            <button class="btn-primario" (click)="mostrarFormularioAnadir()">
+            <button type="button" class="btn-primario" (click)="mostrarFormularioAnadir()">
               Añadir amigo
             </button>
           </div>
@@ -50,13 +50,30 @@
                 <p class="amigo-nombre">{{ amigo.nombre }}</p>
                 <p class="amigo-email">{{ amigo.email }}</p>
               </div>
-              <button 
-                class="btn-eliminar" 
-                (click)="eliminarAmigo(amigo.id)"
-                title="Eliminar amigo"
-              >
-                ✕
-              </button>
+              <div class="amigo-acciones">
+                <button
+                  *ngIf="amigo.salaUuid; else sinSala"
+                  type="button"
+                  class="btn-unir"
+                  (click)="unirseASalaAmigo(amigo)"
+                  title="Unirse a la sala de este amigo"
+                >
+                  Unirse
+                </button>
+                <ng-template #sinSala>
+                  <span class="sala-inactiva">Sin sala activa</span>
+                </ng-template>
+
+                <button 
+                  class="btn-eliminar" 
+                  type="button"
+                  (click)="eliminarAmigo(amigo.id)"
+                  [disabled]="operacionEnCurso"
+                  title="Eliminar amigo"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -64,6 +81,7 @@
         <button 
           *ngIf="!mostrarAnadirAmigo && amigos.length > 0"
           class="btn-anadir"
+          type="button"
           (click)="mostrarFormularioAnadir()"
         >
           + Añadir amigo
@@ -78,7 +96,7 @@
               type="text"
               placeholder="Ingresa el email del usuario..."
               [(ngModel)]="busquedaUsuario"
-              (keyup)="buscarUsuario()"
+              (input)="buscarUsuario()"
               class="input-busqueda"
             />
           </div>
@@ -103,10 +121,11 @@
           </div>
 
           <div class="formulario-botones">
-            <button class="btn-cancelar" (click)="cancelarAnadir()">Cancelar</button>
+              <button type="button" class="btn-cancelar" (click)="cancelarAnadir()">Cancelar</button>
             <button 
               class="btn-enviar" 
-              [disabled]="!usuarioSeleccionado"
+                type="button"
+                [disabled]="!usuarioSeleccionado || operacionEnCurso"
               (click)="enviarSolicitud()"
             >
               Enviar solicitud
@@ -133,6 +152,8 @@
               <div class="solicitud-acciones">
                 <button 
                   class="btn-aceptar"
+                  type="button"
+                  [disabled]="operacionEnCurso"
                   (click)="aceptarSolicitud(solicitud)"
                   title="Aceptar solicitud"
                 >
@@ -140,6 +161,8 @@
                 </button>
                 <button 
                   class="btn-rechazar"
+                  type="button"
+                  [disabled]="operacionEnCurso"
                   (click)="rechazarSolicitud(solicitud)"
                   title="Rechazar solicitud"
                 >

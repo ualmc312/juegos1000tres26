@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.juegos1000tres.juegos1000tres_backend.modelos.Amistad;
 import com.juegos1000tres.juegos1000tres_backend.modelos.SolicitudAmistad;
 import com.juegos1000tres.juegos1000tres_backend.modelos.Usuario;
+import com.juegos1000tres.juegos1000tres_backend.sala.SalaService;
 
 @RestController
 @RequestMapping("/api/amigos")
@@ -27,10 +28,12 @@ import com.juegos1000tres.juegos1000tres_backend.modelos.Usuario;
 public class AmigosController {
 
     private final AmigosService amigosService;
+    private final SalaService salaService;
     private final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
-    public AmigosController(AmigosService amigosService) {
+    public AmigosController(AmigosService amigosService, SalaService salaService) {
         this.amigosService = amigosService;
+        this.salaService = salaService;
     }
 
     /**
@@ -124,7 +127,7 @@ public class AmigosController {
         try {
             List<Usuario> amigos = amigosService.obtenerAmigos(usuarioId);
             List<UsuarioRespuesta> respuesta = amigos.stream()
-                .map(this::convertirUsuario)
+                .map(amigo -> convertirUsuario(amigo, salaService.obtenerSalaActivaDeUsuario(amigo.getEmail())))
                 .toList();
 
             return ResponseEntity.ok(respuesta);
@@ -246,10 +249,15 @@ public class AmigosController {
     }
 
     private UsuarioRespuesta convertirUsuario(Usuario usuario) {
+        return convertirUsuario(usuario, null);
+    }
+
+    private UsuarioRespuesta convertirUsuario(Usuario usuario, String salaUuid) {
         return new UsuarioRespuesta(
             usuario.getId(),
             usuario.getNombre(),
-            usuario.getEmail()
+            usuario.getEmail(),
+            salaUuid
         );
     }
 }
