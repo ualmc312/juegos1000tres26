@@ -3,7 +3,6 @@
 
 	<div class="botones-principales">
 		<generic-button color="red" (click)="crearSala()">Crear sala</generic-button>
-		<generic-button color="purple" (click)="abrirAmigos()" *ngIf="usuarioActual">👥 Amigos</generic-button>
 	</div>
 
 	<div class="join">
@@ -37,11 +36,6 @@
 				<p class="info-value" [title]="hostId ? 'UUID: ' + hostId : ''">
 					{{ hostNombre || '---' }}
 				</p>
-			</div>
-			<div class="sala-botones">
-				<generic-button color="purple" (click)="abrirAmigos()" *ngIf="usuarioActual" [class.full-width]="true">
-					👥 Amigos
-				</generic-button>
 			</div>
 			<div class="sala-reservado">
 				<p>Espacio reservado para nuevas secciones</p>

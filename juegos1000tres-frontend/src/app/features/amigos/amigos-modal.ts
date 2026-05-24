@@ -1,7 +1,8 @@
 import { Component, OnInit, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AmigosService, Usuario, SolicitudAmistad } from './amigos.service';
+import { Router } from '@angular/router';
+import { AmigosService, Usuario, SolicitudAmistad, SalaRespuesta } from './amigos.service';
 import { AuthSession } from '../auth/models/auth-session.model';
 import { catchError, finalize, forkJoin, of } from 'rxjs';
 
@@ -34,6 +35,7 @@ export class AmigosModal implements OnInit {
 
   constructor(
     private readonly amigosService: AmigosService,
+    private readonly router: Router,
     private readonly cdr: ChangeDetectorRef
   ) {}
 
@@ -253,6 +255,44 @@ export class AmigosModal implements OnInit {
     this.usuariosBusqueda = [usuario];
     this.mostrandoResultadosBusqueda = false;
     this.busquedaUsuario = usuario.email;
+  }
+
+  unirseASalaAmigo(amigo: Usuario): void {
+    if (!amigo.salaUuid) {
+      return;
+    }
+
+    if (this.operacionEnCurso) {
+      return;
+    }
+
+    this.operacionEnCurso = true;
+
+    this.amigosService.unirseASala(amigo.salaUuid).subscribe({
+      next: (respuesta: SalaRespuesta) => {
+        if (!respuesta.uuid || !respuesta.jugadorId) {
+          this.mostrarError('No se pudo entrar en la sala del amigo');
+          return;
+        }
+
+        sessionStorage.setItem('sala.jugadorId', respuesta.jugadorId);
+        sessionStorage.setItem('sala.hostId', respuesta.hostId);
+        sessionStorage.setItem('sala.p2pHostPeerId', respuesta.p2pHostPeerId || '');
+
+        this.cerrar.emit();
+        this.router.navigate(['/sala', respuesta.uuid]);
+      },
+      error: (err) => {
+        console.error('Error al unirse a la sala del amigo:', err);
+        this.mostrarError('No se pudo entrar en la sala del amigo');
+        this.operacionEnCurso = false;
+        this.cdr.detectChanges();
+      },
+      complete: () => {
+        this.operacionEnCurso = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   enviarSolicitud(): void {

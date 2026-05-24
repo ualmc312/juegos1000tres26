@@ -8,11 +8,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
-import com.juegos1000tres.juegos1000tres_backend.juegos.handicap.HandicapService;
 import com.juegos1000tres.juegos1000tres_backend.juegos.AdivinaElPersonaje.AdivinaElPersonajeManager;
 import com.juegos1000tres.juegos1000tres_backend.juegos.Dibujo.DibujoManager;
 import com.juegos1000tres.juegos1000tres_backend.juegos.HablameDeTi.HablameDeTiManager;
 import com.juegos1000tres.juegos1000tres_backend.juegos.PruebaWebSocket.PruebaWebSocketManager;
+import com.juegos1000tres.juegos1000tres_backend.juegos.handicap.HandicapService;
 import com.juegos1000tres.juegos1000tres_backend.modelos.Jugador;
 import com.juegos1000tres.juegos1000tres_backend.modelos.Pantalla;
 import com.juegos1000tres.juegos1000tres_backend.modelos.Sala;
@@ -58,7 +58,7 @@ public class SalaService {
 
         Jugador host = new Jugador(nombreFinal);
         Sala sala = new Sala(host, new Pantalla("Lobby"));
-        SalaRoom room = new SalaRoom(uuid, sala, host.getId().toString());
+        SalaRoom room = new SalaRoom(uuid, sala, host.getId().toString(), usuarioId);
 
         if (esInvitado) {
             room.registrarInvitado(usuarioId);
@@ -142,6 +142,18 @@ public class SalaService {
 
     public SalaRoom obtenerSalaRoom(String uuid) {
         return obtenerSala(uuid);
+    }
+
+    public String obtenerSalaActivaDeUsuario(String usuarioId) {
+        if (usuarioId == null || usuarioId.isBlank()) {
+            return null;
+        }
+
+        return salas.values().stream()
+                .filter(room -> usuarioId.equals(room.getCreadorUsuarioId()))
+                .map(SalaRoom::getUuid)
+                .findFirst()
+                .orElse(null);
     }
 
     public void salir(String uuid, String jugadorId) {

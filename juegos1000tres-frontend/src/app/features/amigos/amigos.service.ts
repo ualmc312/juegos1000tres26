@@ -7,6 +7,7 @@ export interface Usuario {
   id: number;
   nombre: string;
   email: string;
+  salaUuid?: string | null;
 }
 
 export interface SolicitudAmistad {
@@ -22,6 +23,16 @@ export interface Amistad {
   usuario1: Usuario;
   usuario2: Usuario;
   fechaCreacion: string;
+}
+
+export interface SalaRespuesta {
+  uuid: string;
+  jugadores: Array<{ id: string; nombre: string; victorias: number }>;
+  hostId: string;
+  pantallaId: string;
+  juegoActual: string;
+  p2pHostPeerId?: string | null;
+  jugadorId?: string | null;
 }
 
 @Injectable({
@@ -122,6 +133,16 @@ export class AmigosService {
   buscarPorEmail(email: string): Observable<Usuario[]> {
     return this.http.get<Usuario[]>(
       `${this.apiBase}/api/amigos/buscar?email=${encodeURIComponent(email)}`,
+      this.requestOptions
+    );
+  }
+
+  /**
+   * Se une a la sala activa de un amigo
+   */
+  unirseASala(uuid: string): Observable<SalaRespuesta> {
+    return this.http.get<SalaRespuesta>(
+      `${this.apiBase}/sala/${uuid}/unirse`,
       this.requestOptions
     );
   }

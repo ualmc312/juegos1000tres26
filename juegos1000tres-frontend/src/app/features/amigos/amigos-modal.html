@@ -50,15 +50,30 @@
                 <p class="amigo-nombre">{{ amigo.nombre }}</p>
                 <p class="amigo-email">{{ amigo.email }}</p>
               </div>
-              <button 
-                class="btn-eliminar" 
-                type="button"
-                (click)="eliminarAmigo(amigo.id)"
-                [disabled]="operacionEnCurso"
-                title="Eliminar amigo"
-              >
-                ✕
-              </button>
+              <div class="amigo-acciones">
+                <button
+                  *ngIf="amigo.salaUuid; else sinSala"
+                  type="button"
+                  class="btn-unir"
+                  (click)="unirseASalaAmigo(amigo)"
+                  title="Unirse a la sala de este amigo"
+                >
+                  Unirse
+                </button>
+                <ng-template #sinSala>
+                  <span class="sala-inactiva">Sin sala activa</span>
+                </ng-template>
+
+                <button 
+                  class="btn-eliminar" 
+                  type="button"
+                  (click)="eliminarAmigo(amigo.id)"
+                  [disabled]="operacionEnCurso"
+                  title="Eliminar amigo"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
           </div>
         </div>
