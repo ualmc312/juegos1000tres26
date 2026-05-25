@@ -1,18 +1,19 @@
 package com.juegos1000tres.juegos1000tres_backend.modelos;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 
 @Entity
@@ -23,42 +24,92 @@ public class SalaEntities {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "host_usuario_id", nullable = false)
-    private Usuario host;
+    @Column(nullable = false, unique = true, length = 32)
+    private String uuid;
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "sala_entities_jugadores",
-            joinColumns = @JoinColumn(name = "sala_id"),
-                inverseJoinColumns = @JoinColumn(name = "usuario_id"))
-            private List<Usuario> jugadores = new ArrayList<>();
+    @Column(nullable = false, length = 80)
+    private String hostNombre;
+
+    @Column(name = "host_usuario_id")
+    private Long hostUsuarioId;
+
+    @Column(name = "host_usuario_token", length = 120)
+    private String hostUsuarioToken;
+
+    @Column(nullable = false)
+    private LocalDate creadaEn;
+
+    @OneToMany(mappedBy = "sala", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OrderBy("orden ASC")
+    private List<SalaJuegoOrden> juegosJugados = new ArrayList<>();
 
     public SalaEntities() {
     }
 
-    public SalaEntities(Usuario host) {
-        this.host = host;
-        this.jugadores.add(host);
+    public SalaEntities(String uuid, String hostNombre) {
+        this(uuid, hostNombre, LocalDate.now());
+    }
+
+    public SalaEntities(String uuid, String hostNombre, LocalDate creadaEn) {
+        this.uuid = uuid;
+        this.hostNombre = hostNombre;
+        this.creadaEn = creadaEn;
     }
 
     public Long getId() {
         return id;
     }
 
-    public Usuario getHost() {
-        return host;
+    public String getUuid() {
+        return uuid;
     }
 
-    public void setHost(Usuario host) {
-        this.host = host;
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
     }
 
-    public List<Usuario> getJugadores() {
-        return Collections.unmodifiableList(jugadores);
+    public String getHostNombre() {
+        return hostNombre;
     }
 
-    public void setJugadores(List<Usuario> jugadores) {
-        this.jugadores = new ArrayList<>(jugadores);
+    public void setHostNombre(String hostNombre) {
+        this.hostNombre = hostNombre;
+    }
+
+    public Long getHostUsuarioId() {
+        return hostUsuarioId;
+    }
+
+    public void setHostUsuarioId(Long hostUsuarioId) {
+        this.hostUsuarioId = hostUsuarioId;
+    }
+
+    public String getHostUsuarioToken() {
+        return hostUsuarioToken;
+    }
+
+    public void setHostUsuarioToken(String hostUsuarioToken) {
+        this.hostUsuarioToken = hostUsuarioToken;
+    }
+
+    public LocalDate getCreadaEn() {
+        return creadaEn;
+    }
+
+    public void setCreadaEn(LocalDate creadaEn) {
+        this.creadaEn = creadaEn;
+    }
+
+    public List<SalaJuegoOrden> getJuegosJugados() {
+        return Collections.unmodifiableList(juegosJugados);
+    }
+
+    public void setJuegosJugados(List<SalaJuegoOrden> juegosJugados) {
+        this.juegosJugados = new ArrayList<>(juegosJugados);
+    }
+
+    public void registrarJuego(SalaJuegoOrden juego) {
+        this.juegosJugados.add(juego);
     }
 
 }

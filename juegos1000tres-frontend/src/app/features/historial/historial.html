@@ -1,0 +1,88 @@
+<section class="historial-page">
+  <header class="historial-hero">
+    <div class="historial-copy">
+      <p class="eyebrow">Historial persistido</p>
+      <h1>Salas, juegos y ganadores</h1>
+      <p>
+        Consulta las salas guardadas, el orden de los juegos jugados, los jugadores que participaron y quién ganó cada partida.
+      </p>
+    </div>
+
+    <div class="historial-actions">
+      <generic-button color="gray" link="/">Volver al inicio</generic-button>
+      <generic-button color="green" (click)="cargarHistorial()">Actualizar</generic-button>
+    </div>
+  </header>
+
+  <div class="historial-state" *ngIf="cargando">
+    Cargando historial...
+  </div>
+
+  <div class="historial-state error" *ngIf="!cargando && errorMensaje">
+    {{ errorMensaje }}
+  </div>
+
+  <div class="historial-state empty" *ngIf="!cargando && !errorMensaje && salas.length === 0">
+    Aún no hay salas guardadas.
+  </div>
+
+  <div class="salas-grid" *ngIf="!cargando && salas.length > 0">
+    <article class="sala-card" *ngFor="let sala of salas; trackBy: trackSala">
+      <div class="sala-top">
+        <div>
+          <p class="sala-label">Sala</p>
+          <h2>{{ sala.uuid }}</h2>
+        </div>
+        <span class="sala-fecha">Creada el {{ sala.creadaEn | date:'dd/MM/yyyy' }}</span>
+      </div>
+
+      <div class="sala-host">
+        <span>Host</span>
+        <strong>{{ sala.hostNombre }}</strong>
+      </div>
+
+      <div class="juegos-lista" *ngIf="sala.juegosJugados.length > 0; else sinJuegos">
+        <article class="juego-card" *ngFor="let juego of sala.juegosJugados; trackBy: trackJuego">
+          <div class="juego-header">
+            <div>
+              <p>Juego {{ juego.orden }}</p>
+              <h3>{{ juego.juegoNombre }}</h3>
+            </div>
+            <span>{{ juego.fechaJugado | date:'dd/MM/yyyy' }}</span>
+          </div>
+
+          <div class="juego-resumen">
+            <div>
+              <span>Ganadores</span>
+              <strong *ngIf="juego.ganadores.length > 0; else sinGanadores">{{ juego.ganadores.join(', ') }}</strong>
+              <ng-template #sinGanadores>
+                <strong>Sin ganadores registrados</strong>
+              </ng-template>
+            </div>
+            <div>
+              <span>Jugadores</span>
+              <strong>{{ juego.jugadores.length }}</strong>
+            </div>
+          </div>
+
+          <ul class="jugadores-lista">
+            <li *ngFor="let jugador of juego.jugadores">
+              <div>
+                <strong>{{ jugador.nombreJugador }}</strong>
+                <span *ngIf="jugador.posicion !== null && jugador.posicion !== undefined">Posición {{ jugador.posicion }}</span>
+              </div>
+              <div class="jugador-metricas">
+                <span>{{ jugador.puntuacion }} pts</span>
+                <span class="victoria" *ngIf="jugador.victoria">Ganador</span>
+              </div>
+            </li>
+          </ul>
+        </article>
+      </div>
+
+      <ng-template #sinJuegos>
+        <div class="sin-juegos">La sala todavía no tiene juegos persistidos.</div>
+      </ng-template>
+    </article>
+  </div>
+</section>

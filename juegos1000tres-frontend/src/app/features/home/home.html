@@ -48,6 +48,7 @@
 
 			<div class="home-actions" *ngIf="usuario">
 				<generic-button color="green" link="/sala">Sala de juegos</generic-button>
+				<generic-button color="purple" link="/historial" *ngIf="!esInvitado">Historial</generic-button>
 				<generic-button color="gray" (click)="cerrarSesion()">Cerrar sesión</generic-button>
 			</div>
 		</div>

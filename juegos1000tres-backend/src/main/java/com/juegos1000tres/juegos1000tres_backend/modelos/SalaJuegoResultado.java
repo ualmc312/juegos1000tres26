@@ -1,5 +1,7 @@
 package com.juegos1000tres.juegos1000tres_backend.modelos;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -13,7 +15,7 @@ import jakarta.persistence.UniqueConstraint;
 
 @Entity
 @Table(name = "sala_juego_resultado", uniqueConstraints = {
-        @UniqueConstraint(columnNames = { "sala_juego_id", "usuario_id" })
+    @UniqueConstraint(columnNames = { "sala_juego_id", "nombre_jugador" })
 })
 public class SalaJuegoResultado {
 
@@ -23,11 +25,14 @@ public class SalaJuegoResultado {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "sala_juego_id", nullable = false)
+    @JsonIgnore
     private SalaJuegoOrden salaJuego;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "usuario_id", nullable = false)
-    private Usuario usuario;
+    @Column(nullable = false, length = 80)
+    private String nombreJugador;
+
+    @Column(name = "usuario_id")
+    private Long usuarioId;
 
     @Column(nullable = false)
     private int puntuacion;
@@ -41,9 +46,14 @@ public class SalaJuegoResultado {
     public SalaJuegoResultado() {
     }
 
-    public SalaJuegoResultado(SalaJuegoOrden salaJuego, Usuario usuario, int puntuacion, boolean victoria) {
+    public SalaJuegoResultado(SalaJuegoOrden salaJuego, String nombreJugador, int puntuacion, boolean victoria) {
+        this(salaJuego, nombreJugador, null, puntuacion, victoria);
+    }
+
+    public SalaJuegoResultado(SalaJuegoOrden salaJuego, String nombreJugador, Long usuarioId, int puntuacion, boolean victoria) {
         this.salaJuego = salaJuego;
-        this.usuario = usuario;
+        this.nombreJugador = nombreJugador;
+        this.usuarioId = usuarioId;
         this.puntuacion = puntuacion;
         this.victoria = victoria;
     }
@@ -60,12 +70,20 @@ public class SalaJuegoResultado {
         this.salaJuego = salaJuego;
     }
 
-    public Usuario getUsuario() {
-        return usuario;
+    public String getNombreJugador() {
+        return nombreJugador;
     }
 
-    public void setUsuario(Usuario usuario) {
-        this.usuario = usuario;
+    public void setNombreJugador(String nombreJugador) {
+        this.nombreJugador = nombreJugador;
+    }
+
+    public Long getUsuarioId() {
+        return usuarioId;
+    }
+
+    public void setUsuarioId(Long usuarioId) {
+        this.usuarioId = usuarioId;
     }
 
     public int getPuntuacion() {

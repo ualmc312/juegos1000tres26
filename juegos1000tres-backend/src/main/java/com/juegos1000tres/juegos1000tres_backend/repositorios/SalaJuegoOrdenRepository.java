@@ -1,6 +1,7 @@
 package com.juegos1000tres.juegos1000tres_backend.repositorios;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
@@ -14,5 +15,8 @@ import com.juegos1000tres.juegos1000tres_backend.modelos.SalaJuegoOrden;
 public interface SalaJuegoOrdenRepository extends JpaRepository<SalaJuegoOrden, Long> {
 
     @RestResource(path = "por-sala", rel = "por-sala")
-    List<SalaJuegoOrden> findBySalaIdOrderByOrdenAsc(Long salaId);
+    List<SalaJuegoOrden> findBySalaUuidOrderByOrdenAsc(String salaUuid);
+
+    @RestResource(path = "ultimo-por-sala", rel = "ultimo-por-sala")
+    Optional<SalaJuegoOrden> findFirstBySalaUuidOrderByOrdenDesc(String salaUuid);
 }

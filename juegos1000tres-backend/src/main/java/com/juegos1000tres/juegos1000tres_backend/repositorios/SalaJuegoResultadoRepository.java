@@ -16,6 +16,6 @@ public interface SalaJuegoResultadoRepository extends JpaRepository<SalaJuegoRes
     @RestResource(path = "por-sala-juego", rel = "por-sala-juego")
     List<SalaJuegoResultado> findBySalaJuegoId(Long salaJuegoId);
 
-    @RestResource(path = "por-usuario", rel = "por-usuario")
-    List<SalaJuegoResultado> findByUsuarioId(Long usuarioId);
+    @RestResource(path = "por-jugador", rel = "por-jugador")
+    List<SalaJuegoResultado> findByNombreJugadorIgnoreCase(String nombreJugador);
 }

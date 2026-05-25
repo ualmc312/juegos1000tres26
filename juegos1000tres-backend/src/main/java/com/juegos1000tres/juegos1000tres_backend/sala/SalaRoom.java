@@ -38,7 +38,7 @@ public class SalaRoom {
         String nombreFinal = esInvitado
                 ? resolverNombreInvitado(usuarioId)
                 : resolverNombreJugador(nombre);
-        Jugador jugador = new Jugador(nombreFinal);
+        Jugador jugador = new Jugador(nombreFinal, esInvitado ? null : usuarioId);
         sala.agregarJugador(jugador);
         return jugador;
     }
@@ -142,6 +142,12 @@ public class SalaRoom {
                 .orElseThrow(() -> new IllegalArgumentException("Jugador no encontrado"));
 
         jugador.sumarPuntos(1);
+    }
+
+    public synchronized void reiniciarPuntuaciones() {
+        for (Jugador jugador : sala.getJugadores()) {
+            jugador.reiniciarPuntuacion();
+        }
     }
 
     public boolean esCreador(String jugadorId) {

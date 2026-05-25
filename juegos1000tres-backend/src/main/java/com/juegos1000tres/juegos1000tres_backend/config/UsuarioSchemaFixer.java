@@ -34,4 +34,45 @@ public class UsuarioSchemaFixer {
             jdbcTemplate.execute("ALTER TABLE usuarios DROP CONSTRAINT IF EXISTS \"" + constraintName + "\"");
         }
     }
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void ajustarEsquemaSalasEntities() {
+        jdbcTemplate.execute("ALTER TABLE salas_entities ADD COLUMN IF NOT EXISTS host_usuario_token varchar(120)");
+        jdbcTemplate.execute("ALTER TABLE salas_entities ALTER COLUMN host_usuario_id DROP NOT NULL");
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void repararFkSalaJuego() {
+        String findFksSql = """
+            SELECT con.conname
+            FROM pg_constraint con
+            JOIN pg_class rel ON rel.oid = con.conrelid
+            JOIN pg_class pref ON pref.oid = con.confrelid
+            WHERE rel.relname = 'sala_juego' AND pref.relname = 'sala' AND con.contype = 'f'
+            """;
+
+        List<String> fks = jdbcTemplate.queryForList(findFksSql, String.class);
+        for (String fk : fks) {
+            jdbcTemplate.execute("ALTER TABLE sala_juego DROP CONSTRAINT IF EXISTS \"" + fk + "\"");
+        }
+
+        // Ensure there is a foreign key to salas_entities(id)
+        String checkToSalas = """
+            SELECT con.conname
+            FROM pg_constraint con
+            JOIN pg_class rel ON rel.oid = con.conrelid
+            JOIN pg_class pref ON pref.oid = con.confrelid
+            WHERE rel.relname = 'sala_juego' AND pref.relname = 'salas_entities' AND con.contype = 'f'
+            """;
+
+        List<String> present = jdbcTemplate.queryForList(checkToSalas, String.class);
+        if (present.isEmpty()) {
+            jdbcTemplate.execute("ALTER TABLE sala_juego ADD CONSTRAINT fk_sala_juego_salases FOREIGN KEY (sala_id) REFERENCES salas_entities(id)");
+        }
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void permitirUsuarioNullEnResultados() {
+        jdbcTemplate.execute("ALTER TABLE sala_juego_resultado ALTER COLUMN usuario_id DROP NOT NULL");
+    }
 }
