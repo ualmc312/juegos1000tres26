@@ -23,6 +23,7 @@ import com.juegos1000tres.juegos1000tres_backend.ia.RespuestaIA;
 import com.juegos1000tres.juegos1000tres_backend.ia.ServicioIA;
 import com.juegos1000tres.juegos1000tres_backend.ia.SolicitudIA;
 import com.juegos1000tres.juegos1000tres_backend.modelos.Juego;
+import com.juegos1000tres.juegos1000tres_backend.sala.SalaService;
 
 public class AdivinaElPersonajeJuego extends Juego {
 
@@ -36,6 +37,8 @@ public class AdivinaElPersonajeJuego extends Juego {
 
     private final ServicioIA servicioIA;
     private final com.juegos1000tres.juegos1000tres_backend.juegos.common.TemaSelector temaSelector;
+    private final SalaService salaService;
+    private final String salaId;
     private final Map<String, JugadorPartida> jugadores = new LinkedHashMap<>();
     private final List<InteraccionPartida> historial = new ArrayList<>();
     private final Set<String> ganadores = new LinkedHashSet<>();
@@ -49,10 +52,12 @@ public class AdivinaElPersonajeJuego extends Juego {
     private String mensajeEstado = "Escribe un tema para comenzar";
     private String ultimaRespuestaIA = "";
 
-    public AdivinaElPersonajeJuego(Traductor<?> conexionJugadores, Traductor<?> conexionPantalla, ServicioIA servicioIA, com.juegos1000tres.juegos1000tres_backend.juegos.common.TemaSelector temaSelector) {
+    public AdivinaElPersonajeJuego(Traductor<?> conexionJugadores, Traductor<?> conexionPantalla, ServicioIA servicioIA, com.juegos1000tres.juegos1000tres_backend.juegos.common.TemaSelector temaSelector, SalaService salaService, String salaId) {
         super(100, true, conexionJugadores, conexionPantalla);
         this.servicioIA = Objects.requireNonNull(servicioIA, "El servicio de IA es obligatorio");
         this.temaSelector = Objects.requireNonNull(temaSelector, "TemaSelector es obligatorio");
+        this.salaService = Objects.requireNonNull(salaService, "SalaService es obligatorio");
+        this.salaId = Objects.requireNonNull(salaId, "SalaId es obligatorio");
     }
 
     public Recibo<String> registrarEventosEnRecibo(Recibo<String> reciboBase) {
@@ -67,8 +72,9 @@ public class AdivinaElPersonajeJuego extends Juego {
 
     public synchronized void registrarJugadorDesdePayload(String payload) {
         Map<String, Object> data = leerPayloadComoMapa(payload, COMANDO_REGISTRAR_JUGADOR);
-        String jugadorId = leerTextoObligatorio(data, "jugadorId");
+        String jugadorIdOriginal = leerTextoObligatorio(data, "jugadorId");
         String nombreJugador = leerTextoOpcional(data, "nombreJugador");
+        String jugadorId = normalizarJugadorId(jugadorIdOriginal, nombreJugador);
 
         JugadorPartida jugador = this.jugadores.computeIfAbsent(jugadorId,
                 id -> new JugadorPartida(id, nombreJugador == null ? "Jugador" : nombreJugador));
@@ -83,8 +89,9 @@ public class AdivinaElPersonajeJuego extends Juego {
 
     public synchronized void proponerTemaDesdePayload(String payload) {
         Map<String, Object> data = leerPayloadComoMapa(payload, COMANDO_PROPONER_TEMA);
-        String jugadorId = leerTextoObligatorio(data, "jugadorId");
+        String jugadorIdOriginal = leerTextoObligatorio(data, "jugadorId");
         String nombreJugador = leerTextoOpcional(data, "nombreJugador");
+        String jugadorId = normalizarJugadorId(jugadorIdOriginal, nombreJugador);
         String temaPropuesto = leerTextoObligatorio(data, "tema");
 
         registrarJugadorSiFalta(jugadorId, nombreJugador);
@@ -151,8 +158,9 @@ public class AdivinaElPersonajeJuego extends Juego {
 
     public synchronized void hacerPreguntaDesdePayload(String payload) {
         Map<String, Object> data = leerPayloadComoMapa(payload, COMANDO_HACER_PREGUNTA);
-        String jugadorId = leerTextoObligatorio(data, "jugadorId");
+        String jugadorIdOriginal = leerTextoObligatorio(data, "jugadorId");
         String nombreJugador = leerTextoOpcional(data, "nombreJugador");
+        String jugadorId = normalizarJugadorId(jugadorIdOriginal, nombreJugador);
         String pregunta = leerTextoObligatorio(data, "pregunta");
 
         registrarJugadorSiFalta(jugadorId, nombreJugador);
@@ -190,8 +198,9 @@ public class AdivinaElPersonajeJuego extends Juego {
 
     public synchronized void intentarAdivinarDesdePayload(String payload) {
         Map<String, Object> data = leerPayloadComoMapa(payload, COMANDO_INTENTAR_ADIVINAR);
-        String jugadorId = leerTextoObligatorio(data, "jugadorId");
+        String jugadorIdOriginal = leerTextoObligatorio(data, "jugadorId");
         String nombreJugador = leerTextoOpcional(data, "nombreJugador");
+        String jugadorId = normalizarJugadorId(jugadorIdOriginal, nombreJugador);
         String intento = leerTextoObligatorio(data, "intento");
 
         registrarJugadorSiFalta(jugadorId, nombreJugador);
@@ -252,6 +261,7 @@ public class AdivinaElPersonajeJuego extends Juego {
         estado.put("personajeRevelado", this.fase == FasePartida.FINALIZADA ? this.personajeSecreto : "");
         estado.put("descripcionPersonaje", this.fase == FasePartida.FINALIZADA ? this.descripcionPersonaje : "");
         estado.put("ganadores", new ArrayList<>(this.ganadores));
+        estado.put("ganadoresNombres", construirGanadoresNombres());
         estado.put("jugadores", construirJugadoresEstado());
         estado.put("historial", construirHistorialEstado());
         estado.put("puedeProponerTema", this.fase == FasePartida.ESPERANDO_TEMA);
@@ -270,6 +280,7 @@ public class AdivinaElPersonajeJuego extends Juego {
         estado.put("jugadorTemaId", this.jugadorTemaId);
         estado.put("personajeRevelado", this.fase == FasePartida.FINALIZADA ? this.personajeSecreto : "");
         estado.put("ganadores", new ArrayList<>(this.ganadores));
+        estado.put("ganadoresNombres", construirGanadoresNombres());
         estado.put("jugadores", construirJugadoresEstado());
         // No incluir historial en pantalla compartida, solo scoreboard
         estado.put("puedeProponerTema", this.fase == FasePartida.ESPERANDO_TEMA);
@@ -312,7 +323,7 @@ public class AdivinaElPersonajeJuego extends Juego {
     }
 
     private void comprobarFinalizacion() {
-        if (this.jugadores.isEmpty()) {
+        if (this.jugadores.isEmpty() || this.fase == FasePartida.FINALIZADA) {
             return;
         }
 
@@ -331,10 +342,17 @@ public class AdivinaElPersonajeJuego extends Juego {
                 .map(jugador -> jugador.jugadorId)
                 .toList());
 
+        for (String ganadorId : this.ganadores) {
+            this.salaService.incrementarVictoria(this.salaId, ganadorId);
+        }
+
         limpiarEstadosPrivadosJugadores();
-        this.mensajeEstado = this.ganadores.size() == 1
-                ? "Ganador: " + this.jugadores.get(this.ganadores.iterator().next()).nombreJugador
-                : "Empate entre varios jugadores";
+        if (this.ganadores.size() == 1) {
+            String ganadorId = this.ganadores.iterator().next();
+            this.mensajeEstado = "Ganador: " + this.jugadores.get(ganadorId).nombreJugador;
+        } else {
+            this.mensajeEstado = "Empate entre varios jugadores";
+        }
         this.ultimaRespuestaIA = "PARTIDA_FINALIZADA";
     }
 
@@ -345,9 +363,26 @@ public class AdivinaElPersonajeJuego extends Juego {
         }
     }
 
+    private List<String> construirGanadoresNombres() {
+        return this.ganadores.stream()
+                .map(this.jugadores::get)
+                .filter(Objects::nonNull)
+                .map(jugador -> jugador.nombreJugador)
+                .toList();
+    }
+
     private void registrarJugadorSiFalta(String jugadorId, String nombreJugador) {
         this.jugadores.computeIfAbsent(jugadorId,
                 id -> new JugadorPartida(id, nombreJugador == null || nombreJugador.isBlank() ? "Jugador" : nombreJugador.trim()));
+    }
+
+    private String normalizarJugadorId(String jugadorId, String nombreJugador) {
+        try {
+            return this.salaService.normalizarJugadorId(this.salaId, jugadorId, nombreJugador);
+        } catch (RuntimeException ex) {
+            // Si no se puede mapear, conserva el id original para no romper la sesion WS.
+            return jugadorId;
+        }
     }
 
     private ValidacionTema validarTemaConIA(String temaPropuesto) {

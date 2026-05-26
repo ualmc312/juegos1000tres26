@@ -20,8 +20,11 @@ export class SpaceInvadersComponent implements OnInit, OnChanges {
   @Output() volverSala = new EventEmitter<void>();
 
   estadoConexion = 'Preparando Space Invaders...';
+  partidaFinalizada = false;
   gameUrl?: SafeResourceUrl;
   gameUrlRaw = '';
+  private jugadoresFinalizados = new Set<string>();
+  private jugadorIdPersistente = '';
 
   constructor(private readonly sanitizer: DomSanitizer) {}
 
@@ -39,6 +42,11 @@ export class SpaceInvadersComponent implements OnInit, OnChanges {
       || changes['esHost']
       || changes['jugadores']
     ) {
+      if (changes['uuid']) {
+        this.jugadoresFinalizados = new Set();
+        this.partidaFinalizada = false;
+      }
+
       this.actualizarUrlJuego();
     }
   }
@@ -50,7 +58,7 @@ export class SpaceInvadersComponent implements OnInit, OnChanges {
   private actualizarUrlJuego(): void {
     const salaId = this.uuid?.trim() || 'space-invaders';
     const backendSalaId = this.uuid?.trim() || 'space-invaders'; // debe ser el UUID de la sala
-    const jugadorId = this.jugadorId?.trim() || 'jugador-space-invaders';
+    const jugadorId = this.obtenerJugadorIdSeguro(salaId);
     const nombreJugador = this.nombreJugador?.trim() || 'Jugador';
     const jugadoresPartida = this.obtenerJugadoresPartida();
 
@@ -77,6 +85,49 @@ export class SpaceInvadersComponent implements OnInit, OnChanges {
       : `Sala ${salaId} - Jugador ${jugadorId}`;
   }
 
+  private obtenerJugadorIdSeguro(salaId: string): string {
+    const explicit = this.jugadorId?.trim();
+    if (explicit) {
+      return explicit;
+    }
+
+    if (this.jugadorIdPersistente) {
+      return this.jugadorIdPersistente;
+    }
+
+    const clave = `space-invaders-player-id:${salaId}`;
+    const existente = this.leerLocalStorage(clave);
+    if (existente) {
+      this.jugadorIdPersistente = existente;
+      return existente;
+    }
+
+    const nuevo = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : `si-${Date.now()}-${Math.floor(Math.random() * 99999)}`;
+
+    this.escribirLocalStorage(clave, nuevo);
+    this.jugadorIdPersistente = nuevo;
+    return nuevo;
+  }
+
+  private leerLocalStorage(clave: string): string {
+    try {
+      const valor = localStorage.getItem(clave);
+      return valor && valor.trim() ? valor.trim() : '';
+    } catch {
+      return '';
+    }
+  }
+
+  private escribirLocalStorage(clave: string, valor: string): void {
+    try {
+      localStorage.setItem(clave, valor);
+    } catch {
+      // Si el almacenamiento falla, seguimos con el id generado en memoria.
+    }
+  }
+
   private obtenerJugadoresPartida(): string[] {
     const pantallaAsignada = this.pantallaId && this.pantallaId !== 'NINGUNO' ? this.pantallaId : '';
     const ids = this.jugadores
@@ -96,8 +147,23 @@ export class SpaceInvadersComponent implements OnInit, OnChanges {
       return;
     }
 
-    const data = event.data as { type?: string; jugadorId?: string } | null;
-    if (!data || data.type !== 'SPACE_INVADERS_RETURN_TO_LOBBY') {
+    const data = event.data as { type?: string; jugadorId?: string; puntuacionFinal?: number } | null;
+    if (!data) {
+      return;
+    }
+
+    if (data.type === 'SPACE_INVADERS_GAME_OVER') {
+      this.marcarJugadorComoFinalizado(data.jugadorId);
+      return;
+    }
+
+    if (data.type === 'SPACE_INVADERS_MATCH_END') {
+      this.partidaFinalizada = true;
+      this.estadoConexion = 'Partida finalizada. Ya puedes volver a la sala.';
+      return;
+    }
+
+    if (data.type !== 'SPACE_INVADERS_RETURN_TO_LOBBY') {
       return;
     }
 
@@ -106,6 +172,28 @@ export class SpaceInvadersComponent implements OnInit, OnChanges {
     }
 
     this.volverSala.emit();
+  }
+
+  volverALaSala(): void {
+    this.volverSala.emit();
+  }
+
+  private marcarJugadorComoFinalizado(jugadorId?: string): void {
+    if (!jugadorId) {
+      return;
+    }
+
+    this.jugadoresFinalizados.add(jugadorId);
+
+    const jugadoresActivos = this.obtenerJugadoresPartida();
+    if (jugadoresActivos.length === 0) {
+      return;
+    }
+
+    if (jugadoresActivos.every(id => this.jugadoresFinalizados.has(id))) {
+      this.partidaFinalizada = true;
+      this.estadoConexion = 'Partida finalizada. Ya puedes volver a la sala.';
+    }
   }
 }
 

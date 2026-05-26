@@ -7,4 +7,12 @@
     title="Space Invaders"
     allowfullscreen
   ></iframe>
+
+  <div class="space-return-panel" *ngIf="partidaFinalizada">
+    <button type="button" class="space-return-button" (click)="volverALaSala()">
+      VOLVER A SALA
+    </button>
+    <p class="space-return-note" *ngIf="!esHost">La pantalla puede volver localmente; el host sigue controlando el cierre global.</p>
+    <p class="space-return-note" *ngIf="esHost">El host puede cerrar la sala y guardar el resultado en historial.</p>
+  </div>
 </div>

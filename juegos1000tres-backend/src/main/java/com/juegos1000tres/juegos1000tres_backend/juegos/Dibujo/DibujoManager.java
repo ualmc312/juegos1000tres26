@@ -6,6 +6,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import com.juegos1000tres.juegos1000tres_backend.comunicacion.Envio;
@@ -15,6 +16,7 @@ import com.juegos1000tres.juegos1000tres_backend.comunicacion.implementaciones.C
 import com.juegos1000tres.juegos1000tres_backend.comunicacion.implementaciones.WebSocketConexion;
 import com.juegos1000tres.juegos1000tres_backend.ia.ServicioIA;
 import com.juegos1000tres.juegos1000tres_backend.juegos.common.TemaSelector;
+import com.juegos1000tres.juegos1000tres_backend.sala.SalaService;
 
 @Service
 public class DibujoManager {
@@ -26,10 +28,12 @@ public class DibujoManager {
 
     private final ServicioIA servicioIA;
     private final TemaSelector temaSelector;
+    private final SalaService salaService;
 
-    public DibujoManager(ServicioIA servicioIA, TemaSelector temaSelector) {
+    public DibujoManager(ServicioIA servicioIA, TemaSelector temaSelector, @Lazy SalaService salaService) {
         this.servicioIA = servicioIA;
         this.temaSelector = temaSelector;
+        this.salaService = salaService;
     }
 
     public synchronized void crearInstanciaParaSala(String salaUuid) {
@@ -51,7 +55,7 @@ public class DibujoManager {
                 Envio.paraStringDesdeOut(),
                 Recibo.paraJsonString());
 
-        DibujoJuego juego = new DibujoJuego(traductorJugadores, traductorPantalla, this.servicioIA, this.temaSelector);
+        DibujoJuego juego = new DibujoJuego(traductorJugadores, traductorPantalla, this.servicioIA, this.temaSelector, this.salaService, salaUuid);
         Recibo<String> reciboEventos = juego.registrarEventosEnRecibo(Recibo.paraJsonString());
 
         Traductor<String> traductorEventos = new Traductor<>(

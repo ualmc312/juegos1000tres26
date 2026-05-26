@@ -243,7 +243,17 @@ export class Lobby implements OnInit, OnDestroy {
   }
 
   volverDesdeJuego(): void {
-    if (!this.esHost || !this.uuidActual || !this.jugadorId) {
+    if (!this.uuidActual || !this.jugadorId) {
+      return;
+    }
+
+    if (!this.esHost && this.juegoActual === 'space-invaders') {
+      this.juegoOcultoLocalmente = true;
+      this.cdr.detectChanges();
+      return;
+    }
+
+    if (!this.esHost) {
       return;
     }
 

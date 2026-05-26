@@ -18,6 +18,7 @@ import com.juegos1000tres.juegos1000tres_backend.comunicacion.Recibo;
 import com.juegos1000tres.juegos1000tres_backend.comunicacion.Traductor;
 import com.juegos1000tres.juegos1000tres_backend.comunicacion.implementaciones.ApiConexion;
 import com.juegos1000tres.juegos1000tres_backend.juegos.Preguntas.PreguntasJuego;
+import com.juegos1000tres.juegos1000tres_backend.sala.SalaService;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -34,8 +35,10 @@ public class PreguntasPruebaService {
     private final Traductor<String> traductorEventos;
     private final ExecutorService executorLoop;
     private final AtomicBoolean loopActivo;
+    private final SalaService salaService;
 
-    public PreguntasPruebaService() {
+    public PreguntasPruebaService(SalaService salaService) {
+        this.salaService = salaService;
         this.conexionApi = new ApiConexion(SALA_ID_PREGUNTAS);
 
         Traductor<String> traductorApi = new Traductor<>(
@@ -47,7 +50,9 @@ public class PreguntasPruebaService {
                 12,
                 traductorApi,
                 traductorApi,
-                cargarPreguntasDesdeResources());
+            cargarPreguntasDesdeResources(),
+            this.salaService,
+            SALA_ID_PREGUNTAS);
 
         Recibo<String> reciboJuego = this.juego.registrarEventosEnRecibo(Recibo.paraJsonString());
         this.traductorEventos = new Traductor<>(

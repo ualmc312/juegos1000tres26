@@ -72,6 +72,14 @@ public class Jugador {
         this.puntuacion += puntos;
     }
 
+    public void establecerPuntuacion(int puntuacion) {
+        if (puntuacion < 0) {
+            throw new IllegalArgumentException("No se puede establecer una puntuacion negativa");
+        }
+
+        this.puntuacion = puntuacion;
+    }
+
     public void reiniciarPuntuacion() {
         this.puntuacion = 0;
     }

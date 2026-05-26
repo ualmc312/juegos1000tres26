@@ -20,6 +20,7 @@ import com.juegos1000tres.juegos1000tres_backend.comunicacion.Enviable;
 import com.juegos1000tres.juegos1000tres_backend.comunicacion.Recibo;
 import com.juegos1000tres.juegos1000tres_backend.comunicacion.Traductor;
 import com.juegos1000tres.juegos1000tres_backend.modelos.Juego;
+import com.juegos1000tres.juegos1000tres_backend.sala.SalaService;
 
 public class PreguntasJuego extends Juego {
 
@@ -45,6 +46,8 @@ public class PreguntasJuego extends Juego {
     private final Set<String> respuestasConfirmadas;
     private final Set<String> respondedoresEsperados;
     private final Random random;
+    private final SalaService salaService;
+    private final String salaId;
 
     private FaseRonda faseRonda;
     private boolean enCurso;
@@ -60,7 +63,9 @@ public class PreguntasJuego extends Juego {
             int numeroJugadores,
             Traductor<?> conexionJugadores,
             Traductor<?> conexionPantalla,
-            Collection<String> preguntasDisponibles) {
+            Collection<String> preguntasDisponibles,
+            SalaService salaService,
+            String salaId) {
         super(numeroJugadores, true, conexionJugadores, conexionPantalla);
         this.jugadores = new LinkedHashMap<>();
         this.bancoPreguntas = normalizarPreguntas(preguntasDisponibles);
@@ -69,6 +74,8 @@ public class PreguntasJuego extends Juego {
         this.respuestasConfirmadas = new LinkedHashSet<>();
         this.respondedoresEsperados = new LinkedHashSet<>();
         this.random = new Random();
+        this.salaService = Objects.requireNonNull(salaService, "SalaService es obligatorio");
+        this.salaId = Objects.requireNonNull(salaId, "SalaId es obligatorio");
         this.faseRonda = FaseRonda.ESPERANDO_JUGADORES;
         this.enCurso = false;
         this.rondaActual = 0;
@@ -235,6 +242,7 @@ public class PreguntasJuego extends Juego {
         JugadorInterno ganador = this.jugadores.get(opcionSeleccionada.autorJugadorId);
         if (ganador != null) {
             ganador.puntos += 1;
+            registrarPuntuacionSala(ganador.jugadorId, 1);
         }
 
         this.faseRonda = FaseRonda.MOSTRANDO_RESULTADO;
@@ -438,6 +446,14 @@ public class PreguntasJuego extends Juego {
 
     public synchronized int getNumeroJugadoresRegistrados() {
         return this.jugadores.size();
+    }
+
+    private void registrarPuntuacionSala(String jugadorId, int puntos) {
+        if (jugadorId == null || jugadorId.isBlank() || puntos == 0) {
+            return;
+        }
+
+        this.salaService.incrementarPuntuacion(this.salaId, jugadorId, puntos);
     }
 
     @Override

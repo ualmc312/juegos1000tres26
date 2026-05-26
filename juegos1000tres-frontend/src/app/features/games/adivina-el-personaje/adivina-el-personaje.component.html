@@ -125,7 +125,8 @@
       <h4>Resultado final</h4>
       <p>{{ estado.personajeRevelado || 'Sin revelar' }}</p>
       <p *ngIf="estado.descripcionPersonaje">{{ estado.descripcionPersonaje }}</p>
-      <p *ngIf="estado.ganadores?.length">Ganadores: {{ estado.ganadores?.join(', ') }}</p>
+      <p *ngIf="estado.ganadoresNombres?.length">Ganadores: {{ estado.ganadoresNombres?.join(', ') }}</p>
+      <p *ngIf="!estado.ganadoresNombres?.length && estado.ganadores?.length">Ganadores: {{ estado.ganadores?.join(', ') }}</p>
     </div>
   </ng-container>
 

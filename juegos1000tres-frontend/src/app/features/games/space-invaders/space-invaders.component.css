@@ -24,3 +24,28 @@
   background: #000;
   filter: drop-shadow(0 26px 70px rgba(0, 0, 0, 0.45));
 }
+
+.space-return-panel {
+  display: grid;
+  gap: 0.65rem;
+  justify-items: center;
+  padding: 1rem 0 1.25rem;
+}
+
+.space-return-button {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.9rem 1.4rem;
+  background: linear-gradient(135deg, #2bd67b, #84f0b3);
+  color: #07130b;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  box-shadow: 0 14px 28px rgba(43, 214, 123, 0.28);
+}
+
+.space-return-note {
+  margin: 0;
+  color: #c8d5e6;
+  font-size: 0.95rem;
+}

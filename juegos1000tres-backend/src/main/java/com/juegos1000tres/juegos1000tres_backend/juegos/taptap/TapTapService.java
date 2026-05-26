@@ -43,6 +43,7 @@ public class TapTapService {
         TapTapPartida partida = obtenerPartida(uuid);
         long ahora = System.currentTimeMillis();
         int puntos = partida.sumarPunto(jugadorId, ahora);
+        this.salaService.establecerPuntuacion(uuid, jugadorId, puntos);
 
         return new TapTapPuntoRespuesta(puntos);
     }

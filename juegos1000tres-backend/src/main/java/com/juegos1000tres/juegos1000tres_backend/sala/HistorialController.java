@@ -112,11 +112,16 @@ public class HistorialController {
                 .map(HistorialResultadoRespuesta::nombreJugador)
                 .toList();
 
+        int puntuacionTotal = juego.getJugadores().stream()
+                .mapToInt(SalaJuegoResultado::getPuntuacion)
+                .sum();
+
         return new HistorialJuegoRespuesta(
                 juego.getOrden(),
                 juego.getFechaJugado() != null ? juego.getFechaJugado().toString() : "",
                 juego.getJuego() != null ? juego.getJuego().getNombre() : "Juego",
                 juego.getJuego() != null ? juego.getJuego().getRuta() : "",
+                puntuacionTotal,
                 jugadores,
                 ganadores);
     }
@@ -152,6 +157,7 @@ public class HistorialController {
             String fechaJugado,
             String juegoNombre,
             String juegoRuta,
+            int puntuacionTotal,
             List<HistorialResultadoRespuesta> jugadores,
             List<String> ganadores) {
     }

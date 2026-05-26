@@ -12,6 +12,8 @@ type EstadoDibujo = {
   jugadorTemaId?: string;
   jugadorDibujaId?: string;
   palabraSecreta?: string;
+  ganadores?: string[];
+  ganadoresNombres?: string[];
   marcador?: Array<{ jugadorId: string; nombre: string; puntos: number }>;
   drawingFrame?: Array<Record<string, unknown>>;
   resumenRonda?: Array<Record<string, unknown>>;
@@ -92,7 +94,7 @@ export class DibujoComponent implements OnInit, AfterViewInit, OnDestroy {
     const temaLimpio = this.tema.trim();
     if (!temaLimpio || !this.traductor) return;
 
-    this.traductor.enviar(new ProponerTemaEnviable(this.jugadorPersistente, this.nombreJugador, temaLimpio));
+    this.traductor.enviar(new ProponerTemaEnviable(this.idJugadorActual, this.nombreJugador, temaLimpio));
     this.tema = '';
   }
 
@@ -100,12 +102,12 @@ export class DibujoComponent implements OnInit, AfterViewInit, OnDestroy {
     const intentoLimpio = this.intento.trim();
     if (!intentoLimpio || !this.traductor) return;
 
-    this.traductor.enviar(new IntentarAdivinarEnviable(this.jugadorPersistente, this.nombreJugador, intentoLimpio));
+    this.traductor.enviar(new IntentarAdivinarEnviable(this.idJugadorActual, this.nombreJugador, intentoLimpio));
     this.intento = '';
   }
 
   get esProponenteTema(): boolean {
-    return !!this.estado.jugadorTemaId && this.jugadorPersistente === this.estado.jugadorTemaId;
+    return !!this.estado.jugadorTemaId && this.idJugadorActual === this.estado.jugadorTemaId;
   }
 
   get esDibujante(): boolean {
@@ -113,13 +115,13 @@ export class DibujoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   get esPintor(): boolean {
-    return !!this.estado.jugadorDibujaId && this.jugadorPersistente === this.estado.jugadorDibujaId;
+    return !!this.estado.jugadorDibujaId && this.idJugadorActual === this.estado.jugadorDibujaId;
   }
 
   get yaAcerto(): boolean {
     if (!this.estado.resumenRonda) return false;
     return this.estado.resumenRonda.some(
-      (item) => item['adivinador'] === this.jugadorPersistente && item['acierta'] === true
+      (item) => item['adivinador'] === this.idJugadorActual && item['acierta'] === true
     );
   }
 
@@ -132,6 +134,19 @@ export class DibujoComponent implements OnInit, AfterViewInit, OnDestroy {
 
   get esFaseFinalizada(): boolean {
     return this.estado.fase === 'FINALIZADA';
+  }
+
+  get ganadoresNombresSeguros(): string[] {
+    return this.estado.ganadoresNombres ?? [];
+  }
+
+  private get idJugadorActual(): string {
+    return this.jugadorId?.trim() || this.jugadorPersistente;
+  }
+
+  esGanador(jugador: { jugadorId: string; nombre: string }): boolean {
+    const ganadores = this.estado.ganadores ?? [];
+    return ganadores.includes(jugador.jugadorId) || ganadores.includes(jugador.nombre);
   }
 
   volverALaSala(): void {
@@ -174,12 +189,12 @@ export class DibujoComponent implements OnInit, AfterViewInit, OnDestroy {
 
   deshacer(): void {
     if (!this.esPintor || !this.traductor) return;
-    this.traductor.enviar(new ComandoVacioEnviable(this.jugadorPersistente, 'ERASE_LAST'));
+    this.traductor.enviar(new ComandoVacioEnviable(this.idJugadorActual, 'ERASE_LAST'));
   }
 
   limpiar(): void {
     if (!this.esPintor || !this.traductor) return;
-    this.traductor.enviar(new ComandoVacioEnviable(this.jugadorPersistente, 'CLEAR_DRAWING'));
+    this.traductor.enviar(new ComandoVacioEnviable(this.idJugadorActual, 'CLEAR_DRAWING'));
   }
 
   private obtenerCoordenadas(e: MouseEvent | TouchEvent): { x: number; y: number } | null {
@@ -233,7 +248,7 @@ export class DibujoComponent implements OnInit, AfterViewInit, OnDestroy {
   private enviarPunto(x: number, y: number, down: boolean): void {
     if (!this.traductor) return;
     const t = Date.now() - this.tiempoInicioRonda;
-    this.traductor.enviar(new AddStrokeEnviable(this.jugadorPersistente, x, y, t, down));
+    this.traductor.enviar(new AddStrokeEnviable(this.idJugadorActual, x, y, t, down));
   }
 
   private ajustarCanvas(): void {
@@ -249,7 +264,7 @@ export class DibujoComponent implements OnInit, AfterViewInit, OnDestroy {
     const baseCanal = `ws://127.0.0.1:8091/ws/salas/${encodeURIComponent(salaId)}/${rol}`;
     const canal = this.esPantalla
       ? baseCanal
-      : `${baseCanal}?jugadorId=${encodeURIComponent(this.jugadorPersistente)}`;
+      : `${baseCanal}?jugadorId=${encodeURIComponent(this.idJugadorActual)}`;
 
     const conexion = new WebSocketConexion(salaId, canal);
     const envio = Envio.paraStringDesdeOut();
@@ -276,7 +291,7 @@ export class DibujoComponent implements OnInit, AfterViewInit, OnDestroy {
 
       if (!this.esPantalla && !this.registroEnviado && conexion?.estaConectado()) {
         try {
-          this.traductor.enviar(new RegistrarJugadorEnviable(this.jugadorPersistente, this.nombreJugador));
+          this.traductor.enviar(new RegistrarJugadorEnviable(this.idJugadorActual, this.nombreJugador));
           this.registroEnviado = true;
         } catch {
           await this.esperar(200);
@@ -318,6 +333,8 @@ export class DibujoComponent implements OnInit, AfterViewInit, OnDestroy {
         jugadorDibujaId: typeof data['jugadorDibujaId'] === 'string' ? String(data['jugadorDibujaId']) : undefined,
         palabraSecreta: typeof data['palabraSecreta'] === 'string' ? String(data['palabraSecreta']) : undefined,
         resultadoIntento: typeof data['resultadoIntento'] === 'string' ? String(data['resultadoIntento']) : undefined,
+        ganadores: Array.isArray(data['ganadores']) ? data['ganadores'].map((item) => String(item)) : [],
+        ganadoresNombres: Array.isArray(data['ganadoresNombres']) ? data['ganadoresNombres'].map((item) => String(item)) : [],
         marcador: Array.isArray(data['marcador'])
           ? (data['marcador'] as Array<Record<string, unknown>>).map(m => ({ jugadorId: String(m['jugadorId'] ?? ''), nombre: String(m['nombre'] ?? ''), puntos: Number(m['puntos'] ?? 0) }))
           : [],
@@ -409,7 +426,7 @@ export class DibujoComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private registrarJugadorSiHaceFalta(): void {
     if (this.esPantalla || this.registroEnviado || !this.traductor) return;
-    this.traductor.enviar(new RegistrarJugadorEnviable(this.jugadorPersistente, this.nombreJugador));
+    this.traductor.enviar(new RegistrarJugadorEnviable(this.idJugadorActual, this.nombreJugador));
     this.registroEnviado = true;
   }
 

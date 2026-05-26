@@ -77,7 +77,7 @@ public class JuegoManager {
             preguntasDefault.add("Cual es el color favorito de [NOMBRE_JUGADOR]?");
             preguntasDefault.add("Que prefiere [NOMBRE_JUGADOR], playa o montana?");
 
-            PreguntasJuego juegoInstancia = new PreguntasJuego(2, placeholder, placeholder, preguntasDefault);
+            PreguntasJuego juegoInstancia = new PreguntasJuego(2, placeholder, placeholder, preguntasDefault, this.salaService, salaUuid);
             juegoInstancia.iniciar();
 
             Recibo<String> reciboConEventos = juegoInstancia.registrarEventosEnRecibo(Recibo.paraJsonString());
@@ -98,8 +98,7 @@ public class JuegoManager {
                 reciboBase
             );
 
-            TapTapService tapTapService = new TapTapService(null); // TODO: Inyectar SalaService
-            tapTapService = new TapTapService(this.salaService);
+            TapTapService tapTapService = new TapTapService(this.salaService);
             TapTapJuego juegoInstancia = new TapTapJuego(tapTapService, salaUuid, placeholder, placeholder);
             juegoInstancia.iniciar();
 

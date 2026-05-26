@@ -7,6 +7,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.springframework.stereotype.Service;
+import org.springframework.context.annotation.Lazy;
 
 import com.juegos1000tres.juegos1000tres_backend.comunicacion.Envio;
 import com.juegos1000tres.juegos1000tres_backend.comunicacion.Recibo;
@@ -15,6 +16,7 @@ import com.juegos1000tres.juegos1000tres_backend.comunicacion.implementaciones.C
 import com.juegos1000tres.juegos1000tres_backend.comunicacion.implementaciones.WebSocketConexion;
 import com.juegos1000tres.juegos1000tres_backend.ia.ServicioIA;
 import com.juegos1000tres.juegos1000tres_backend.juegos.common.TemaSelector;
+import com.juegos1000tres.juegos1000tres_backend.sala.SalaService;
 
 @Service
 public class AdivinaElPersonajeManager {
@@ -25,10 +27,12 @@ public class AdivinaElPersonajeManager {
     private final Map<String, InstanciaSala> instancias = new ConcurrentHashMap<>();
     private final ServicioIA servicioIA;
     private final TemaSelector temaSelector;
+    private final SalaService salaService;
 
-    public AdivinaElPersonajeManager(ServicioIA servicioIA, TemaSelector temaSelector) {
+    public AdivinaElPersonajeManager(ServicioIA servicioIA, TemaSelector temaSelector, @Lazy SalaService salaService) {
         this.servicioIA = servicioIA;
         this.temaSelector = temaSelector;
+        this.salaService = salaService;
     }
 
     public synchronized void crearInstanciaParaSala(String salaUuid) {
@@ -50,7 +54,7 @@ public class AdivinaElPersonajeManager {
                 Envio.paraStringDesdeOut(),
                 Recibo.paraJsonString());
 
-        AdivinaElPersonajeJuego juego = new AdivinaElPersonajeJuego(traductorJugadores, traductorPantalla, this.servicioIA, this.temaSelector);
+        AdivinaElPersonajeJuego juego = new AdivinaElPersonajeJuego(traductorJugadores, traductorPantalla, this.servicioIA, this.temaSelector, this.salaService, salaUuid);
         Recibo<String> reciboEventos = juego.registrarEventosEnRecibo(Recibo.paraJsonString());
         Traductor<String> traductorEventos = new Traductor<>(
                 conexionJugadores,

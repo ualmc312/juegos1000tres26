@@ -23,6 +23,7 @@ import com.juegos1000tres.juegos1000tres_backend.comunicacion.Enviable;
 import com.juegos1000tres.juegos1000tres_backend.comunicacion.Recibo;
 import com.juegos1000tres.juegos1000tres_backend.comunicacion.Traductor;
 import com.juegos1000tres.juegos1000tres_backend.modelos.Juego;
+import com.juegos1000tres.juegos1000tres_backend.sala.SalaService;
 
 public class HablameDeTiJuego extends Juego {
 
@@ -49,6 +50,8 @@ public class HablameDeTiJuego extends Juego {
     private final List<OpcionRespuesta> opcionesActuales = new ArrayList<>();
     private final List<Map<String, Object>> resumenRondaActual = new ArrayList<>();
     private final Random random = new Random();
+    private final SalaService salaService;
+    private final String salaId;
 
     private FasePartida fase = FasePartida.ESPERANDO_JUGADORES;
     private boolean enCurso;
@@ -61,9 +64,11 @@ public class HablameDeTiJuego extends Juego {
     private String ultimoError = "";
     private long proximaTransicionEpochMs;
 
-    public HablameDeTiJuego(Traductor<?> conexionJugadores, Traductor<?> conexionPantalla) {
+    public HablameDeTiJuego(Traductor<?> conexionJugadores, Traductor<?> conexionPantalla, SalaService salaService, String salaId) {
         super(100, true, conexionJugadores, conexionPantalla);
         this.bancoPreguntas = cargarBancoPreguntas();
+        this.salaService = Objects.requireNonNull(salaService, "SalaService es obligatorio");
+        this.salaId = Objects.requireNonNull(salaId, "SalaId es obligatorio");
     }
 
     public Recibo<String> registrarEventosEnRecibo(Recibo<String> reciboBase) {
@@ -373,11 +378,13 @@ public class HablameDeTiJuego extends Juego {
                 JugadorPartida jugador = this.jugadores.get(voto.getKey());
                 if (jugador != null) {
                     jugador.puntos += 20;
+                    registrarPuntuacionSala(jugador.jugadorId, 20);
                 }
             } else {
                 JugadorPartida autor = this.jugadores.get(opcion.autorJugadorId);
                 if (autor != null) {
                     autor.puntos += 10;
+                    registrarPuntuacionSala(autor.jugadorId, 10);
                 }
             }
         }
@@ -406,6 +413,14 @@ public class HablameDeTiJuego extends Juego {
         this.ultimoError = mensaje;
         this.mensajeEstado = mensaje;
         publicarEstado();
+    }
+
+    private void registrarPuntuacionSala(String jugadorId, int puntos) {
+        if (jugadorId == null || jugadorId.isBlank() || puntos == 0) {
+            return;
+        }
+
+        this.salaService.incrementarPuntuacion(this.salaId, jugadorId, puntos);
     }
 
     private void publicarEstado() {

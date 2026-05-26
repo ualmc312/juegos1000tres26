@@ -26,6 +26,7 @@ import com.juegos1000tres.juegos1000tres_backend.ia.ServicioIA;
 import com.juegos1000tres.juegos1000tres_backend.ia.SolicitudIA;
 import com.juegos1000tres.juegos1000tres_backend.juegos.common.TemaSelector;
 import com.juegos1000tres.juegos1000tres_backend.modelos.Juego;
+import com.juegos1000tres.juegos1000tres_backend.sala.SalaService;
 
 public class DibujoJuego extends Juego {
 
@@ -44,6 +45,8 @@ public class DibujoJuego extends Juego {
 
     private final ServicioIA servicioIA;
     private final TemaSelector temaSelector;
+    private final SalaService salaService;
+    private final String salaId;
 
     private final Map<String, Jugador> jugadores = new LinkedHashMap<>();
     private final List<String> ordenRondas = new ArrayList<>();
@@ -51,6 +54,8 @@ public class DibujoJuego extends Juego {
     private final Map<String, ArrayDeque<String>> targetsPendientesPorTema = new LinkedHashMap<>();
     private final Map<String, Set<String>> targetsUsadosPorTema = new LinkedHashMap<>();
     private String ultimoTargetNormalizado = "";
+    private final List<String> ganadores = new ArrayList<>();
+    private final List<String> ganadoresNombres = new ArrayList<>();
 
     private FasePartida fase = FasePartida.ESPERANDO_TEMA;
     private boolean enCurso;
@@ -69,10 +74,12 @@ public class DibujoJuego extends Juego {
     private final List<Map<String, Object>> resumenRondaActual = new ArrayList<>();
     private String mensajeEstado = "";
 
-    public DibujoJuego(Traductor<?> conexionJugadores, Traductor<?> conexionPantalla, ServicioIA servicioIA, TemaSelector temaSelector) {
+    public DibujoJuego(Traductor<?> conexionJugadores, Traductor<?> conexionPantalla, ServicioIA servicioIA, TemaSelector temaSelector, SalaService salaService, String salaId) {
         super(100, true, conexionJugadores, conexionPantalla);
         this.servicioIA = Objects.requireNonNull(servicioIA);
         this.temaSelector = Objects.requireNonNull(temaSelector);
+        this.salaService = Objects.requireNonNull(salaService);
+        this.salaId = Objects.requireNonNull(salaId);
     }
 
     public Recibo<String> registrarEventosEnRecibo(Recibo<String> reciboBase) {
@@ -245,10 +252,7 @@ public class DibujoJuego extends Juego {
                 this.indiceRondaActual += 1;
                 iniciarRondaActual();
             } else {
-                limpiarMensajesPrivados();
-                this.fase = FasePartida.FINALIZADA;
-                this.enCurso = false;
-                this.mensajeEstado = "Partida finalizada";
+                finalizarPartida();
             }
 
             this.proximaTransicionEpochMs = 0L;
@@ -272,6 +276,8 @@ public class DibujoJuego extends Juego {
         estado.put("jugadorDibujaId", this.jugadorDibujaId == null ? "" : this.jugadorDibujaId);
         estado.put("palabraSecreta", "");
         estado.put("resultadoIntento", "");
+        estado.put("ganadores", new ArrayList<>(this.ganadores));
+        estado.put("ganadoresNombres", new ArrayList<>(this.ganadoresNombres));
         estado.put("resumenRonda", new ArrayList<>(this.resumenRondaActual));
         estado.put("marcador", construirMarcador());
         estado.put("puedeAdivinar", this.fase == FasePartida.JUGANDO);
@@ -299,6 +305,8 @@ public class DibujoJuego extends Juego {
         estado.put("jugadorDibujaId", this.jugadorDibujaId == null ? "" : this.jugadorDibujaId);
         estado.put("palabraSecreta", (this.fase == FasePartida.MOSTRANDO_RESULTADO || this.fase == FasePartida.FINALIZADA) ? this.target : "");
         estado.put("resultadoIntento", "");
+        estado.put("ganadores", new ArrayList<>(this.ganadores));
+        estado.put("ganadoresNombres", new ArrayList<>(this.ganadoresNombres));
 
         long ahora = System.currentTimeMillis();
         List<Map<String, Object>> frame = new ArrayList<>(this.trazos);
@@ -329,9 +337,7 @@ public class DibujoJuego extends Juego {
 
     private void iniciarRondaActual() {
         if (this.indiceRondaActual >= this.ordenRondas.size()) {
-            limpiarMensajesPrivados();
-            this.fase = FasePartida.FINALIZADA;
-            this.enCurso = false;
+            finalizarPartida();
             return;
         }
 
@@ -631,8 +637,13 @@ public class DibujoJuego extends Juego {
     }
 
     private List<Map<String, Object>> construirMarcador() {
+        List<Jugador> ordenados = this.jugadores.values().stream()
+                .sorted(java.util.Comparator.comparingInt((Jugador j) -> j.puntos).reversed()
+                        .thenComparing(Jugador::nombre, String.CASE_INSENSITIVE_ORDER))
+                .toList();
+
         List<Map<String, Object>> resultado = new ArrayList<>();
-        for (Jugador j : this.jugadores.values()) {
+        for (Jugador j : ordenados) {
             Map<String, Object> item = new LinkedHashMap<>();
             item.put("jugadorId", j.jugadorId);
             item.put("nombreJugador", j.nombre());
@@ -640,6 +651,61 @@ public class DibujoJuego extends Juego {
             resultado.add(item);
         }
         return resultado;
+    }
+
+    private void finalizarPartida() {
+        if (this.fase == FasePartida.FINALIZADA) {
+            return;
+        }
+
+        limpiarMensajesPrivados();
+        this.fase = FasePartida.FINALIZADA;
+        this.enCurso = false;
+        this.proximaTransicionEpochMs = 0L;
+        this.ganadores.clear();
+        this.ganadoresNombres.clear();
+
+        int mejorPuntuacion = this.jugadores.values().stream()
+            .mapToInt(jugador -> jugador.puntos)
+            .max()
+            .orElse(0);
+
+        List<Jugador> ganadoresPartida = this.jugadores.values().stream()
+            .filter(jugador -> jugador.puntos == mejorPuntuacion)
+            .sorted(java.util.Comparator.comparing(Jugador::nombre, String.CASE_INSENSITIVE_ORDER)
+                .thenComparing(jugador -> jugador.jugadorId, String.CASE_INSENSITIVE_ORDER))
+            .toList();
+
+        if (ganadoresPartida.isEmpty()) {
+            this.mensajeEstado = "Partida finalizada";
+            return;
+        }
+
+        for (Jugador ganador : ganadoresPartida) {
+            String ganadorId = normalizarJugadorId(ganador.jugadorId, ganador.nombre());
+            this.ganadores.add(ganadorId);
+            this.ganadoresNombres.add(ganador.nombre());
+            this.salaService.incrementarVictoria(this.salaId, ganadorId);
+        }
+
+        this.mensajeEstado = this.ganadores.size() == 1
+            ? "Ganador: " + this.ganadoresNombres.get(0)
+            : "Empate entre varios jugadores";
+
+        // Persistar las puntuaciones en el historial de la sala
+        try {
+            this.salaService.registrarResultadosJuego(this.salaId);
+        } catch (RuntimeException ex) {
+            // no bloquear el flujo de la finalizacion si la persistencia falla
+        }
+    }
+
+    private String normalizarJugadorId(String jugadorId, String nombreJugador) {
+        try {
+            return this.salaService.normalizarJugadorId(this.salaId, jugadorId, nombreJugador);
+        } catch (RuntimeException ex) {
+            return jugadorId;
+        }
     }
 
     public void publicarEstado() {

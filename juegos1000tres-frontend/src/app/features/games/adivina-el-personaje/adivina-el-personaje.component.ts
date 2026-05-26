@@ -31,6 +31,7 @@ type EstadoAdivina = {
   personajeRevelado: string;
   descripcionPersonaje: string;
   ganadores: string[];
+  ganadoresNombres?: string[];
   jugadores: JugadorEstado[];
   historial: InteraccionEstado[];
   puedeProponerTema: boolean;
@@ -228,6 +229,7 @@ export class AdivinaElPersonajeComponent implements OnInit, OnDestroy {
         personajeRevelado: String(data['personajeRevelado'] ?? ''),
         descripcionPersonaje: String(data['descripcionPersonaje'] ?? ''),
         ganadores: Array.isArray(data['ganadores']) ? data['ganadores'].map((item) => String(item)) : [],
+        ganadoresNombres: Array.isArray(data['ganadoresNombres']) ? data['ganadoresNombres'].map((item) => String(item)) : [],
         jugadores: Array.isArray(data['jugadores'])
           ? data['jugadores'].map((item) => {
               const registro = item as Record<string, unknown>;

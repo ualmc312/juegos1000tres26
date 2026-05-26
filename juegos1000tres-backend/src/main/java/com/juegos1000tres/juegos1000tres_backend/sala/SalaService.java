@@ -17,9 +17,13 @@ import com.juegos1000tres.juegos1000tres_backend.modelos.Jugador;
 import com.juegos1000tres.juegos1000tres_backend.modelos.Pantalla;
 import com.juegos1000tres.juegos1000tres_backend.modelos.Sala;
 import com.juegos1000tres.juegos1000tres_backend.sala.p2p.P2PSenalizacionService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class SalaService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(SalaService.class);
 
     private final Map<String, SalaRoom> salas = new ConcurrentHashMap<>();
     private final SecureRandom random = new SecureRandom();
@@ -112,7 +116,6 @@ public class SalaService {
             }
 
             this.salaPersistenciaService.registrarJuegoIniciado(uuid, juego, room.getJugadores());
-            room.reiniciarPuntuaciones();
 
             if ("prueba-websocket".equalsIgnoreCase(juego)) {
                 this.pruebaWebSocketManager.crearInstanciaParaSala(uuid);
@@ -145,8 +148,6 @@ public class SalaService {
             // no bloquear la finalizacion por un fallo de persistencia
         }
 
-        room.reiniciarPuntuaciones();
-
         try {
             if ("prueba-websocket".equalsIgnoreCase(juegoAntes)) {
                 this.pruebaWebSocketManager.detenerInstanciaParaSala(uuid);
@@ -166,9 +167,48 @@ public class SalaService {
         limpiarEstadoJuegoEspecial(uuid, juegoAntes);
     }
 
+    /**
+     * Expose registrarResultadosJuego to allow game instances to trigger
+     * persistence of the current players' puntuaciones into historial.
+     */
+    public void registrarResultadosJuego(String uuid) {
+        SalaRoom room = obtenerSala(uuid);
+        try {
+            this.salaPersistenciaService.registrarResultadosJuego(uuid, room.getJugadores());
+        } catch (RuntimeException ex) {
+            // don't block game flow on persistence errors
+        }
+    }
+
     public void incrementarVictoria(String uuid, String jugadorId) {
         SalaRoom room = obtenerSala(uuid);
-        room.sumarVictoria(jugadorId);
+        LOG.info("Incrementar victoria request: sala={}, jugadorId={}", uuid, jugadorId);
+        try {
+            room.sumarVictoria(jugadorId);
+            LOG.info("Victoria incrementada: sala={}, jugadorId={}", uuid, jugadorId);
+        } catch (RuntimeException ex) {
+            LOG.warn("Fallo al incrementar victoria: sala={}, jugadorId={}, motivo={}", uuid, jugadorId, ex.getMessage());
+            throw ex;
+        }
+    }
+
+    public void incrementarPuntuacion(String uuid, String jugadorId, int puntos) {
+        if (puntos == 0) {
+            return;
+        }
+
+        SalaRoom room = obtenerSala(uuid);
+        room.sumarPuntos(jugadorId, puntos);
+    }
+
+    public void establecerPuntuacion(String uuid, String jugadorId, int puntuacion) {
+        SalaRoom room = obtenerSala(uuid);
+        room.establecerPuntuacion(jugadorId, puntuacion);
+    }
+
+    public String normalizarJugadorId(String uuid, String jugadorId, String nombreJugador) {
+        SalaRoom room = obtenerSala(uuid);
+        return room.resolverJugadorIdCanonical(jugadorId, nombreJugador);
     }
 
     public SalaRoom obtenerSalaRoom(String uuid) {

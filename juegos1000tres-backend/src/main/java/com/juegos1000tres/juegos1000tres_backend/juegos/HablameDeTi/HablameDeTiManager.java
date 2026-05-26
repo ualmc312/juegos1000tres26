@@ -7,12 +7,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.springframework.stereotype.Service;
+import org.springframework.context.annotation.Lazy;
 
 import com.juegos1000tres.juegos1000tres_backend.comunicacion.Envio;
 import com.juegos1000tres.juegos1000tres_backend.comunicacion.Recibo;
 import com.juegos1000tres.juegos1000tres_backend.comunicacion.Traductor;
 import com.juegos1000tres.juegos1000tres_backend.comunicacion.implementaciones.ComunicacionRuntimeConfig;
 import com.juegos1000tres.juegos1000tres_backend.comunicacion.implementaciones.WebSocketConexion;
+import com.juegos1000tres.juegos1000tres_backend.sala.SalaService;
 
 @Service
 public class HablameDeTiManager {
@@ -21,6 +23,11 @@ public class HablameDeTiManager {
     private static final String PAYLOAD_VACIO = "{}";
 
     private final Map<String, InstanciaSala> instancias = new ConcurrentHashMap<>();
+    private final SalaService salaService;
+
+    public HablameDeTiManager(@Lazy SalaService salaService) {
+        this.salaService = salaService;
+    }
 
     public synchronized void crearInstanciaParaSala(String salaUuid) {
         if (instancias.containsKey(salaUuid)) {
@@ -41,7 +48,7 @@ public class HablameDeTiManager {
                 Envio.paraStringDesdeOut(),
                 Recibo.paraJsonString());
 
-        HablameDeTiJuego juego = new HablameDeTiJuego(traductorJugadores, traductorPantalla);
+        HablameDeTiJuego juego = new HablameDeTiJuego(traductorJugadores, traductorPantalla, this.salaService, salaUuid);
         Recibo<String> reciboEventos = juego.registrarEventosEnRecibo(Recibo.paraJsonString());
 
         Traductor<String> traductorEventos = new Traductor<>(

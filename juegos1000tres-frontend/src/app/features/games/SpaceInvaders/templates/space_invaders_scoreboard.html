@@ -112,6 +112,7 @@
         (function () {
             const params = new URLSearchParams(window.location.search);
             const screenId = params.get('jugadorId') || 'pantalla-1';
+            let partidaFinalizadaNotificada = false;
             
             // Reemplazar también la vista en el HTML si es necesario
             const screenIdLabel = document.getElementById('screenIdLabel');
@@ -127,6 +128,7 @@
                 if (!Array.isArray(jugadores) || jugadores.length === 0) {
                     tablaJugadores.innerHTML = '<tr><td colspan="4" class="muted">Sin datos todavia.</td></tr>';
                     leaderText.textContent = 'Esperando datos de partida...';
+                    partidaFinalizadaNotificada = false;
                     return;
                 }
 
@@ -144,6 +146,25 @@
 
                 const lider = ordenados[0];
                 leaderText.textContent = `Lider: ${lider.player} con ${lider.score} puntos`;
+
+                const todosMuertos = ordenados.length > 0 && ordenados.every((item) => item.dead);
+                if (todosMuertos) {
+                    leaderText.textContent = `Partida finalizada. Ganador: ${lider.player} con ${lider.score} puntos`;
+                    if (!partidaFinalizadaNotificada && window.parent && window.parent !== window) {
+                        window.parent.postMessage(
+                            {
+                                type: 'SPACE_INVADERS_MATCH_END',
+                                screenId,
+                                jugadorId: screenId,
+                                puntuacionFinal: lider.score,
+                            },
+                            window.location.origin
+                        );
+                        partidaFinalizadaNotificada = true;
+                    }
+                } else {
+                    partidaFinalizadaNotificada = false;
+                }
 
                 tablaJugadores.innerHTML = ordenados
                     .map((item, index) => {

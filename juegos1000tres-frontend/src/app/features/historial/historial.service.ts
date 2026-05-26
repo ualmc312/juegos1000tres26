@@ -15,6 +15,7 @@ export interface HistorialJuego {
   fechaJugado: string;
   juegoNombre: string;
   juegoRuta: string;
+  puntuacionTotal: number;
   jugadores: HistorialResultado[];
   ganadores: string[];
 }
