@@ -38,6 +38,16 @@ services:
       postgres:
         condition: service_healthy
 
+  frontend:
+    build:
+      context: ./juegos1000tres-frontend
+      dockerfile: Dockerfile
+    container_name: juegos1000tres-frontend-app
+    ports:
+      - "4200:4200"
+    depends_on:
+      - backend
+
 volumes:
   postgres_data:
   maven_cache:
