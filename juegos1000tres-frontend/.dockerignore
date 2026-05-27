@@ -1,0 +1,14 @@
+node_modules
+npm-debug.log
+.DS_Store
+dist
+coverage
+.git
+.gitignore
+node_modules
+npm-debug.log
+.DS_Store
+dist
+coverage
+.git
+.gitignore
