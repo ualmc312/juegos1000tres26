@@ -4,6 +4,7 @@ import { Auth } from './features/auth/auth';
 import { Home } from './features/home/home';
 import { Lobby } from './features/lobby/lobby';
 import { Historial } from './features/historial/historial';
+import { Estadisticas } from './features/estadisticas/estadisticas';
 import { Login } from './features/auth/components/login/login';
 import { Register } from './features/auth/components/register/register';
 import { authGuard } from './core/guards/auth.guard';
@@ -25,6 +26,7 @@ export const routes: Routes = [
 	},
 	{ path: 'sala', component: Lobby, canActivate: [authGuard] },
 	{ path: 'sala/:uuid', component: Lobby, canActivate: [authGuard] },
+	{ path: 'estadisticas', component: Estadisticas, canActivate: [registeredGuard] },
 	{ path: 'historial', component: Historial, canActivate: [registeredGuard] },
 	{ path: 'reflejos-p2p/:uuid', component: ReflejosP2PComponent, canActivate: [authGuard] },
 	{ path: 'pantalla-reflejos/:uuid', component: PantallaReflejosComponent, canActivate: [authGuard] },

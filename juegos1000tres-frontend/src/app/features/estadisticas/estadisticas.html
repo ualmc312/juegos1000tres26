@@ -1,0 +1,66 @@
+<section class="estadisticas-page">
+  <header class="estadisticas-hero">
+    <div class="estadisticas-copy">
+      <p class="eyebrow">Estadísticas del historial</p>
+      <h1>Victorias por juego</h1>
+      <p>
+        Consulta en qué minijuegos has ganado más partidas. El gráfico agrupa las victorias por nombre de juego usando el historial persistido.
+      </p>
+    </div>
+
+    <div class="estadisticas-actions">
+      <generic-button color="gray" link="/">Volver al inicio</generic-button>
+      <generic-button color="green" (click)="cargarEstadisticas()">Actualizar</generic-button>
+    </div>
+  </header>
+
+  <div class="estadisticas-state" *ngIf="cargando">
+    Cargando estadísticas...
+  </div>
+
+  <div class="estadisticas-state error" *ngIf="!cargando && errorMensaje">
+    {{ errorMensaje }}
+  </div>
+
+  <div class="estadisticas-state empty" *ngIf="!cargando && !errorMensaje && estadisticas.length === 0">
+    Aún no hay victorias registradas en tu historial.
+  </div>
+
+  <section class="estadisticas-panel" *ngIf="!cargando && !errorMensaje && estadisticas.length > 0">
+    <div class="estadisticas-panel-head">
+      <div>
+        <span class="panel-label">Jugador</span>
+        <strong>{{ usuarioNombre }}</strong>
+      </div>
+      <div>
+        <span class="panel-label">Victorias totales</span>
+        <strong>{{ totalVictorias }}</strong>
+      </div>
+    </div>
+
+    <div class="grafico-wrapper">
+      <div class="eje-y">
+        <span *ngFor="let tick of ticks">{{ tick }}</span>
+      </div>
+
+      <div class="grafico-scroll">
+        <div class="grafico" [style.--max-victorias]="maxVictorias">
+          <div class="lineas-fondo"></div>
+
+          <article class="columna" *ngFor="let juego of estadisticas; trackBy: trackJuego">
+            <div class="barra-wrap">
+              <div class="barra" [style.height.%]="juego.altura">
+                <span class="valor">{{ juego.victorias }}</span>
+              </div>
+            </div>
+
+            <div class="columna-meta">
+              <strong>{{ juego.juegoNombre }}</strong>
+              <span>{{ juego.partidas }} partidas</span>
+            </div>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+</section>

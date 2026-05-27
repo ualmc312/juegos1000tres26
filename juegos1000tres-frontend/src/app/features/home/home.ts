@@ -58,6 +58,14 @@ export class Home implements OnInit {
     this.router.navigate(['/historial']);
   }
 
+  irAEstadisticas(): void {
+    if (this.esInvitado) {
+      return;
+    }
+
+    this.router.navigate(['/estadisticas']);
+  }
+
   cerrarAmigos(): void {
     this.mostrarAmigos = false;
   }

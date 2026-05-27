@@ -29,6 +29,8 @@
 				class="menu-bubble"
 				[disabled]="esInvitado"
 				[attr.aria-disabled]="esInvitado"
+				(click)="irAEstadisticas()"
+				*ngIf="!esInvitado"
 			>
 				Estadisticas
 			</button>

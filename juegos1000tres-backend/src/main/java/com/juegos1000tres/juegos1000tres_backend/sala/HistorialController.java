@@ -93,11 +93,10 @@ public class HistorialController {
     }
 
     private HistorialJuegoRespuesta mapearJuego(SalaJuegoOrden juego, Long usuarioId, String nombreUsuario, boolean esHost) {
-        List<SalaJuegoResultado> resultados = juego.getJugadores().stream()
-                .filter(resultado -> esHost || perteneceAlUsuario(resultado, usuarioId, nombreUsuario))
-                .toList();
+        List<SalaJuegoResultado> resultados = juego.getJugadores();
 
-        boolean participo = !resultados.isEmpty();
+        boolean participo = esHost || resultados.stream()
+                .anyMatch(resultado -> perteneceAlUsuario(resultado, usuarioId, nombreUsuario));
 
         if (!participo) {
             return null;
