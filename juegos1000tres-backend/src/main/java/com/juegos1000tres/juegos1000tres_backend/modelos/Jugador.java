@@ -9,6 +9,7 @@ public class Jugador {
     private final String nombre;
     private final String usuarioId;
     private boolean conectado;
+    private int victorias;
     private int puntuacion;
 
     public Jugador(String nombre) {
@@ -33,6 +34,7 @@ public class Jugador {
         this.nombre = nombre.trim();
         this.usuarioId = (usuarioId == null || usuarioId.isBlank()) ? null : usuarioId.trim();
         this.conectado = true;
+        this.victorias = 0;
         this.puntuacion = 0;
     }
 
@@ -52,6 +54,10 @@ public class Jugador {
         return conectado;
     }
 
+    public int getVictorias() {
+        return victorias;
+    }
+
     public int getPuntuacion() {
         return puntuacion;
     }
@@ -62,6 +68,10 @@ public class Jugador {
 
     public void desconectar() {
         this.conectado = false;
+    }
+
+    public void sumarVictoria() {
+        this.victorias += 1;
     }
 
     public void sumarPuntos(int puntos) {

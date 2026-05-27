@@ -20,6 +20,7 @@ public class SalaRoom {
     private String pantallaId;
     private String juegoActual;
     private String p2pHostPeerId;
+    private boolean resultadosPersistidos;
     private int contadorNombres = 1;
     private int contadorInvitados = 1;
     private final Map<String, Integer> invitadosPorUsuario = new ConcurrentHashMap<>();
@@ -32,6 +33,7 @@ public class SalaRoom {
         this.pantallaId = creadorId;
         this.juegoActual = "";
         this.p2pHostPeerId = "";
+        this.resultadosPersistidos = false;
     }
 
     public synchronized Jugador agregarJugador(String nombre, String usuarioId, boolean esInvitado) {
@@ -124,6 +126,7 @@ public class SalaRoom {
 
         this.juegoActual = juego.trim();
         this.p2pHostPeerId = "reflejos-p2p".equalsIgnoreCase(this.juegoActual) ? UUID.randomUUID().toString() : "";
+        this.resultadosPersistidos = false;
     }
 
     public synchronized void finalizarJuego(String actorId) {
@@ -134,8 +137,23 @@ public class SalaRoom {
         this.juegoActual = "";
     }
 
+    public synchronized boolean resultadosPersistidos() {
+        return resultadosPersistidos;
+    }
+
+    public synchronized void marcarResultadosPersistidos() {
+        this.resultadosPersistidos = true;
+    }
+
     public synchronized void sumarVictoria(String jugadorId) {
-        sumarPuntos(jugadorId, 1);
+        String canonicalId = resolverJugadorIdCanonical(jugadorId, null);
+        UUID id = UUID.fromString(canonicalId);
+        Jugador jugador = sala.getJugadores().stream()
+                .filter(item -> item.getId().equals(id))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Jugador no encontrado"));
+
+        jugador.sumarVictoria();
     }
 
     public synchronized void sumarPuntos(String jugadorId, int puntos) {
@@ -176,6 +194,10 @@ public class SalaRoom {
 
     public synchronized String resolverJugadorIdCanonical(String jugadorId, String nombreJugador) {
         if (jugadorId != null && !jugadorId.isBlank()) {
+            if (Objects.equals(this.p2pHostPeerId, jugadorId.trim())) {
+                return this.creadorId;
+            }
+
             UUID uuid = intentarParsearUuid(jugadorId);
             if (uuid != null) {
                 boolean existe = sala.getJugadores().stream().anyMatch(item -> item.getId().equals(uuid));

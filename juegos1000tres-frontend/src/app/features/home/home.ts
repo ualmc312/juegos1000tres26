@@ -50,6 +50,14 @@ export class Home implements OnInit {
     this.mostrarAmigos = true;
   }
 
+  irAHistorial(): void {
+    if (this.esInvitado) {
+      return;
+    }
+
+    this.router.navigate(['/historial']);
+  }
+
   cerrarAmigos(): void {
     this.mostrarAmigos = false;
   }

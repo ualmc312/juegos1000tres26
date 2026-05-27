@@ -141,8 +141,9 @@ public class SalaService {
         room.finalizarJuego(actorId);
 
         try {
-            if (juegoAntes != null && !juegoAntes.isBlank()) {
+            if (juegoAntes != null && !juegoAntes.isBlank() && !room.resultadosPersistidos()) {
                 this.salaPersistenciaService.registrarResultadosJuego(uuid, room.getJugadores());
+                room.marcarResultadosPersistidos();
             }
         } catch (RuntimeException ex) {
             // no bloquear la finalizacion por un fallo de persistencia
@@ -174,7 +175,10 @@ public class SalaService {
     public void registrarResultadosJuego(String uuid) {
         SalaRoom room = obtenerSala(uuid);
         try {
-            this.salaPersistenciaService.registrarResultadosJuego(uuid, room.getJugadores());
+            if (!room.resultadosPersistidos()) {
+                this.salaPersistenciaService.registrarResultadosJuego(uuid, room.getJugadores());
+                room.marcarResultadosPersistidos();
+            }
         } catch (RuntimeException ex) {
             // don't block game flow on persistence errors
         }
@@ -233,8 +237,9 @@ public class SalaService {
 
         if (room.esCreador(jugadorId)) {
             try {
-                if (juegoAntes != null && !juegoAntes.isBlank()) {
+                if (juegoAntes != null && !juegoAntes.isBlank() && !room.resultadosPersistidos()) {
                     this.salaPersistenciaService.registrarResultadosJuego(uuid, room.getJugadores());
+                    room.marcarResultadosPersistidos();
                 }
             } catch (RuntimeException ex) {
                 // ignore
@@ -250,8 +255,9 @@ public class SalaService {
 
         if (!room.isAbierta()) {
             try {
-                if (juegoAntes != null && !juegoAntes.isBlank()) {
+                if (juegoAntes != null && !juegoAntes.isBlank() && !room.resultadosPersistidos()) {
                     this.salaPersistenciaService.registrarResultadosJuego(uuid, room.getJugadores());
+                    room.marcarResultadosPersistidos();
                 }
             } catch (RuntimeException ex) {
                 // ignore
@@ -268,7 +274,10 @@ public class SalaService {
 
         if (room != null && juegoAntes != null && !juegoAntes.isBlank()) {
             try {
-                this.salaPersistenciaService.registrarResultadosJuego(uuid, room.getJugadores());
+                if (!room.resultadosPersistidos()) {
+                    this.salaPersistenciaService.registrarResultadosJuego(uuid, room.getJugadores());
+                    room.marcarResultadosPersistidos();
+                }
             } catch (RuntimeException ex) {
                 // ignore
             }
@@ -284,7 +293,7 @@ public class SalaService {
             .map(jugador -> new JugadorRespuesta(
                 jugador.getId().toString(),
                 jugador.getNombre(),
-                jugador.getPuntuacion()
+                jugador.getVictorias()
             ))
                 .toList();
 

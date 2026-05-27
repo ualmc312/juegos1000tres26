@@ -154,7 +154,6 @@ export class Taptap implements OnInit, OnDestroy {
         : 'A disparar';
 
     if (restante <= 0) {
-      this.finalizado = true;
       this.objetivos = [];
       this.intentarFinalizar();
       return;
@@ -198,7 +197,13 @@ export class Taptap implements OnInit, OnDestroy {
     this.finalizacionEnviada = true;
 
     this.tapTapService.finalizarPartida(this.uuid, this.jugadorId).subscribe({
-      next: () => {
+      next: (respuesta) => {
+        if (!respuesta.victoriaRegistrada) {
+          this.finalizacionEnviada = false;
+          return;
+        }
+
+        this.finalizado = true;
         this.cargarEstado(true);
       },
       error: () => {

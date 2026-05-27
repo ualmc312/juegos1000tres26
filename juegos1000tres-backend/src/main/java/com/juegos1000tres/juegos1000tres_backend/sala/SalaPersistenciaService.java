@@ -68,6 +68,7 @@ public class SalaPersistenciaService {
 
         SalaJuegoOrden juego = juegoActual.get();
         juego.limpiarJugadores();
+        salaJuegoOrdenRepository.saveAndFlush(juego);
 
         List<Jugador> jugadoresOrdenados = (jugadores == null ? List.<Jugador>of() : jugadores).stream()
                 .sorted(Comparator.comparingInt(Jugador::getPuntuacion).reversed()

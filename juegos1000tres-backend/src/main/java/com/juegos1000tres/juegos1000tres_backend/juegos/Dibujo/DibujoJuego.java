@@ -692,12 +692,6 @@ public class DibujoJuego extends Juego {
             ? "Ganador: " + this.ganadoresNombres.get(0)
             : "Empate entre varios jugadores";
 
-        // Persistar las puntuaciones en el historial de la sala
-        try {
-            this.salaService.registrarResultadosJuego(this.salaId);
-        } catch (RuntimeException ex) {
-            // no bloquear el flujo de la finalizacion si la persistencia falla
-        }
     }
 
     private String normalizarJugadorId(String jugadorId, String nombreJugador) {

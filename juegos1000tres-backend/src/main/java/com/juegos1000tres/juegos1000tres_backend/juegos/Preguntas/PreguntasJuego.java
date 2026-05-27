@@ -29,6 +29,7 @@ public class PreguntasJuego extends Juego {
     public static final String COMANDO_ACTUALIZAR_BORRADOR = "ACTUALIZAR_BORRADOR";
     public static final String COMANDO_ENVIAR_RESPUESTA = "ENVIAR_RESPUESTA";
     public static final String COMANDO_ELEGIR_RESPUESTA = "ELEGIR_RESPUESTA";
+    public static final String COMANDO_FINALIZAR = "FINALIZAR";
     public static final String COMANDO_ESTADO_PARTIDA = "ESTADO_PREGUNTAS";
 
     private static final int LIMITE_RESPUESTA = 120;
@@ -48,6 +49,7 @@ public class PreguntasJuego extends Juego {
     private final Random random;
     private final SalaService salaService;
     private final String salaId;
+    private boolean partidaFinalizada;
 
     private FaseRonda faseRonda;
     private boolean enCurso;
@@ -85,6 +87,7 @@ public class PreguntasJuego extends Juego {
         this.preguntaActual = "";
         this.opcionGanadoraId = null;
         this.mensajeEstado = "Esperando al menos 2 jugadores para iniciar";
+        this.partidaFinalizada = false;
     }
 
     public Recibo<String> registrarEventosEnRecibo(Recibo<String> reciboBase) {
@@ -108,7 +111,10 @@ public class PreguntasJuego extends Juego {
 
         return reciboConRespuesta.conEvento(
                 COMANDO_ELEGIR_RESPUESTA,
-                new ElegirRespuestaPreguntasEvento(this));
+            new ElegirRespuestaPreguntasEvento(this))
+            .conEvento(
+                COMANDO_FINALIZAR,
+                new FinalizarPartidaPreguntasEvento(this));
     }
 
     public synchronized void registrarJugadorDesdePayload(String payload, ContextoEvento contexto) {
@@ -251,6 +257,14 @@ public class PreguntasJuego extends Juego {
                 ? "Respuesta seleccionada"
                 : "Punto para " + ganador.nombre;
 
+        contexto.enviar(crearEstadoEnviable(System.currentTimeMillis()));
+    }
+
+    public synchronized void finalizarPartidaDesdePayload(String payload, ContextoEvento contexto) {
+        Objects.requireNonNull(contexto, "El contexto de evento es obligatorio");
+        leerPayloadComoMapa(payload, COMANDO_FINALIZAR);
+
+        finalizarPartidaInterna();
         contexto.enviar(crearEstadoEnviable(System.currentTimeMillis()));
     }
 
@@ -492,6 +506,48 @@ public class PreguntasJuego extends Juego {
         this.respuestasConfirmadas.clear();
         this.borradoresPorJugador.clear();
         this.mensajeEstado = "Partida detenida";
+    }
+
+    private void finalizarPartidaInterna() {
+        if (this.partidaFinalizada) {
+            return;
+        }
+
+        this.partidaFinalizada = true;
+        this.enCurso = false;
+        this.faseRonda = FaseRonda.MOSTRANDO_RESULTADO;
+        this.deadlineRespuestasEpochMs = 0L;
+        this.proximaRondaEpochMs = 0L;
+        this.mensajeEstado = "Partida finalizada";
+
+        int maximo = this.jugadores.values().stream()
+                .mapToInt(jugador -> jugador.puntos)
+                .max()
+                .orElse(0);
+
+        List<JugadorInterno> ganadores = this.jugadores.values().stream()
+                .filter(jugador -> jugador.puntos == maximo)
+                .sorted(Comparator.comparing((JugadorInterno jugador) -> jugador.nombre, String.CASE_INSENSITIVE_ORDER)
+                        .thenComparing(jugador -> jugador.jugadorId))
+                .toList();
+
+        for (JugadorInterno ganador : ganadores) {
+            registrarVictoriaSala(ganador.jugadorId);
+        }
+
+        registrarResultadosSala();
+    }
+
+    private void registrarVictoriaSala(String jugadorId) {
+        if (jugadorId == null || jugadorId.isBlank()) {
+            return;
+        }
+
+        this.salaService.incrementarVictoria(this.salaId, jugadorId);
+    }
+
+    private void registrarResultadosSala() {
+        this.salaService.registrarResultadosJuego(this.salaId);
     }
 
     private void iniciarNuevaRondaInterna(long ahoraMs) {

@@ -151,7 +151,6 @@
       const tablaJugadores = document.getElementById('tablaJugadores');
       let recepcionActiva = false;
       let partidaFinalizadaNotificada = false;
-      let victoriasRegistradas = false;
 
       function obtenerUrlBackend() {
         const backendUrl = params.get('backendUrl');
@@ -174,7 +173,6 @@
           tablaJugadores.innerHTML = '<tr><td colspan="4" class="muted">Sin datos todavia.</td></tr>';
           leaderText.textContent = 'Esperando datos de partida...';
           partidaFinalizadaNotificada = false;
-          victoriasRegistradas = false;
           return;
         }
 
@@ -222,16 +220,7 @@
 
         if (!todosMuertos) {
           partidaFinalizadaNotificada = false;
-          victoriasRegistradas = false;
           return;
-        }
-
-        if (!victoriasRegistradas) {
-          registrarVictoriasGanadores(backendSalaId, ordenados)
-            .catch(() => null)
-            .finally(() => {
-              victoriasRegistradas = true;
-            });
         }
 
         tablaJugadores.innerHTML = ordenados
@@ -258,30 +247,6 @@
           .replaceAll('>', '&gt;')
           .replaceAll('"', '&quot;')
           .replaceAll("'", '&#039;');
-      }
-
-      async function registrarVictoriasGanadores(salaIdActual, jugadores) {
-        const maxPuntos = jugadores.reduce((maximo, jugador) => Math.max(maximo, jugador.score), 0);
-        const ganadores = jugadores.filter((jugador) => jugador.score === maxPuntos && jugador.jugadorId);
-
-        if (ganadores.length === 0) {
-          return;
-        }
-
-        const backendBase = obtenerUrlBackend();
-        const endpointBase = `${backendBase}/sala/${encodeURIComponent(salaIdActual)}/victoria`;
-
-        await Promise.all(
-          ganadores.map(async (ganador) => {
-            await fetch(`${endpointBase}?jugadorId=${encodeURIComponent(ganador.jugadorId)}`, {
-              method: 'POST',
-              credentials: 'include',
-              headers: {
-                Accept: 'application/json',
-              },
-            });
-          })
-        );
       }
 
       class EstadoJugadoresPantallaEvento {

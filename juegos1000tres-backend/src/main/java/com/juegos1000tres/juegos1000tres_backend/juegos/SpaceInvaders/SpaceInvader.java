@@ -14,6 +14,7 @@ import com.juegos1000tres.juegos1000tres_backend.comunicacion.Enviable;
 import com.juegos1000tres.juegos1000tres_backend.comunicacion.Recibo;
 import com.juegos1000tres.juegos1000tres_backend.comunicacion.Traductor;
 import com.juegos1000tres.juegos1000tres_backend.modelos.Juego;
+import com.juegos1000tres.juegos1000tres_backend.sala.SalaService;
 
 public class SpaceInvader extends Juego {
 
@@ -23,13 +24,23 @@ public class SpaceInvader extends Juego {
 	private final Map<UUID, EstadoJugadorInterno> estadoJugadores;
 	private final ActualizarPuntuacionEvento actualizarPuntuacionEvento;
 	private final NotificarMuerteJugadorEvento notificarMuerteJugadorEvento;
+	private final SalaService salaService;
+	private final String salaId;
+	private boolean finalizado;
 	private volatile boolean enCurso;
 
 	public SpaceInvader(int numeroJugadores, Traductor<?> conexionJugadores, Traductor<?> conexionPantalla) {
+		this(numeroJugadores, conexionJugadores, conexionPantalla, null, null);
+	}
+
+	public SpaceInvader(int numeroJugadores, Traductor<?> conexionJugadores, Traductor<?> conexionPantalla, SalaService salaService, String salaId) {
 		super(numeroJugadores, true, conexionJugadores, conexionPantalla);
 		this.estadoJugadores = new ConcurrentHashMap<>();
 		this.actualizarPuntuacionEvento = new ActualizarPuntuacionEvento(this);
 		this.notificarMuerteJugadorEvento = new NotificarMuerteJugadorEvento(this);
+		this.salaService = salaService;
+		this.salaId = salaId;
+		this.finalizado = false;
 		this.enCurso = false;
 	}
 
@@ -60,11 +71,13 @@ public class SpaceInvader extends Juego {
 
 		EstadoJugadorInterno estadoJugador = obtenerJugadorRegistrado(jugadorId);
 		estadoJugador.setPuntuacion(puntuacionTotal);
+		sincronizarPuntuacionConSala(jugadorId, puntuacionTotal);
 	}
 
 	public void marcarJugadorComoMuerto(UUID jugadorId) {
 		EstadoJugadorInterno estadoJugador = obtenerJugadorRegistrado(jugadorId);
 		estadoJugador.setMuerto(true);
+		revisarFinalizacionSiCorresponde();
 	}
 
 	public int getPuntuacion(UUID jugadorId) {
@@ -162,6 +175,73 @@ public class SpaceInvader extends Juego {
 		}
 
 		return estadoJugador;
+	}
+
+	private void sincronizarPuntuacionConSala(UUID jugadorId, int puntuacionTotal) {
+		if (this.salaService == null || this.salaId == null || this.salaId.isBlank()) {
+			return;
+		}
+
+		try {
+			this.salaService.establecerPuntuacion(this.salaId, jugadorId.toString(), puntuacionTotal);
+		} catch (RuntimeException ex) {
+			// La puntuacion del juego no debe depender de la persistencia de la sala.
+		}
+	}
+
+	private void revisarFinalizacionSiCorresponde() {
+		if (this.finalizado || this.estadoJugadores.isEmpty()) {
+			return;
+		}
+
+		boolean todosMuertos = this.estadoJugadores.values().stream().allMatch(EstadoJugadorInterno::isMuerto);
+		if (!todosMuertos) {
+			return;
+		}
+
+		this.finalizado = true;
+		this.enCurso = false;
+
+		int mejorPuntuacion = this.estadoJugadores.values().stream()
+				.mapToInt(EstadoJugadorInterno::getPuntuacion)
+				.max()
+				.orElse(0);
+
+		List<EstadoJugadorInterno> ganadores = this.estadoJugadores.values().stream()
+				.filter(estado -> estado.getPuntuacion() == mejorPuntuacion)
+				.sorted(Comparator.comparing(EstadoJugadorInterno::getNombreJugador, String.CASE_INSENSITIVE_ORDER)
+						.thenComparing(estado -> estado.getJugadorId().toString()))
+				.toList();
+
+		for (EstadoJugadorInterno ganador : ganadores) {
+			registrarVictoriaEnSala(ganador.getJugadorId());
+		}
+
+		registrarResultadosEnSala();
+	}
+
+	private void registrarVictoriaEnSala(UUID jugadorId) {
+		if (this.salaService == null || this.salaId == null || this.salaId.isBlank()) {
+			return;
+		}
+
+		try {
+			this.salaService.incrementarVictoria(this.salaId, jugadorId.toString());
+		} catch (RuntimeException ex) {
+			// No bloquear el fin del juego por un fallo de persistencia.
+		}
+	}
+
+	private void registrarResultadosEnSala() {
+		if (this.salaService == null || this.salaId == null || this.salaId.isBlank()) {
+			return;
+		}
+
+		try {
+			this.salaService.registrarResultadosJuego(this.salaId);
+		} catch (RuntimeException ex) {
+			// No bloquear el fin del juego por un fallo de persistencia.
+		}
 	}
 
 	static final class EstadoJugadorInterno {

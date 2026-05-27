@@ -37,12 +37,15 @@ export class ReflejosP2PService {
   private recepcionActiva = false;
   private salaId = '';
   private peerId = '';
+  private jugadorSalaId = '';
   private hostId = '';
   private rol: 'host' | 'player' | 'pantalla' = 'player';
   private secuenciaActual: ReflejosSecuenciaPayload | null = null;
   private inicioRondaLocalMs = 0;
   private timer: ReturnType<typeof setInterval> | null = null;
   private reaccionesLocales = new Map<string, number>();
+  private victoriaRegistradaEnBackend = false;
+  private resultadoBackendPendiente: Promise<void> | null = null;
 
   constructor(private readonly ngZone: NgZone, private readonly http: HttpClient) {}
 
@@ -70,6 +73,7 @@ export class ReflejosP2PService {
     this.desconectar();
     this.salaId = salaId.trim();
     this.rol = rol;
+    this.jugadorSalaId = jugadorId?.trim() || '';
 
     // El hostId DEBE venir en los parámetros (generado por el backend)
     const hostIdFinal = hostId?.trim() || '';
@@ -236,27 +240,18 @@ export class ReflejosP2PService {
     this.secuenciaActual = null;
     this.reaccionesLocales.clear();
     this.inicioRondaLocalMs = 0;
+    this.victoriaRegistradaEnBackend = false;
+    this.resultadoBackendPendiente = null;
   }
 
   finalizarJuegoEnBackend(actorId: string): Promise<void> {
     if (!this.esHost() || !this.salaId || !actorId) return Promise.resolve();
 
-    return new Promise((resolve) => {
-      // 1. Registrar victoria si hay un ganador válido
-      const ganadorId = this.estado$.value.ganadorId;
-      if (ganadorId && ganadorId !== 'Empate' && ganadorId !== 'Nadie') {
-        const urlVictoria = `${obtenerApiBaseUrl()}/sala/${this.salaId}/victoria?jugadorId=${ganadorId}`;
-        this.http.post(urlVictoria, null, { withCredentials: true }).subscribe({
-          next: () => this.cerrarJuego(actorId, resolve),
-          error: (e) => {
-            console.error('[ReflejosP2P] Error al registrar victoria:', e);
-            this.cerrarJuego(actorId, resolve);
-          }
-        });
-      } else {
-        this.cerrarJuego(actorId, resolve);
-      }
-    });
+    const resultadoPendiente = this.resultadoBackendPendiente ?? Promise.resolve();
+
+    return resultadoPendiente.finally(() => new Promise<void>((resolve) => {
+      this.cerrarJuego(actorId, () => resolve());
+    }));
   }
 
   private cerrarJuego(actorId: string, resolve: () => void): void {
@@ -268,6 +263,56 @@ export class ReflejosP2PService {
         resolve(); // Resolvemos igual para no bloquear
       }
     });
+  }
+
+  private registrarVictoriaGanadorEnBackend(ganadorId: string | null): Promise<void> {
+    if (!this.esHost() || !this.salaId || this.victoriaRegistradaEnBackend) {
+      return Promise.resolve();
+    }
+
+    const ganadorSalaId = this.normalizarGanadorParaSala(ganadorId);
+    if (!ganadorSalaId || ganadorSalaId === 'Empate' || ganadorSalaId === 'Nadie') {
+      return Promise.resolve();
+    }
+
+    this.victoriaRegistradaEnBackend = true;
+
+    const urlVictoria = `${obtenerApiBaseUrl()}/sala/${this.salaId}/victoria?jugadorId=${encodeURIComponent(ganadorSalaId)}`;
+    const urlPuntuacion = `${obtenerApiBaseUrl()}/sala/${this.salaId}/puntuacion?jugadorId=${encodeURIComponent(ganadorSalaId)}&puntos=1`;
+
+    this.resultadoBackendPendiente = new Promise<void>((resolve) => {
+      this.http.post(urlVictoria, null, { withCredentials: true }).subscribe({
+        next: () => {
+          this.http.post(urlPuntuacion, null, { withCredentials: true }).subscribe({
+            next: () => resolve(),
+            error: (e) => {
+              console.error('[ReflejosP2P] Error al registrar puntuacion del ganador:', e);
+              this.victoriaRegistradaEnBackend = false;
+              resolve();
+            }
+          });
+        },
+        error: (e) => {
+          console.error('[ReflejosP2P] Error al registrar victoria:', e);
+          this.victoriaRegistradaEnBackend = false;
+          resolve();
+        }
+      });
+    });
+
+    return this.resultadoBackendPendiente;
+  }
+
+  private normalizarGanadorParaSala(ganadorId: string | null): string {
+    if (!ganadorId) {
+      return '';
+    }
+
+    if (this.jugadorSalaId && ganadorId === this.hostId) {
+      return this.jugadorSalaId;
+    }
+
+    return ganadorId;
   }
 
   /**
@@ -460,6 +505,8 @@ export class ReflejosP2PService {
       ganadorId,
       mensaje: ganadorId ? `Ganador: ${ganadorId}` : 'Sin ganador',
     });
+
+    void this.registrarVictoriaGanadorEnBackend(ganadorId);
   }
 
   private reenviarEstadoActualSiEsHost(_peerId: string): void {

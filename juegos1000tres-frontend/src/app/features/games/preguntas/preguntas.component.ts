@@ -103,6 +103,7 @@ export class PreguntasComponent implements OnInit, OnDestroy {
       return;
     }
 
+    this.preguntasService.finalizarPartida(this.jugadorId);
     this.volverSala.emit();
   }
 }

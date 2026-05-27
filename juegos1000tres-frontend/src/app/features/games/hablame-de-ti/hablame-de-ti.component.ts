@@ -49,6 +49,8 @@ type EstadoHablameDeTi = {
   preguntaDirecta: string;
   preguntaPublica: string;
   respuestaOriginal: string;
+  ganadores: string[];
+  ganadoresNombres?: string[];
   preguntasAsignadas: PreguntaAsignada[];
   mentirasPendientes: string[];
   votosPendientes: string[];
@@ -170,6 +172,23 @@ export class HablameDeTiComponent implements OnInit, OnDestroy {
     return this.estado.fase === 'FINALIZADA';
   }
 
+  esGanador(jugador: Marcador): boolean {
+    const ganadores = this.estado.ganadores || [];
+    const ganadoresNombres = this.estado.ganadoresNombres || [];
+
+    return this.esFaseFinalizada
+      && (ganadores.includes(jugador.jugadorId) || ganadoresNombres.includes(jugador.nombreJugador));
+  }
+
+  get ganadoresTexto(): string {
+    const ganadoresNombres = this.estado.ganadoresNombres || [];
+    if (ganadoresNombres.length) {
+      return ganadoresNombres.join(', ');
+    }
+
+    return (this.estado.ganadores || []).join(', ');
+  }
+
   volverALaSala(): void {
     if (!this.esHost || !this.esFaseFinalizada) {
       return;
@@ -265,6 +284,8 @@ export class HablameDeTiComponent implements OnInit, OnDestroy {
         preguntaDirecta: String(data['preguntaDirecta'] ?? ''),
         preguntaPublica: String(data['preguntaPublica'] ?? ''),
         respuestaOriginal: String(data['respuestaOriginal'] ?? ''),
+        ganadores: Array.isArray(data['ganadores']) ? data['ganadores'].map((item) => String(item)) : [],
+        ganadoresNombres: Array.isArray(data['ganadoresNombres']) ? data['ganadoresNombres'].map((item) => String(item)) : [],
         preguntasAsignadas: Array.isArray(data['preguntasAsignadas'])
           ? data['preguntasAsignadas'].map((item) => {
               const registro = item as Record<string, unknown>;

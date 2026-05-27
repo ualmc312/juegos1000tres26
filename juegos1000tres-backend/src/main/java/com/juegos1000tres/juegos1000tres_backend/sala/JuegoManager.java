@@ -49,7 +49,7 @@ public class JuegoManager {
             );
 
             // Paso 2: Crear el juego (los eventos internos referencian 'this').
-            SpaceInvader juegoInstancia = new SpaceInvader(4, placeholder, placeholder);
+            SpaceInvader juegoInstancia = new SpaceInvader(4, placeholder, placeholder, this.salaService, salaUuid);
             juegoInstancia.iniciar();
 
             // Paso 3: Registrar los eventos en un Recibo nuevo ahora que el juego existe.

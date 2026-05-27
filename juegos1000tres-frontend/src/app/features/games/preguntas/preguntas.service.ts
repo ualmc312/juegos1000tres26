@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { ApiConexion, Envio, Recibo, Traductor } from '../../../core/comunicacion';
+import { obtenerApiBaseUrl } from '../../../core/config/api-base';
 import { PreguntasEstadoEnviable, PreguntasEstadoEvento } from './comunicacion';
 import { EstadoPreguntas } from './modelos';
 
 @Injectable()
 export class PreguntasService {
-  private readonly baseApi = 'http://localhost:8083';
+  private readonly baseApi = obtenerApiBaseUrl();
   private traductor: Traductor<string> | null = null;
   private salaActual = '';
   private estadoActual$ = new BehaviorSubject<Partial<EstadoPreguntas>>({});

@@ -98,6 +98,14 @@ public class SalaController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/{uuid}/puntuacion")
+    public ResponseEntity<Void> establecerPuntuacion(@PathVariable String uuid,
+                                                     @RequestParam String jugadorId,
+                                                     @RequestParam int puntos) {
+        salaService.establecerPuntuacion(uuid, jugadorId, puntos);
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping("/{uuid}/salir")
     public ResponseEntity<Void> salirSala(@PathVariable String uuid,
                                           @RequestParam String jugadorId) {

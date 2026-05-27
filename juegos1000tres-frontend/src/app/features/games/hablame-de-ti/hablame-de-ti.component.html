@@ -73,7 +73,7 @@
     <section class="card">
       <h4>Marcador</h4>
       <ul class="score-list">
-        <li *ngFor="let jugador of estado.marcador || []; let idx = index" [class.ganador]="esFaseFinalizada && idx === 0">{{ jugador.nombreJugador }} - {{ jugador.puntos }}</li>
+        <li *ngFor="let jugador of estado.marcador || []" [class.ganador]="esGanador(jugador)">{{ jugador.nombreJugador }} - {{ jugador.puntos }}</li>
       </ul>
     </section>
   </ng-container>
@@ -122,11 +122,14 @@
           <span>Jugador</span>
           <span>Puntos totales</span>
         </div>
-        <div class="round-row" *ngFor="let jugador of estado.marcador || []; let idx = index" [class.ganador]="esFaseFinalizada && idx === 0">
+        <div class="round-row" *ngFor="let jugador of estado.marcador || []" [class.ganador]="esGanador(jugador)">
           <span>{{ jugador.nombreJugador }}</span>
           <span>{{ jugador.puntos }}</span>
         </div>
       </div>
+      <p *ngIf="estado.ganadoresNombres?.length || estado.ganadores?.length" class="muted">
+        Ganadores: {{ ganadoresTexto }}
+      </p>
     </section>
   </ng-template>
 
