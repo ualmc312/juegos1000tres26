@@ -336,13 +336,35 @@ public class AdivinaElPersonajeJuego extends Juego {
         this.enCurso = false;
         int minimo = this.jugadores.values().stream().mapToInt(jugador -> jugador.preguntasAlAcertar).min().orElse(0);
 
-        this.ganadores.clear();
-        this.ganadores.addAll(this.jugadores.values().stream()
+        // Determinar el ganador verdadero: si hay empate elegimos uno de forma determinista
+        List<JugadorPartida> candidatos = new ArrayList<>(this.jugadores.values().stream()
                 .filter(jugador -> jugador.preguntasAlAcertar == minimo)
-                .map(jugador -> jugador.jugadorId)
-                .toList());
+            .toList());
 
-        for (String ganadorId : this.ganadores) {
+        if (candidatos.isEmpty()) {
+            this.ganadores.clear();
+        } else {
+            candidatos.sort(java.util.Comparator
+                    .comparingInt((JugadorPartida j) -> j.preguntasAlAcertar)
+                    .thenComparing(j -> j.nombreJugador, String.CASE_INSENSITIVE_ORDER)
+                    .thenComparing(j -> j.jugadorId));
+
+            JugadorPartida ganadorVerdadero = candidatos.get(0);
+            String ganadorId = ganadorVerdadero.jugadorId;
+
+            this.ganadores.clear();
+            this.ganadores.add(ganadorId);
+
+            for (String jugadorId : this.jugadores.keySet()) {
+                if (!jugadorId.equals(ganadorId)) {
+                    try {
+                        this.salaService.establecerPuntuacion(this.salaId, jugadorId, 0);
+                    } catch (RuntimeException ex) {
+                        // no bloquear la finalización por fallos en puntuación
+                    }
+                }
+            }
+
             try {
                 this.salaService.establecerPuntuacion(this.salaId, ganadorId, 1);
             } catch (RuntimeException ex) {
