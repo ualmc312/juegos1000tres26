@@ -25,11 +25,6 @@
   <ng-container *ngIf="!esPantalla; else pantallaTpl">
     <div class="adp-form" *ngIf="estado.puedeProponerTema && soyJugadorTema">
       <label>
-        Nombre
-        <input type="text" [(ngModel)]="nombreJugador" />
-      </label>
-
-      <label>
         Tema
         <input
           type="text"
