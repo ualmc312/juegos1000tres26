@@ -1,7 +1,9 @@
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Enviable, Envio, Recibo, Traductor, WebSocketConexion } from '../../../core/comunicacion';
+import { obtenerApiBaseUrl } from '../../../core/config/api-base';
 
 type JugadorEstado = {
   jugadorId: string;
@@ -65,10 +67,17 @@ export class AdivinaElPersonajeComponent implements OnInit, OnDestroy {
   private recepcionActiva = false;
   private registroEnviado = false;
   private jugadorPersistente = '';
+  private readonly apiBase = obtenerApiBaseUrl();
+  private readonly requestOptions = { withCredentials: true };
+  private jugadoresPorId = new Map<string, string>();
+  private nombresCargados = false;
+
+  constructor(private readonly http: HttpClient) {}
 
   ngOnInit(): void {
     this.nombreJugador = this.nombreInicial();
     this.jugadorPersistente = this.obtenerJugadorPersistente();
+    this.cargarNombresSala();
     this.inicializarComunicacion();
     this.iniciarRecepcion();
   }
@@ -135,6 +144,17 @@ export class AdivinaElPersonajeComponent implements OnInit, OnDestroy {
       && (ganadores.includes(jugador.jugadorId) || ganadores.includes(jugador.nombreJugador));
   }
 
+  get ganadoresTexto(): string {
+    const ganadoresNombres = this.estado.ganadoresNombres || [];
+    if (ganadoresNombres.length) {
+      return ganadoresNombres.join(', ');
+    }
+
+    return (this.estado.ganadores || [])
+      .map((id) => this.jugadoresPorId.get(id) || id)
+      .join(', ');
+  }
+
   volverALaSala(): void {
     if (!this.esHost || !this.esFaseFinalizada) {
       return;
@@ -182,7 +202,7 @@ export class AdivinaElPersonajeComponent implements OnInit, OnDestroy {
         continue;
       }
 
-      if (!this.esPantalla && !this.registroEnviado && conexion?.estaConectado()) {
+      if (!this.esPantalla && !this.registroEnviado && this.nombresCargados && conexion?.estaConectado()) {
         try {
           this.traductor.enviar(new RegistrarJugadorEnviable(this.idJugadorActual, this.nombreJugador));
           this.registroEnviado = true;
@@ -233,9 +253,11 @@ export class AdivinaElPersonajeComponent implements OnInit, OnDestroy {
         jugadores: Array.isArray(data['jugadores'])
           ? data['jugadores'].map((item) => {
               const registro = item as Record<string, unknown>;
+              const jugadorId = String(registro['jugadorId'] ?? '');
+              const nombrePorId = this.jugadoresPorId.get(jugadorId);
               return {
-                jugadorId: String(registro['jugadorId'] ?? ''),
-                nombreJugador: String(registro['nombreJugador'] ?? 'Jugador'),
+                jugadorId,
+                nombreJugador: nombrePorId || String(registro['nombreJugador'] ?? 'Jugador'),
                 preguntasValidas: Number(registro['preguntasValidas'] ?? 0),
                 preguntasInvalidas: Number(registro['preguntasInvalidas'] ?? 0),
                 preguntasAlAcertar: Number(registro['preguntasAlAcertar'] ?? 0),
@@ -262,6 +284,31 @@ export class AdivinaElPersonajeComponent implements OnInit, OnDestroy {
     } catch {
       // Ignorar payloads que no correspondan al estado del juego.
     }
+  }
+
+  private cargarNombresSala(): void {
+    const salaId = this.salaId();
+    if (!salaId) {
+      this.nombresCargados = true;
+      return;
+    }
+
+    this.http
+      .get<SalaRespuesta>(`${this.apiBase}/sala/${salaId}/estado`, this.requestOptions)
+      .subscribe({
+        next: (respuesta: SalaRespuesta) => {
+          const jugadores = respuesta.jugadores || [];
+          this.jugadoresPorId = new Map(jugadores.map((jugador: JugadorResumen) => [jugador.id, jugador.nombre]));
+          const nombreActual = this.jugadoresPorId.get(this.idJugadorActual);
+          if (nombreActual) {
+            this.nombreJugador = nombreActual;
+          }
+          this.nombresCargados = true;
+        },
+        error: () => {
+          this.nombresCargados = true;
+        }
+      });
   }
 
   private registrarJugadorSiHaceFalta(): void {
@@ -331,6 +378,20 @@ export class AdivinaElPersonajeComponent implements OnInit, OnDestroy {
   private esperar(ms: number): Promise<void> {
     return new Promise((resolve) => window.setTimeout(resolve, ms));
   }
+}
+
+interface JugadorResumen {
+  id: string;
+  nombre: string;
+}
+
+interface SalaRespuesta {
+  uuid: string;
+  jugadores: JugadorResumen[];
+  hostId: string;
+  p2pHostPeerId: string;
+  pantallaId: string;
+  juegoActual: string;
 }
 
 class RegistrarJugadorEnviable extends Enviable {

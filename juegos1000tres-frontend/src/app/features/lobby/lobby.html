@@ -1,15 +1,21 @@
 <section class="lobby" *ngIf="viewMode === 'lobby'">
+	<a class="lobby-back" routerLink="/">Volver al inicio</a>
 	<h1>Salas</h1>
 
-	<div class="botones-principales">
-		<generic-button color="red" (click)="crearSala()">Crear sala</generic-button>
-		<generic-button color="gray" link="/">Volver al inicio</generic-button>
+	<div class="lobby-block">
+		<h2 class="lobby-heading lobby-heading--host">Lidera tu propia sala!</h2>
+		<p class="lobby-note">Crea una sala e invita a tus amigos.</p>
+		<generic-button color="purple" (click)="crearSala()">Crear sala</generic-button>
 	</div>
 
-	<div class="join">
-		<label for="uuid">UUID</label>
-		<input id="uuid" type="text" placeholder="123456" [(ngModel)]="uuidInput" />
-		<generic-button color="gray" (click)="unirseSala()">Unirse a sala</generic-button>
+	<div class="lobby-block">
+		<h2 class="lobby-heading lobby-heading--join">Unete a una sala existente!</h2>
+		<p class="lobby-note">Solicita el codigo de la sala a la que te quieres unir y empieza a jugar.</p>
+		<div class="join">
+			<label for="uuid">Codigo de sala</label>
+			<input id="uuid" type="text" placeholder="123456" [(ngModel)]="uuidInput" />
+			<generic-button color="green" (click)="unirseSala()">Unirse a sala</generic-button>
+		</div>
 	</div>
 
 	<p class="error" *ngIf="errorUuid">{{ errorUuid }}</p>
@@ -23,7 +29,7 @@
 	<div class="sala-layout">
 		<aside class="sala-sidebar">
 			<div class="sala-tag" (click)="copiarUUID()" title="Haz clic para copiar">
-				<span>Sala</span>
+				<span>Codigo de sala</span>
 				<strong>{{ uuidActual }}</strong>
 			</div>
 			<div class="sala-info">
@@ -37,9 +43,6 @@
 				<p class="info-value" [title]="hostId ? 'UUID: ' + hostId : ''">
 					{{ hostNombre || '---' }}
 				</p>
-			</div>
-			<div class="sala-reservado">
-				<p>Espacio reservado para nuevas secciones</p>
 			</div>
 			<div class="salir-wrap">
 				<generic-button color="red" (click)="salir()">Salir</generic-button>

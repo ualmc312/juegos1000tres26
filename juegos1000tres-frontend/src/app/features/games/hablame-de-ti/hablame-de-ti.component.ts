@@ -1,7 +1,9 @@
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Enviable, Envio, Recibo, Traductor, WebSocketConexion } from '../../../core/comunicacion';
+import { obtenerApiBaseUrl } from '../../../core/config/api-base';
 
 type PreguntaAsignada = {
   jugadorId: string;
@@ -90,10 +92,17 @@ export class HablameDeTiComponent implements OnInit, OnDestroy {
   private recepcionActiva = false;
   private registroEnviado = false;
   private jugadorPersistente = '';
+  private readonly apiBase = obtenerApiBaseUrl();
+  private readonly requestOptions = { withCredentials: true };
+  private jugadoresPorId = new Map<string, string>();
+  private nombresCargados = false;
+
+  constructor(private readonly http: HttpClient) {}
 
   ngOnInit(): void {
     this.nombreJugador = this.nombreInicial();
     this.jugadorPersistente = this.obtenerJugadorPersistente();
+    this.cargarNombresSala();
     this.inicializarComunicacion();
     this.iniciarRecepcion();
   }
@@ -168,6 +177,51 @@ export class HablameDeTiComponent implements OnInit, OnDestroy {
     return this.estado.fase === 'RESPONDIENDO_ORIGINALES';
   }
 
+  get faseTexto(): string {
+    switch (this.estado.fase) {
+      case 'RESPONDIENDO_ORIGINALES':
+        return 'Verdad';
+      case 'ESCRIBIENDO_MENTIRAS':
+        return 'Mentira';
+      case 'VOTANDO':
+        return 'Votando';
+      case 'MOSTRANDO_RESULTADO':
+        return 'Resultados';
+      default:
+        return this.estado.fase || 'Sin estado';
+    }
+  }
+
+  get faseClase(): string {
+    switch (this.estado.fase) {
+      case 'RESPONDIENDO_ORIGINALES':
+        return 'fase-verdad';
+      case 'ESCRIBIENDO_MENTIRAS':
+        return 'fase-mentira';
+      case 'VOTANDO':
+      case 'MOSTRANDO_RESULTADO':
+        return 'fase-votando';
+      default:
+        return '';
+    }
+  }
+
+  get mensajeVisible(): string {
+    if (this.estado.fase === 'ESCRIBIENDO_MENTIRAS' && this.soyJugadorObjetivo) {
+      return 'Espera a que los otros jugadores terminen de responder.';
+    }
+
+    if (this.estado.fase === 'VOTANDO' && this.soyJugadorObjetivo) {
+      return 'Espera a que los jugadores voten.';
+    }
+
+    return this.estado.mensaje || '---';
+  }
+
+  get esPantallaActiva(): boolean {
+    return this.esPantalla && !!this.pantallaId && this.pantallaId !== this.idJugadorActual;
+  }
+
   get esFaseFinalizada(): boolean {
     return this.estado.fase === 'FINALIZADA';
   }
@@ -186,7 +240,9 @@ export class HablameDeTiComponent implements OnInit, OnDestroy {
       return ganadoresNombres.join(', ');
     }
 
-    return (this.estado.ganadores || []).join(', ');
+    return (this.estado.ganadores || [])
+      .map((id) => this.jugadoresPorId.get(id) || id)
+      .join(', ');
   }
 
   volverALaSala(): void {
@@ -199,7 +255,7 @@ export class HablameDeTiComponent implements OnInit, OnDestroy {
 
   private inicializarComunicacion(): void {
     const salaId = this.salaId();
-    const rol = this.esPantalla ? 'pantalla' : 'jugadores';
+    const rol = this.esPantallaActiva ? 'pantalla' : 'jugadores';
     const canal = `ws://127.0.0.1:8091/ws/salas/${encodeURIComponent(salaId)}/${rol}`;
 
     const conexion = new WebSocketConexion(salaId, canal);
@@ -230,7 +286,7 @@ export class HablameDeTiComponent implements OnInit, OnDestroy {
         continue;
       }
 
-      if (!this.esPantalla && !this.registroEnviado && conexion?.estaConectado()) {
+      if (!this.esPantallaActiva && !this.registroEnviado && this.nombresCargados && conexion?.estaConectado()) {
         try {
           this.traductor.enviar(new RegistrarJugadorEnviable(this.idJugadorActual, this.nombreJugador));
           this.registroEnviado = true;
@@ -276,10 +332,15 @@ export class HablameDeTiComponent implements OnInit, OnDestroy {
         mensaje: String(data['mensaje'] ?? ''),
         ultimoError: String(data['ultimoError'] ?? ''),
         jugadorObjetivo: data['jugadorObjetivo'] && typeof data['jugadorObjetivo'] === 'object'
-          ? {
-              jugadorId: String((data['jugadorObjetivo'] as Record<string, unknown>)['jugadorId'] ?? ''),
-              nombreJugador: String((data['jugadorObjetivo'] as Record<string, unknown>)['nombreJugador'] ?? ''),
-            }
+          ? (() => {
+              const registro = data['jugadorObjetivo'] as Record<string, unknown>;
+              const jugadorId = String(registro['jugadorId'] ?? '');
+              const nombrePorId = this.jugadoresPorId.get(jugadorId);
+              return {
+                jugadorId,
+                nombreJugador: nombrePorId || String(registro['nombreJugador'] ?? ''),
+              };
+            })()
           : undefined,
         preguntaDirecta: String(data['preguntaDirecta'] ?? ''),
         preguntaPublica: String(data['preguntaPublica'] ?? ''),
@@ -289,9 +350,11 @@ export class HablameDeTiComponent implements OnInit, OnDestroy {
         preguntasAsignadas: Array.isArray(data['preguntasAsignadas'])
           ? data['preguntasAsignadas'].map((item) => {
               const registro = item as Record<string, unknown>;
+              const jugadorId = String(registro['jugadorId'] ?? '');
+              const nombrePorId = this.jugadoresPorId.get(jugadorId);
               return {
-                jugadorId: String(registro['jugadorId'] ?? ''),
-                nombreJugador: String(registro['nombreJugador'] ?? 'Jugador'),
+                jugadorId,
+                nombreJugador: nombrePorId || String(registro['nombreJugador'] ?? 'Jugador'),
                 preguntaDirecta: String(registro['preguntaDirecta'] ?? ''),
                 preguntaPublica: String(registro['preguntaPublica'] ?? ''),
                 respondida: Boolean(registro['respondida']),
@@ -304,10 +367,12 @@ export class HablameDeTiComponent implements OnInit, OnDestroy {
         opciones: Array.isArray(data['opciones'])
           ? data['opciones'].map((item) => {
               const registro = item as Record<string, unknown>;
+              const autorJugadorId = String(registro['autorJugadorId'] ?? '');
+              const nombrePorId = this.jugadoresPorId.get(autorJugadorId);
               return {
                 opcionId: String(registro['opcionId'] ?? ''),
-                autorJugadorId: String(registro['autorJugadorId'] ?? ''),
-                autorNombre: String(registro['autorNombre'] ?? 'Jugador'),
+                autorJugadorId,
+                autorNombre: nombrePorId || String(registro['autorNombre'] ?? 'Jugador'),
                 texto: String(registro['texto'] ?? ''),
                 esOriginal: Boolean(registro['esOriginal']),
                 seleccionable: Boolean(registro['seleccionable']),
@@ -317,11 +382,13 @@ export class HablameDeTiComponent implements OnInit, OnDestroy {
         resumenRonda: Array.isArray(data['resumenRonda'])
           ? data['resumenRonda'].map((item) => {
               const registro = item as Record<string, unknown>;
+              const autorJugadorId = String(registro['autorJugadorId'] ?? '');
+              const nombrePorId = this.jugadoresPorId.get(autorJugadorId);
               return {
                 respuesta: String(registro['respuesta'] ?? ''),
                 esOriginal: Boolean(registro['esOriginal']),
-                autorJugadorId: String(registro['autorJugadorId'] ?? ''),
-                autorNombre: String(registro['autorNombre'] ?? 'Jugador'),
+                autorJugadorId,
+                autorNombre: nombrePorId || String(registro['autorNombre'] ?? 'Jugador'),
                 numSeleccionados: Number(registro['numSeleccionados'] ?? 0),
                 puntosGanadosEstaRonda: Number(registro['puntosGanadosEstaRonda'] ?? 0),
                 puntosTotales: Number(registro['puntosTotales'] ?? 0),
@@ -331,9 +398,11 @@ export class HablameDeTiComponent implements OnInit, OnDestroy {
         marcador: Array.isArray(data['marcador'])
           ? data['marcador'].map((item) => {
               const registro = item as Record<string, unknown>;
+              const jugadorId = String(registro['jugadorId'] ?? '');
+              const nombrePorId = this.jugadoresPorId.get(jugadorId);
               return {
-                jugadorId: String(registro['jugadorId'] ?? ''),
-                nombreJugador: String(registro['nombreJugador'] ?? 'Jugador'),
+                jugadorId,
+                nombreJugador: nombrePorId || String(registro['nombreJugador'] ?? 'Jugador'),
                 puntos: Number(registro['puntos'] ?? 0),
               };
             })
@@ -403,6 +472,31 @@ export class HablameDeTiComponent implements OnInit, OnDestroy {
   private obtenerConexionWebSocket(): WebSocketConexion | undefined {
     const conexion = this.traductor?.getConexion();
     return conexion instanceof WebSocketConexion ? conexion : undefined;
+  }
+
+  private cargarNombresSala(): void {
+    const salaId = this.salaId();
+    if (!salaId) {
+      this.nombresCargados = true;
+      return;
+    }
+
+    this.http
+      .get<SalaRespuesta>(`${this.apiBase}/sala/${salaId}/estado`, this.requestOptions)
+      .subscribe({
+        next: (respuesta: SalaRespuesta) => {
+          const jugadores = respuesta.jugadores || [];
+          this.jugadoresPorId = new Map(jugadores.map((jugador: JugadorResumen) => [jugador.id, jugador.nombre]));
+          const nombreActual = this.jugadoresPorId.get(this.idJugadorActual);
+          if (nombreActual) {
+            this.nombreJugador = nombreActual;
+          }
+          this.nombresCargados = true;
+        },
+        error: () => {
+          this.nombresCargados = true;
+        }
+      });
   }
 
   private esperar(ms: number): Promise<void> {
@@ -513,4 +607,18 @@ class VotarRespuestaEnviable extends Enviable {
   in(entrada: unknown): void {
     void entrada;
   }
+}
+
+interface JugadorResumen {
+  id: string;
+  nombre: string;
+}
+
+interface SalaRespuesta {
+  uuid: string;
+  jugadores: JugadorResumen[];
+  hostId: string;
+  p2pHostPeerId: string;
+  pantallaId: string;
+  juegoActual: string;
 }

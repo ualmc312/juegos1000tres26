@@ -1,7 +1,9 @@
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import { Component, EventEmitter, Input, OnDestroy, OnInit, AfterViewInit, ViewChild, ElementRef, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Enviable, Envio, Recibo, Traductor, WebSocketConexion } from '../../../core/comunicacion';
+import { obtenerApiBaseUrl } from '../../../core/config/api-base';
 
 type EstadoDibujo = {
   comando: string;
@@ -50,6 +52,10 @@ export class DibujoComponent implements OnInit, AfterViewInit, OnDestroy {
   private recepcionActiva = false;
   private registroEnviado = false;
   private jugadorPersistente = '';
+  private readonly apiBase = obtenerApiBaseUrl();
+  private readonly requestOptions = { withCredentials: true };
+  private jugadoresPorId = new Map<string, string>();
+  private nombresCargados = false;
 
   // Dibujo interactivo del pintor
   private pintando = false;
@@ -63,9 +69,12 @@ export class DibujoComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @ViewChild('canvas') canvasRef?: ElementRef<HTMLCanvasElement>;
 
+  constructor(private readonly http: HttpClient) {}
+
   ngOnInit(): void {
     this.nombreJugador = this.nombreInicial();
     this.jugadorPersistente = this.obtenerJugadorPersistente();
+    this.cargarNombresSala();
     this.relojId = setInterval(() => {
       this.ahoraMs = Date.now();
     }, 250);
@@ -137,7 +146,12 @@ export class DibujoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   get ganadoresNombresSeguros(): string[] {
-    return this.estado.ganadoresNombres ?? [];
+    const directos = this.estado.ganadoresNombres ?? [];
+    if (directos.length) {
+      return directos;
+    }
+    const ids = this.estado.ganadores ?? [];
+    return ids.map((id) => this.jugadoresPorId.get(id) || '').filter((nombre) => !!nombre);
   }
 
   private get idJugadorActual(): string {
@@ -289,7 +303,7 @@ export class DibujoComponent implements OnInit, AfterViewInit, OnDestroy {
         continue;
       }
 
-      if (!this.esPantalla && !this.registroEnviado && conexion?.estaConectado()) {
+      if (!this.esPantalla && !this.registroEnviado && this.nombresCargados && conexion?.estaConectado()) {
         try {
           this.traductor.enviar(new RegistrarJugadorEnviable(this.idJugadorActual, this.nombreJugador));
           this.registroEnviado = true;
@@ -336,7 +350,15 @@ export class DibujoComponent implements OnInit, AfterViewInit, OnDestroy {
         ganadores: Array.isArray(data['ganadores']) ? data['ganadores'].map((item) => String(item)) : [],
         ganadoresNombres: Array.isArray(data['ganadoresNombres']) ? data['ganadoresNombres'].map((item) => String(item)) : [],
         marcador: Array.isArray(data['marcador'])
-          ? (data['marcador'] as Array<Record<string, unknown>>).map(m => ({ jugadorId: String(m['jugadorId'] ?? ''), nombre: String(m['nombre'] ?? ''), puntos: Number(m['puntos'] ?? 0) }))
+          ? (data['marcador'] as Array<Record<string, unknown>>).map(m => {
+              const jugadorId = String(m['jugadorId'] ?? '');
+              const nombrePorId = this.jugadoresPorId.get(jugadorId);
+              return {
+                jugadorId,
+                nombre: nombrePorId || String(m['nombre'] ?? 'Jugador'),
+                puntos: Number(m['puntos'] ?? 0)
+              };
+            })
           : [],
         drawingFrame: Array.isArray(data['drawingFrame']) ? (data['drawingFrame'] as Array<Record<string, unknown>>) : [],
         resumenRonda: Array.isArray(data['resumenRonda']) ? (data['resumenRonda'] as Array<Record<string, unknown>>) : [],
@@ -424,6 +446,40 @@ export class DibujoComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  private cargarNombresSala(): void {
+    const salaId = this.salaId();
+    if (!salaId) {
+      this.nombresCargados = true;
+      return;
+    }
+
+    this.http
+      .get<SalaRespuesta>(`${this.apiBase}/sala/${salaId}/estado`, this.requestOptions)
+      .subscribe({
+        next: (respuesta: SalaRespuesta) => {
+          const jugadores = respuesta.jugadores || [];
+          this.jugadoresPorId = new Map(jugadores.map((jugador: JugadorResumen) => [jugador.id, jugador.nombre]));
+          const nombreActual = this.jugadoresPorId.get(this.idJugadorActual);
+          if (nombreActual) {
+            this.nombreJugador = nombreActual;
+          }
+          if (this.estado.marcador?.length) {
+            this.estado = {
+              ...this.estado,
+              marcador: this.estado.marcador.map((item) => ({
+                ...item,
+                nombre: this.jugadoresPorId.get(item.jugadorId) || item.nombre || 'Jugador'
+              }))
+            };
+          }
+          this.nombresCargados = true;
+        },
+        error: () => {
+          this.nombresCargados = true;
+        }
+      });
+  }
+
   private registrarJugadorSiHaceFalta(): void {
     if (this.esPantalla || this.registroEnviado || !this.traductor) return;
     this.traductor.enviar(new RegistrarJugadorEnviable(this.idJugadorActual, this.nombreJugador));
@@ -481,6 +537,20 @@ export class DibujoComponent implements OnInit, AfterViewInit, OnDestroy {
     this.recepcionActiva = true;
     void this.bucleRecepcion();
   }
+}
+
+interface JugadorResumen {
+  id: string;
+  nombre: string;
+}
+
+interface SalaRespuesta {
+  uuid: string;
+  jugadores: JugadorResumen[];
+  hostId: string;
+  p2pHostPeerId: string;
+  pantallaId: string;
+  juegoActual: string;
 }
 
 class RegistrarJugadorEnviable extends Enviable {

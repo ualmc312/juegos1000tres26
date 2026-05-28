@@ -42,7 +42,10 @@ export class ReflejosP2PComponent implements OnInit, OnDestroy {
   private backendNotificado = false;
   private esPopup = false;
   private pollingSalaId: ReturnType<typeof setInterval> | null = null;
-
+  private readonly apiBase = obtenerApiBaseUrl();
+  private readonly requestOptions = { withCredentials: true };
+  private jugadoresPorId = new Map<string, string>();
+  private nombresCargados = false;
   private sub?: Subscription;
 
   constructor(
@@ -78,14 +81,19 @@ export class ReflejosP2PComponent implements OnInit, OnDestroy {
     this.esHost = rol === 'host';
     this.hostPeerId = hostPeerId || '';
 
+    this.cargarNombresSala();
+
     try {
       this.reflejos.inicializar(sala, rol, hostPeerId, this.jugadorId);
       
       // Obtener el peerId del servicio para mostrarlo
       this.peerIdActual = this.reflejos.getPeerId();
       
-      this.sub = this.reflejos.getEstado$().subscribe((estado) => {
+      this.sub = this.reflejos.getEstado$().subscribe((estado: ReflejosEstado) => {
         this.estado = estado;
+        if (estado.fase === 'RESULTADO' && estado.ranking.length && this.jugadoresPorId.size === 0) {
+          this.cargarNombresSala();
+        }
         this.cdr.detectChanges();
 
         if (estado.fase === 'RESULTADO' && !this.esHost) {
@@ -138,6 +146,13 @@ export class ReflejosP2PComponent implements OnInit, OnDestroy {
     return this.estado.fase === 'FUEGO' || this.estado.fase === 'PALABRA';
   }
 
+  obtenerNombreJugador(id: string | null): string {
+    if (!id) {
+      return '';
+    }
+    return this.jugadoresPorId.get(id) || id;
+  }
+
   get puedeVolverALaSala(): boolean {
     return this.esHost && this.estado.fase === 'RESULTADO';
   }
@@ -151,7 +166,7 @@ export class ReflejosP2PComponent implements OnInit, OnDestroy {
       this.http
         .get<{ juegoActual?: string }>(`${obtenerApiBaseUrl()}/sala/${this.uuid}/estado`, { withCredentials: true })
         .subscribe({
-          next: respuesta => {
+          next: (respuesta: { juegoActual?: string }) => {
             if ((respuesta.juegoActual || '') !== 'reflejos-p2p') {
               this.ejecutarCierre();
             }
@@ -171,4 +186,45 @@ export class ReflejosP2PComponent implements OnInit, OnDestroy {
     clearInterval(this.pollingSalaId);
     this.pollingSalaId = null;
   }
+
+  private cargarNombresSala(): void {
+    if (!this.uuid) {
+      this.nombresCargados = true;
+      return;
+    }
+
+    this.http
+      .get<SalaRespuesta>(`${this.apiBase}/sala/${this.uuid}/estado`, this.requestOptions)
+      .subscribe({
+        next: (respuesta: SalaRespuesta) => {
+          const jugadores = respuesta.jugadores || [];
+          const mapa = new Map(jugadores.map((jugador: JugadorResumen) => [jugador.id, jugador.nombre]));
+          if (respuesta.p2pHostPeerId && respuesta.hostId) {
+            const hostNombre = mapa.get(respuesta.hostId);
+            if (hostNombre) {
+              mapa.set(respuesta.p2pHostPeerId, hostNombre);
+            }
+          }
+          this.jugadoresPorId = mapa;
+          this.nombresCargados = true;
+        },
+        error: () => {
+          this.nombresCargados = true;
+        }
+      });
+  }
+}
+
+interface JugadorResumen {
+  id: string;
+  nombre: string;
+}
+
+interface SalaRespuesta {
+  uuid: string;
+  jugadores: JugadorResumen[];
+  hostId: string;
+  p2pHostPeerId: string;
+  pantallaId: string;
+  juegoActual: string;
 }
