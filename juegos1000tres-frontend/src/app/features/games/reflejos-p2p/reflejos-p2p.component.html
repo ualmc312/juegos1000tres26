@@ -24,7 +24,7 @@
     </div>
     <div class="fila">
       <span>Ronda: {{ estado.rondaId || '---' }}</span>
-      <span>Ganador: {{ estado.ganadorId || '---' }}</span>
+      <span>Ganador: {{ obtenerNombreJugador(estado.ganadorId) || '---' }}</span>
     </div>
   </article>
 
@@ -39,7 +39,7 @@
     <h3>Ranking</h3>
     <ol *ngIf="estado.ranking.length > 0">
       <li *ngFor="let item of estado.ranking; let idx = index" [class.ganador]="estado.fase === 'RESULTADO' && idx === 0">
-        {{ item.jugadorId }} - {{ item.tiempoMs }} ms
+        {{ obtenerNombreJugador(item.jugadorId) }} - {{ item.tiempoMs }} ms
       </li>
     </ol>
     <p *ngIf="estado.ranking.length === 0" style="color: #9fb1dd;">Sin resultados aún</p>

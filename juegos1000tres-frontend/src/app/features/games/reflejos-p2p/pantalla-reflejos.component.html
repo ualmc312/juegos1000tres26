@@ -29,7 +29,7 @@
         <div *ngIf="estado.ranking.length > 0" class="ranking-list">
           <div *ngFor="let item of estado.ranking; let i = index" class="ranking-item" [class.ganador]="estado.fase === 'RESULTADO' && i === 0">
             <span class="posicion">{{ i + 1 }}.</span>
-            <span class="nombre">{{ item.jugadorId }}</span>
+            <span class="nombre">{{ obtenerNombreJugador(item.jugadorId) }}</span>
             <span class="tiempo">{{ item.tiempoMs }}ms</span>
           </div>
         </div>
