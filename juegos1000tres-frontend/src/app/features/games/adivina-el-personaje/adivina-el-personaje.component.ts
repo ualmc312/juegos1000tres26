@@ -144,6 +144,17 @@ export class AdivinaElPersonajeComponent implements OnInit, OnDestroy {
       && (ganadores.includes(jugador.jugadorId) || ganadores.includes(jugador.nombreJugador));
   }
 
+  get ganadoresTexto(): string {
+    const ganadoresNombres = this.estado.ganadoresNombres || [];
+    if (ganadoresNombres.length) {
+      return ganadoresNombres.join(', ');
+    }
+
+    return (this.estado.ganadores || [])
+      .map((id) => this.jugadoresPorId.get(id) || id)
+      .join(', ');
+  }
+
   volverALaSala(): void {
     if (!this.esHost || !this.esFaseFinalizada) {
       return;
