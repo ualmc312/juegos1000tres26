@@ -18,10 +18,6 @@
       <p class="label">Tema</p>
       <strong>{{ estado.tema || 'Pendiente' }}</strong>
     </div>
-    <div>
-      <p class="label">IA</p>
-      <strong>{{ estado.ultimaRespuestaIA || '---' }}</strong>
-    </div>
   </div>
 
   <p class="adp-message" *ngIf="estado.mensaje">{{ estado.mensaje }}</p>

@@ -46,7 +46,9 @@ export class PantallaReflejosComponent implements OnInit, OnDestroy {
       // Inicializar como observador (no participa en el juego)
       this.reflejos.inicializar(sala, 'host', undefined);
 
-      this.sub = this.reflejos.getEstado$().subscribe((estado) => (this.estado = estado));
+      this.sub = this.reflejos.getEstado$().subscribe((estado) => {
+        this.estado = estado;
+      });
     } catch (error) {
       const mensaje = error instanceof Error ? error.message : 'Error desconocido';
       this.errorInicial = mensaje;

@@ -42,7 +42,6 @@ export class ReflejosP2PComponent implements OnInit, OnDestroy {
   private backendNotificado = false;
   private esPopup = false;
   private pollingSalaId: ReturnType<typeof setInterval> | null = null;
-
   private sub?: Subscription;
 
   constructor(
@@ -84,7 +83,7 @@ export class ReflejosP2PComponent implements OnInit, OnDestroy {
       // Obtener el peerId del servicio para mostrarlo
       this.peerIdActual = this.reflejos.getPeerId();
       
-      this.sub = this.reflejos.getEstado$().subscribe((estado) => {
+      this.sub = this.reflejos.getEstado$().subscribe((estado: ReflejosEstado) => {
         this.estado = estado;
         this.cdr.detectChanges();
 
@@ -151,7 +150,7 @@ export class ReflejosP2PComponent implements OnInit, OnDestroy {
       this.http
         .get<{ juegoActual?: string }>(`${obtenerApiBaseUrl()}/sala/${this.uuid}/estado`, { withCredentials: true })
         .subscribe({
-          next: respuesta => {
+          next: (respuesta: { juegoActual?: string }) => {
             if ((respuesta.juegoActual || '') !== 'reflejos-p2p') {
               this.ejecutarCierre();
             }

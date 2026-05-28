@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Subscription, interval } from 'rxjs';
 import { obtenerApiBaseUrl } from '../../core/config/api-base';
 import { GenericButton } from '../../shared/components/generic-button/generic-button';
@@ -23,6 +23,7 @@ import { AmigosModal } from '../amigos/amigos-modal';
   standalone: true,
   imports: [
     CommonModule,
+    RouterModule,
     FormsModule,
     GenericButton,
     Taptap,
@@ -60,14 +61,12 @@ export class Lobby implements OnInit, OnDestroy {
 
   juegosDisponibles = [
     { id: 'space-invaders', nombre: 'Space Invaders' },
-    { id: 'prueba-websocket', nombre: 'Prueba WebSocket' },
     { id: 'adivina-el-personaje', nombre: 'Adivina el personaje' },
     { id: 'dibujo', nombre: 'Dibujo' },
     { id: 'hablame-de-ti', nombre: 'Hablame de ti' },
     { id: 'taptap', nombre: 'TapTap' },
     { id: 'preguntas', nombre: 'Preguntas' },
-    { id: 'reflejos-p2p', nombre: 'Reflejos P2P' },
-    { id: 'handicap', nombre: 'Handicap' }
+    { id: 'reflejos-p2p', nombre: 'Reflejos P2P' }
   ];
 
   private readonly apiBase = obtenerApiBaseUrl();
