@@ -177,6 +177,47 @@ export class HablameDeTiComponent implements OnInit, OnDestroy {
     return this.estado.fase === 'RESPONDIENDO_ORIGINALES';
   }
 
+  get faseTexto(): string {
+    switch (this.estado.fase) {
+      case 'RESPONDIENDO_ORIGINALES':
+        return 'Verdad';
+      case 'ESCRIBIENDO_MENTIRAS':
+        return 'Mentira';
+      case 'VOTANDO':
+        return 'Votando';
+      case 'MOSTRANDO_RESULTADO':
+        return 'Resultados';
+      default:
+        return this.estado.fase || 'Sin estado';
+    }
+  }
+
+  get faseClase(): string {
+    switch (this.estado.fase) {
+      case 'RESPONDIENDO_ORIGINALES':
+        return 'fase-verdad';
+      case 'ESCRIBIENDO_MENTIRAS':
+        return 'fase-mentira';
+      case 'VOTANDO':
+      case 'MOSTRANDO_RESULTADO':
+        return 'fase-votando';
+      default:
+        return '';
+    }
+  }
+
+  get mensajeVisible(): string {
+    if (this.estado.fase === 'ESCRIBIENDO_MENTIRAS' && this.soyJugadorObjetivo) {
+      return 'Espera a que los otros jugadores terminen de responder.';
+    }
+
+    if (this.estado.fase === 'VOTANDO' && this.soyJugadorObjetivo) {
+      return 'Espera a que los jugadores voten.';
+    }
+
+    return this.estado.mensaje || '---';
+  }
+
   get esPantallaActiva(): boolean {
     return this.esPantalla && !!this.pantallaId && this.pantallaId !== this.idJugadorActual;
   }

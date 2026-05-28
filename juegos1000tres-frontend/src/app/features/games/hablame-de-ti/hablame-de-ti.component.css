@@ -121,6 +121,35 @@
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
 }
 
+.state-grid > div {
+  min-width: 0;
+}
+
+.state-grid strong {
+  display: block;
+  word-break: break-word;
+}
+
+.fase-label {
+  font-family: var(--font-pixel);
+  font-size: inherit;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.fase-verdad {
+  color: var(--green);
+}
+
+.fase-mentira {
+  color: var(--accent-lit);
+}
+
+.fase-votando {
+  color: #ffffff;
+}
+
 .screen-stage {
   min-height: 240px;
   display: grid;
@@ -156,6 +185,12 @@
 .card h4 {
   margin: 0;
   font-size: 1.2rem;
+}
+
+.phase-subtitle {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.95rem;
 }
 
 .card button,

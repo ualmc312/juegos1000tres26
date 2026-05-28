@@ -10,7 +10,7 @@
   <div class="state-grid">
     <div>
       <p class="label">Fase</p>
-      <strong>{{ estado.fase || 'Sin estado' }}</strong>
+      <strong [class.fase-label]="!!faseClase" [ngClass]="faseClase">{{ faseTexto }}</strong>
     </div>
     <div>
       <p class="label">Ronda</p>
@@ -18,7 +18,7 @@
     </div>
     <div>
       <p class="label">Mensaje</p>
-      <strong>{{ estado.mensaje || '---' }}</strong>
+      <strong>{{ mensajeVisible }}</strong>
     </div>
   </div>
 
@@ -54,7 +54,8 @@
     </section>
 
     <section class="card" *ngIf="estado.puedeVotar && !soyJugadorObjetivo">
-      <h4>Vota la respuesta correcta</h4>
+      <h4>Selecciona la respuesta correcta</h4>
+      <p class="phase-subtitle">A la pregunta: {{ estado.preguntaPublica || '---' }}</p>
       <p class="muted">Preguntas pendientes de mentira: {{ preguntasPendientesTexto }}</p>
       <div class="options">
         <label *ngFor="let opcion of opcionesParaVotar">
